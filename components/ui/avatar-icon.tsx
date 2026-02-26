@@ -90,7 +90,7 @@ const AvatarIcon = forwardRef<AvatarIconHandle, AvatarIconProps>(
           height={size}
           className={cn(
             "rounded-full -mt-0.5 -mr-0.5 transition-[filter,opacity] duration-200",
-            active ? "grayscale-0 opacity-100" : "grayscale opacity-60"
+            active ? "grayscale-0 opacity-100" : "grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100"
           )}
           style={{ width: size, height: size }}
           variants={avatarVariants}
