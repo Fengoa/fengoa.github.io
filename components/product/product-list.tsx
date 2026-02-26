@@ -25,17 +25,14 @@ export function ProductList({ products }: { products: ProductItem[] }) {
           const col = (index % COLUMNS) + 1;
 
           return (
-            <div
+            <Grid.Cell
               key={product.id}
               data-id={product.id}
-              className="taste-grid-cell"
-              style={{
-                gridRow: `${row} / span 1`,
-                gridColumn: `${col} / span 1`,
-              }}
+              row={row}
+              column={col}
             >
               <ProductCard product={product} />
-            </div>
+            </Grid.Cell>
           );
         })}
       </AnimatedBackground>

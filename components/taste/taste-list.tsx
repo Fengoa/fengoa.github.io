@@ -90,17 +90,14 @@ export function TasteList({ items }: { items: TasteItem[] }) {
               const col = (index % COLUMNS) + 1;
               const row = Math.floor(index / COLUMNS) + 1;
               return (
-                <div
+                <Grid.Cell
                   key={item.id}
                   data-id={item.id}
-                  className="taste-grid-cell"
-                  style={{
-                    gridRow: `${row} / span 1`,
-                    gridColumn: `${col} / span 1`,
-                  }}
+                  row={row}
+                  column={col}
                 >
                   <TasteCard item={item} />
-                </div>
+                </Grid.Cell>
               );
             })}
           </AnimatedBackground>

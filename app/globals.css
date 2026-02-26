@@ -201,58 +201,6 @@ code:where(:not(pre) > code) {
   border-radius: 4px;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Grid System (display: contents technique)                          */
-/* ------------------------------------------------------------------ */
-
-.taste-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--columns), 1fr);
-  grid-template-rows: repeat(var(--rows), auto);
-  position: relative;
-  border: var(--guide-width, 1px) solid var(--border);
-  border-right: none;
-  border-bottom: none;
-}
-
-.taste-grid-guides {
-  display: contents;
-}
-
-.taste-grid-guide {
-  position: absolute;
-  inset: 0;
-  grid-column-start: var(--x);
-  grid-column-end: span 1;
-  grid-row-start: var(--y);
-  grid-row-end: span 1;
-  border: var(--guide-width, 1px) solid var(--border);
-  border-left: none;
-  border-top: none;
-  pointer-events: none;
-}
-
-.taste-grid-cell {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-}
-
-.taste-grid-cross {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  pointer-events: none;
-}
-
-.taste-grid-cross > svg {
-  position: absolute;
-  top: calc(var(--guide-width, 1px) * -0.5);
-  left: calc(var(--guide-width, 1px) * -0.5);
-  transform: translate(-50%, -50%);
-}
 
 /* ------------------------------------------------------------------ */
 /*  Share icon hover animation                                         */

@@ -21,17 +21,14 @@ export function PostList({ posts }: { posts: PostData[] }) {
         className="bg-black/2 dark:bg-white/4"
       >
         {posts.map((post, index) => (
-          <div
+          <Grid.Cell
             key={post.slug}
             data-id={post.slug}
-            className="taste-grid-cell"
-            style={{
-              gridRow: `${index + 1} / span 1`,
-              gridColumn: `1 / span 1`,
-            }}
+            row={index + 1}
+            column={1}
           >
             <PostCard post={post} index={index} />
-          </div>
+          </Grid.Cell>
         ))}
       </AnimatedBackground>
     </Grid>
