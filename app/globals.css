@@ -97,6 +97,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Sugar-high syntax highlighting */
+  --sh-class: #2d5e9d;
+  --sh-identifier: #354150;
+  --sh-sign: #8996a3;
+  --sh-property: #0550ae;
+  --sh-entity: #249a97;
+  --sh-jsxliterals: #6266d1;
+  --sh-string: #00a99a;
+  --sh-keyword: #f47067;
+  --sh-comment: #a19595;
 }
 
 .dark {
@@ -131,6 +141,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  /* Sugar-high syntax highlighting */
+  --sh-class: #4c97f8;
+  --sh-identifier: #e0e0e0;
+  --sh-sign: #8996a3;
+  --sh-property: #79c0ff;
+  --sh-entity: #67cdcc;
+  --sh-jsxliterals: #a78bfa;
+  --sh-string: #7ee787;
+  --sh-keyword: #f47067;
+  --sh-comment: #6b6b6b;
 }
 
 @layer base {
@@ -146,60 +166,7 @@
   }
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
 
-::view-transition-image-pair(root) {
-  isolation: isolate;
-}
-
-::view-transition-old(root) {
-  z-index: 1;
-}
-
-::view-transition-new(root) {
-  z-index: 999;
-}
-.vertical-text {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-pre > code {
-  display: grid;
-  counter-reset: line;
-  zoom: 0.9;
-}
-
-code[data-line-numbers] > [data-line]::before {
-  counter-increment: line;
-  content: counter(line);
-  display: inline-block;
-  width: 1rem;
-  margin-right: 1.5rem;
-  text-align: right;
-  color: var(--muted-foreground);
-  opacity: 0.5;
-  font-size: 0.8em;
-}
-
-code:where(:not(pre) > code) {
-  padding: 0.2em 0.4em;
-  background-color: var(--secondary);
-  border-radius: 4px;
-}
 
 
 /* ------------------------------------------------------------------ */

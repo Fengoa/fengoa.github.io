@@ -1,5 +1,6 @@
 import React, { ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
+import { highlight } from "sugar-high";
 import { getId } from "@/lib/utils";
 
 export const H1 = (props: ComponentPropsWithoutRef<"h1">) => (
@@ -123,25 +124,40 @@ export const Blockquote = (props: ComponentPropsWithoutRef<"blockquote">) => (
   />
 );
 
-export const Pre = ({ style, ...props }: ComponentPropsWithoutRef<"pre">) => (
+export const Pre = (props: ComponentPropsWithoutRef<"pre">) => (
   <pre
-    className="mb-8 py-4 border border-neutral-200 dark:border-neutral-800 rounded-md overflow-auto bg-transparent font-mono text-sm leading-relaxed **:data-line:px-4 **:data-highlighted-line:bg-neutral-100/50 dark:**:data-highlighted-line:bg-neutral-800/50"
-    style={{ ...style, background: "transparent" }}
+    className="mb-8 py-4 px-4 border border-neutral-200 dark:border-neutral-800 rounded-md overflow-auto bg-transparent font-mono text-sm leading-relaxed"
     {...props}
   />
 );
 
-export const Code = (props: ComponentPropsWithoutRef<"code">) => {
-  const isInline = !props.className?.includes("language-");
+export const Code = ({
+  children,
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"code">) => {
+  const isInline = !className?.includes("language-");
   if (isInline) {
     return (
       <code
         className="bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-md text-[0.9em] font-mono text-foreground/90 border border-neutral-200/50 dark:border-neutral-700/50"
         {...props}
-      />
+      >
+        {children}
+      </code>
     );
   }
-  return <code className="grid min-w-full" {...props} />;
+
+  const codeString = typeof children === "string" ? children : "";
+  const html = highlight(codeString);
+
+  return (
+    <code
+      className="grid min-w-full"
+      dangerouslySetInnerHTML={{ __html: html }}
+      {...props}
+    />
+  );
 };
 
 export const Img = ({
