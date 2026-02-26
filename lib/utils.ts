@@ -19,6 +19,6 @@ export const getId = (children: any): string => {
   return text(children)
     .toLowerCase()
     .replace(/\s/g, "-")
-    .replace(/\.|\?/g, "")
-    .replace(/[^\w-]/g, ""); // Remove non-alphanumeric characters except hyphens
+    .replace(/[.?]/g, "")
+    .replace(/[^\p{L}\p{N}_-]/gu, "");
 }

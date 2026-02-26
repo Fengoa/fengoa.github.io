@@ -11,8 +11,16 @@
 这带来一个问题：常见的做法是让每个子元素画自己的边框。格子都填满时没问题，但只要有空格子，那个位置没有元素，线就断了。
 
 ```css
-.grid { border: 1px solid; border-right: none; border-bottom: none; }
-.grid > div { border: 1px solid; border-left: none; border-top: none; }
+.grid {
+  border: 1px solid;
+  border-right: none;
+  border-bottom: none;
+}
+.grid > div {
+  border: 1px solid;
+  border-left: none;
+  border-top: none;
+}
 ```
 
 我需要的是：组件知道自己有多少行和列，自己把所有的线画好，不依赖内容。
@@ -20,20 +28,27 @@
 做法是在容器里额外放一层参考线元素，用 `display: contents` 让它们在布局上消失，但仍参与 Grid 定位：
 
 ```tsx
-<div className="grid relative" style={{
-  gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-  gridTemplateRows: `repeat(${rows}, auto)`,
-  borderTop: '1px solid var(--border)',
-  borderLeft: '1px solid var(--border)',
-}}>
+<div
+  className="grid relative"
+  style={{
+    gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+    gridTemplateRows: `repeat(${rows}, auto)`,
+    borderTop: "1px solid var(--border)",
+    borderLeft: "1px solid var(--border)",
+  }}
+>
   <div className="contents">
     {Array.from({ length: rows * columns }, (_, i) => (
-      <div key={i} className="absolute inset-0 pointer-events-none" style={{
-        gridColumnStart: (i % columns) + 1,
-        gridRowStart: Math.floor(i / columns) + 1,
-        borderRight: '1px solid var(--border)',
-        borderBottom: '1px solid var(--border)',
-      }} />
+      <div
+        key={i}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          gridColumnStart: (i % columns) + 1,
+          gridRowStart: Math.floor(i / columns) + 1,
+          borderRight: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border)",
+        }}
+      />
     ))}
   </div>
   {children}
@@ -46,9 +61,15 @@
 
 ```tsx
 <Grid rows={4} columns={4}>
-  <Grid.Cell row={1} column={1}>What</Grid.Cell>
-  <Grid.Cell row={2} column={3}>will</Grid.Cell>
-  <Grid.Cell row={4} column="auto">?</Grid.Cell>
+  <Grid.Cell row={1} column={1}>
+    What
+  </Grid.Cell>
+  <Grid.Cell row={2} column={3}>
+    will
+  </Grid.Cell>
+  <Grid.Cell row={4} column="auto">
+    ?
+  </Grid.Cell>
 </Grid>
 ```
 
@@ -68,13 +89,15 @@
 
 ```tsx
 <nav className="fixed top-0 left-0 right-0 z-50 h-14">
-  <div className="
+  <div
+    className="
     absolute inset-0 -bottom-4
     backdrop-blur-md
     bg-linear-to-b from-background to-transparent
     pointer-events-none
     mask-[linear-gradient(black_30%,rgba(0,0,0,0.8)_70%,transparent_100%)]
-  " />
+  "
+  />
   <div className="relative h-full flex items-center">
     <NavTabs />
   </div>
@@ -101,23 +124,27 @@ function AnimatedBackground({ children, className, transition }) {
   const uniqueId = useId();
 
   return Children.map(children, (child) => {
-    const id = child.props['data-id'];
+    const id = child.props["data-id"];
 
-    return cloneElement(child, {
-      onMouseEnter: () => setActiveId(id),
-      onMouseLeave: () => setActiveId(null),
-    }, <>
-      <AnimatePresence>
-        {activeId === id && (
-          <motion.div
-            layoutId={`background-${uniqueId}`}
-            className={cn('absolute inset-0', className)}
-            transition={transition}
-          />
-        )}
-      </AnimatePresence>
-      <div className="z-10">{child.props.children}</div>
-    </>);
+    return cloneElement(
+      child,
+      {
+        onMouseEnter: () => setActiveId(id),
+        onMouseLeave: () => setActiveId(null),
+      },
+      <>
+        <AnimatePresence>
+          {activeId === id && (
+            <motion.div
+              layoutId={`background-${uniqueId}`}
+              className={cn("absolute inset-0", className)}
+              transition={transition}
+            />
+          )}
+        </AnimatePresence>
+        <div className="z-10">{child.props.children}</div>
+      </>
+    );
   });
 }
 ```
