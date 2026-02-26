@@ -22,15 +22,17 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group block transition-colors duration-200 hover:bg-white dark:hover:bg-white/5"
+      className="group block transition-colors duration-300 hover:bg-white dark:hover:bg-white/5"
     >
       <article
-        className={cn("grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden")}
+        className={cn(
+          "grid grid-cols-1 md:grid-cols-2 md:gap-8 overflow-hidden p-6 sm:p-8 lg:p-10"
+        )}
       >
         {/* 文字区 */}
         <div
           className={cn(
-            "flex flex-col justify-between p-6 sm:p-8 lg:p-10",
+            "flex flex-col justify-between",
             !isEven && "md:order-2"
           )}
         >
@@ -42,11 +44,11 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
               </span>
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-bold leading-tight tracking-tight text-foreground mb-3">
+            <h2 className="text-2xl sm:text-3xl font-bold leading-tight tracking-tight text-foreground mb-3">
               {post.title}
             </h2>
 
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed line-clamp-3">
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed line-clamp-3 group-hover:text-secondary-foreground transition-colors duration-200">
               {post.summary}
             </p>
           </div>
@@ -62,19 +64,21 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
         {/* 封面区 */}
         <div
           className={cn(
-            "relative aspect-square rounded-full overflow-hidden size-80",
+            "relative flex items-center justify-center",
             !isEven && "md:order-1"
           )}
         >
-          {post.cover && (
-            <Image
-              src={post.cover}
-              alt={post.title}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              width={320}
-              height={320}
-            />
-          )}
+          <div className="aspect-square rounded-full overflow-hidden size-90 border">
+            {post.cover && (
+              <Image
+                src={post.cover}
+                alt={post.title}
+                className="size-full object-cover"
+                width={320}
+                height={320}
+              />
+            )}
+          </div>
         </div>
       </article>
     </Link>

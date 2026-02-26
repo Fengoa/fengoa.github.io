@@ -46,7 +46,7 @@ const posts: PostData[] = [
 
 export default function Home() {
   return (
-    <main className="py-12 space-y-12">
+    <main className="py-20 space-y-12">
       <PostList posts={posts} />
     </main>
   );

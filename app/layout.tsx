@@ -57,15 +57,17 @@ export default function RootLayout({
           </div>
 
           {/* Footer */}
-          <footer className="border-t mx-auto px-4 md:px-16 max-w-320 py-4 flex items-center justify-between">
-            <TextLoop
-              interval={6}
-              className="text-xs text-muted-foreground overflow-hidden"
-            >
-              <span>© {new Date().getFullYear()} Oriens.</span>
-              <span>Be quiet.</span>
-            </TextLoop>
-            <ThemeSwitcher />
+          <footer className="border-t flex items-center justify-between">
+            <div className="mx-auto px-4 md:px-16 max-w-7xl w-full py-4 flex items-center justify-between">
+              <TextLoop
+                interval={6}
+                className="text-xs text-muted-foreground overflow-hidden"
+              >
+                <span>© {new Date().getFullYear()} Oriens.</span>
+                <span>Be quiet.</span>
+              </TextLoop>
+              <ThemeSwitcher />
+            </div>
           </footer>
         </ThemeProvider>
       </body>
