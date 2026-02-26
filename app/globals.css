@@ -160,43 +160,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  a, button, [role="button"], input[type="submit"], input[type="reset"], input[type="button"], select, summary {
+    cursor: pointer;
+  }
   ::selection {
     background: var(--foreground);
     color: var(--background);
   }
 }
 
-
-
-
-/* ------------------------------------------------------------------ */
-/*  Share icon hover animation                                         */
-/* ------------------------------------------------------------------ */
-
-.share-icon-arrow {
-  transition: transform 0.2s ease;
-}
-
-.share-icon-line {
-  transition: stroke 0.2s ease, fill 0.2s ease, transform 0.2s ease;
-}
-
-.group:hover .share-icon-arrow {
-  transform: translate(2px, -2px);
-}
-
-/* ------------------------------------------------------------------ */
-/*  Nav avatar grayscale                                               */
-/* ------------------------------------------------------------------ */
-
-.nav-avatar {
-  filter: grayscale(100%);
-  opacity: 0.6;
-  transition: filter 0.2s ease, opacity 0.2s ease;
-}
-
-button:hover .nav-avatar,
-button[data-checked="true"] .nav-avatar {
-  filter: grayscale(0%);
-  opacity: 1;
-}

@@ -10,6 +10,7 @@ import {
   Sparkles,
   Dice5,
   Code,
+  Bookmark,
 } from "lucide-react";
 
 export default function MePage() {
@@ -77,6 +78,13 @@ export default function MePage() {
             >
               <Globe className="size-3.5" />
               moodl.ink/me
+            </a>
+            <a
+              href="/taste"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Bookmark className="size-3.5" />
+              收藏夹
             </a>
           </div>
         </Grid.Cell>

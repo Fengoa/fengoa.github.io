@@ -33,14 +33,14 @@ function ShareIcon() {
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        className="share-icon-arrow"
+        className="transition-transform duration-200 ease-in-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
         clipRule="evenodd"
         d="M9.74999 1H8.99999V2.5H9.74999H12.4388L7.46966 7.46912L6.93933 7.99945L7.99999 9.06011L8.53032 8.52978L13.4994 3.56066V6.25V7H14.9994V6.25V1.75C14.9994 1.33579 14.6637 1 14.2494 1H9.74999Z"
         fill="currentColor"
         fillRule="evenodd"
       />
       <path
-        className="share-icon-line"
+        className="transition-[stroke,fill,transform] duration-200 ease-in-out"
         d="M14.25 10.25L14.25 13.25C14.25 13.8023 13.8023 14.25 13.25 14.25L2.75 14.25C2.19772 14.25 1.75 13.8023 1.75 13.25L1.75 2.75C1.75 2.19772 2.19772 1.75 2.75 1.75L5.75 1.75"
         stroke="currentColor"
         strokeLinecap="square"
