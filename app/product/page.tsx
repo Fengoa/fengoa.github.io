@@ -1,113 +1,94 @@
 import { ProductList } from "@/components/product/product-list";
 import type { ProductItem } from "@/components/product/product-card";
+import { Grid } from "@/components/ui/grid";
 import {
-  Rocket,
-  Shield,
-  Globe,
-  Zap,
-  Cloud,
-  Code,
-  Users,
-  Lock,
-  BarChart3,
+  Palette,
+  Terminal,
+  Figma,
   Layers,
-  Gauge,
-  Headphones,
+  Sparkles,
+  Globe,
 } from "lucide-react";
 
 const products: ProductItem[] = [
   {
-    id: "starter",
-    name: "Starter",
-    description: "适合个人项目和独立开发者，快速起步的理想选择。",
-    price: "免费",
-    features: [
-      { icon: <Rocket className="size-4" />, text: "快速部署，秒级上线" },
-      { icon: <Code className="size-4" />, text: "自动化 CI/CD 流水线" },
-      { icon: <Shield className="size-4" />, text: "基础安全防护" },
-      { icon: <Globe className="size-4" />, text: "全球 CDN 加速" },
-      { icon: <Cloud className="size-4" />, text: "弹性计算资源" },
-      { icon: <BarChart3 className="size-4" />, text: "基础流量分析" },
-    ],
-    cta: "开始使用",
-    ctaHref: "#",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    description: "为团队和成长型产品打造，满足规模化需求。",
-    price: "¥128/月",
-    priceNote: "+ 按量计费",
-    popular: true,
-    features: [
-      {
-        icon: <Zap className="size-4" />,
-        text: "包含 Starter 全部功能",
-      },
-      { icon: <Layers className="size-4" />, text: "¥128 免费额度" },
-      { icon: <Users className="size-4" />, text: "团队协作与权限管理" },
-      {
-        icon: <Gauge className="size-4" />,
-        text: "更快的构建速度",
-      },
-      {
-        icon: <Shield className="size-4" />,
-        text: "冷启动优化",
-      },
-      { icon: <Cloud className="size-4" />, text: "企业级扩展插件" },
-    ],
-    cta: "免费试用",
-    ctaHref: "#",
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
+    id: "oriens-blog",
+    name: "Oriens Blog",
     description:
-      "关键安全、高可用、平台级 SLA 和专属支持。",
-    features: [
-      {
-        icon: <Lock className="size-4" />,
-        text: "包含 Pro 全部功能",
-      },
-      {
-        icon: <Users className="size-4" />,
-        text: "访客与团队权限控制",
-      },
-      {
-        icon: <Shield className="size-4" />,
-        text: "目录同步与 SSO",
-      },
-      {
-        icon: <Globe className="size-4" />,
-        text: "多区域计算与容灾",
-      },
-      {
-        icon: <Gauge className="size-4" />,
-        text: "99.99% SLA",
-      },
-      {
-        icon: <Headphones className="size-4" />,
-        text: "专属技术支持",
-      },
-    ],
-    cta: "获取方案",
-    ctaHref: "#",
-    secondaryCta: "申请试用",
-    secondaryCtaHref: "#",
+      "基于 Next.js 构建的个人博客，采用 MDX 内容管理、Grid 布局系统与 Motion 动画。",
+    href: "https://github.com",
+    tags: ["Next.js", "MDX", "Motion"],
+    icon: <Globe className="size-5" />,
+    year: "2026",
+  },
+  {
+    id: "design-system",
+    name: "Orien Design",
+    description:
+      "一套面向产品团队的设计系统，包含 Token、组件库与主题引擎，统一设计与开发表达。",
+    href: "https://github.com",
+    tags: ["Design System", "React", "Figma"],
+    icon: <Palette className="size-5" />,
+    year: "2025",
+  },
+  {
+    id: "fig-gen",
+    name: "FigGen",
+    description:
+      "Figma 插件，自动生成设计规范文档与标注，加速设计到开发的交付流程。",
+    href: "https://github.com",
+    tags: ["Figma Plugin", "TypeScript"],
+    icon: <Figma className="size-5" />,
+    year: "2025",
+  },
+  {
+    id: "cli-toolkit",
+    name: "DevKit CLI",
+    description:
+      "面向前端工程师的命令行工具集，集成项目初始化、代码生成与发布流水线。",
+    href: "https://github.com",
+    tags: ["CLI", "Node.js"],
+    icon: <Terminal className="size-5" />,
+    year: "2024",
+  },
+  {
+    id: "motion-lab",
+    name: "Motion Lab",
+    description:
+      "交互动画实验场，探索 Spring 物理模型、手势驱动与布局动画的最佳实践。",
+    href: "https://github.com",
+    tags: ["Motion", "实验"],
+    icon: <Sparkles className="size-5" />,
+    year: "2024",
+  },
+  {
+    id: "layer-stack",
+    name: "LayerStack",
+    description:
+      "可视化图层管理工具，帮助设计师快速整理复杂 Figma 文件的图层结构。",
+    href: "https://github.com",
+    tags: ["Figma Plugin", "效率"],
+    icon: <Layers className="size-5" />,
+    year: "2023",
   },
 ];
 
 export default function ProductPage() {
   return (
-    <main className="py-12 space-y-12">
-      {/* Hero */}
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-          找到适合你的方案
-        </h1>
-        <p className="text-muted-foreground text-base sm:text-lg">
-          面向不同规模的团队，按需选择，灵活扩展。
-        </p>
+    <main className="py-12 space-y-0">
+      {/* Hero: Grid 网格背景 + 居中文字 */}
+      <div className="relative">
+        <Grid rows={1} columns={8}>
+          <Grid.Cross row={1} column={1} />
+          <Grid.Cell row={1} column={1} colSpan={8} className="py-16 sm:py-24 flex flex-col items-center justify-center text-center">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+              打造过的一些东西
+            </h1>
+            <p className="mt-4 text-muted-foreground text-base sm:text-lg max-w-md">
+              独立项目、开源工具与设计探索。
+            </p>
+          </Grid.Cell>
+        </Grid>
       </div>
 
       {/* Product Grid */}
