@@ -80,8 +80,13 @@ export default function ProductPage() {
       <div className="relative">
         <Grid rows={1} columns={8}>
           <Grid.Cross row={1} column={1} />
-          <Grid.Cell row={1} column={1} colSpan={8} className="py-16 sm:py-24 flex flex-col items-center justify-center text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+          <Grid.Cell
+            row={1}
+            column={1}
+            colSpan={8}
+            className="py-16 sm:py-24 flex flex-col items-center justify-center text-center"
+          >
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
               打造过的一些东西
             </h1>
             <p className="mt-4 text-muted-foreground text-base sm:text-lg max-w-md">

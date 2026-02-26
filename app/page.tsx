@@ -1,4 +1,6 @@
 import { PostList } from "@/components/blog/post-list";
+import { BlogHero } from "@/components/blog/blog-hero";
+import { Grid } from "@/components/ui/grid";
 import type { PostData } from "@/components/blog/post-card";
 
 const posts: PostData[] = [
@@ -46,8 +48,11 @@ const posts: PostData[] = [
 
 export default function Home() {
   return (
-    <main className="py-20 space-y-12">
-      <PostList posts={posts} />
+    <main className="py-20">
+      <Grid.System>
+        <BlogHero />
+        <PostList posts={posts} />
+      </Grid.System>
     </main>
   );
 }

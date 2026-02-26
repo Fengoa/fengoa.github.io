@@ -13,7 +13,6 @@ export function PostList({ posts }: { posts: PostData[] }) {
           key={post.slug}
           row={index + 1}
           column={1}
-
         >
           <PostCard post={post} index={index} />
         </Grid.Cell>

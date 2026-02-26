@@ -29,43 +29,11 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
           "grid grid-cols-1 md:grid-cols-2 md:gap-8 overflow-hidden p-6 sm:p-8 lg:p-10"
         )}
       >
-        {/* 文字区 */}
+        {/* 封面区 — 移动端在上，桌面端根据奇偶左右排列 */}
         <div
           className={cn(
-            "flex flex-col justify-between",
-            !isEven && "md:order-2"
-          )}
-        >
-          <div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 font-mono text-xs text-muted-foreground tracking-wide">
-              <span className="inline-flex items-center gap-1.5">
-                <Calendar className="size-3 -mt-px" />
-                {formatDate(post.date)}
-              </span>
-            </div>
-
-            <h2 className="text-2xl sm:text-3xl font-bold leading-tight tracking-tight text-foreground mb-3">
-              {post.title}
-            </h2>
-
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed line-clamp-3 group-hover:text-secondary-foreground transition-colors duration-200">
-              {post.summary}
-            </p>
-          </div>
-
-          <div className="mt-6">
-            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground group-hover:gap-2.5 transition-all duration-200">
-              阅读文章
-              <ArrowRight className="size-4" />
-            </span>
-          </div>
-        </div>
-
-        {/* 封面区 */}
-        <div
-          className={cn(
-            "relative flex items-center justify-center",
-            !isEven && "md:order-1"
+            "relative flex items-center justify-center mb-6 md:mb-0",
+            isEven ? "md:order-2 md:justify-end" : "md:order-1 md:justify-start"
           )}
         >
           <div className="aspect-square rounded-full overflow-hidden size-90 border">
@@ -78,6 +46,38 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
                 height={320}
               />
             )}
+          </div>
+        </div>
+
+        {/* 文字区 */}
+        <div
+          className={cn(
+            "flex flex-col justify-start md:justify-around",
+            isEven ? "md:order-1" : "md:order-2"
+          )}
+        >
+          <div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 font-mono text-xs text-muted-foreground tracking-wide">
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="size-3 -mt-px" />
+                {formatDate(post.date)}
+              </span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-bold leading-tight text-foreground mb-6">
+              {post.title}
+            </h2>
+
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed group-hover:text-secondary-foreground transition-colors duration-200">
+              {post.summary}
+            </p>
+          </div>
+
+          <div className="mt-6">
+            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground group-hover:gap-2.5 transition-all duration-200">
+              阅读文章
+              <ArrowRight className="size-4" />
+            </span>
           </div>
         </div>
       </article>

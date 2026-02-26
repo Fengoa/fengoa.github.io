@@ -31,7 +31,7 @@ export function ProductCard({ product }: { product: ProductItem }) {
         </div>
 
         {/* 名称 + 描述 */}
-        <h3 className="mt-4 text-lg font-bold text-foreground leading-snug tracking-tight">
+        <h3 className="mt-4 text-lg font-bold text-foreground leading-snug">
           {product.name}
         </h3>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">

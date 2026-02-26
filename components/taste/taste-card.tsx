@@ -72,7 +72,7 @@ export function TasteCard({ item }: { item: TasteItem }) {
 
       {/* 中下部：标题 + 描述 */}
       <div className="mt-6">
-        <h3 className="text-lg sm:text-xl font-bold leading-snug tracking-tight text-foreground mb-3">
+        <h3 className="text-lg sm:text-xl font-bold leading-snug text-foreground mb-3">
           {item.title}
         </h3>
         <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">

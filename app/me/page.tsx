@@ -25,7 +25,7 @@ export default function MePage() {
           colSpan={4}
           className="py-16 sm:py-24"
         >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
             卢向东
           </h1>
           <p className="mt-4 text-muted-foreground text-base sm:text-lg">
