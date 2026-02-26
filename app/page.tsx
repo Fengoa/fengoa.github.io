@@ -3,6 +3,14 @@ import type { PostData } from "@/components/blog/post-card";
 
 const posts: PostData[] = [
   {
+    slug: "craft-oriens",
+    title: "Crafting Oriens",
+    date: "2026-02-26",
+    author: "向东Oriens",
+    summary:
+      "记录这个博客的搭建过程——导航栏的模糊渐变、网格系统的参考线绘制、以及那个跟随鼠标的滑动背景。",
+  },
+  {
     slug: "hello-world",
     title: "Hello World: 我的第一篇数字花园日志",
     date: "2026-02-05",

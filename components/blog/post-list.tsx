@@ -1,8 +1,5 @@
-"use client";
-
 import { PostCard, type PostData } from "./post-card";
 import { Grid } from "@/components/ui/grid";
-import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 
 const COLUMNS = 1;
 
@@ -11,26 +8,16 @@ export function PostList({ posts }: { posts: PostData[] }) {
 
   return (
     <Grid rows={rows} columns={COLUMNS}>
-      <AnimatedBackground
-        transition={{
-          type: "spring",
-          bounce: 0.2,
-          duration: 0.6,
-        }}
-        enableHover
-        className="bg-black/2 dark:bg-white/4"
-      >
-        {posts.map((post, index) => (
-          <Grid.Cell
-            key={post.slug}
-            data-id={post.slug}
-            row={index + 1}
-            column={1}
-          >
-            <PostCard post={post} index={index} />
-          </Grid.Cell>
-        ))}
-      </AnimatedBackground>
+      {posts.map((post, index) => (
+        <Grid.Cell
+          key={post.slug}
+          row={index + 1}
+          column={1}
+
+        >
+          <PostCard post={post} index={index} />
+        </Grid.Cell>
+      ))}
     </Grid>
   );
 }

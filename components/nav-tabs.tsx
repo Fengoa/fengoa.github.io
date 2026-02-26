@@ -29,7 +29,7 @@ const tabs: { id: string; label: string; icon: ReactNode; href: string }[] = [
     id: "me",
     label: "我",
     icon: <Egg className="size-4" />,
-    href: "#",
+    href: "/me",
   },
 ];
 
@@ -48,16 +48,7 @@ export function NavTabs() {
 
   return (
     <div className="flex flex-row">
-      <AnimatedBackground
-        defaultValue={activeTab}
-        className="rounded-lg bg-black/5 dark:bg-white/10"
-        transition={{
-          type: "spring",
-          bounce: 0.2,
-          duration: 0.3,
-        }}
-        enableHover
-      >
+      <AnimatedBackground defaultValue={activeTab} enableHover>
         {tabs.map((tab) => {
           const isMe = tab.id === "me";
           const isMeActive = isMe && activeTab === "me";

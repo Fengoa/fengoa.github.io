@@ -2,8 +2,7 @@ import { type ReactNode, type CSSProperties, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
-/*  Grid.System — rendered once at the root of a page                  */
-/*  Sets --guide-width via CSS custom property inheritance             */
+/*  Grid.System — 页面根级容器，通过 CSS 变量继承传递 guideWidth        */
 /* ------------------------------------------------------------------ */
 
 interface GridSystemProps {
@@ -28,7 +27,7 @@ function GridSystem({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Grid                                                               */
+/*  Grid — 网格容器，自动生成参考线                                     */
 /* ------------------------------------------------------------------ */
 
 interface GridProps {
@@ -61,7 +60,7 @@ export function Grid({
         } as CSSProperties
       }
     >
-      {/* Guide layer */}
+      {/* 参考线层 — display:contents 让子元素直接参与 Grid 布局 */}
       <div className="contents">
         {Array.from({ length: rows * columns }, (_, index) => {
           const x = (index % columns) + 1;
@@ -69,7 +68,7 @@ export function Grid({
           return (
             <div
               key={index}
-              className="absolute inset-0 pointer-events-none"
+              className="absolute inset-0 z-[2] pointer-events-none"
               style={
                 {
                   gridColumnStart: x,
@@ -90,7 +89,7 @@ export function Grid({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Grid.Cell                                                          */
+/*  Grid.Cell — 内容单元格，指定行列位置                                */
 /* ------------------------------------------------------------------ */
 
 interface GridCellProps extends HTMLAttributes<HTMLDivElement> {
@@ -130,7 +129,7 @@ function GridCell({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Grid.Cross                                                         */
+/*  Grid.Cross — 网格交叉点的十字装饰                                   */
 /* ------------------------------------------------------------------ */
 
 interface GridCrossProps {
@@ -168,7 +167,7 @@ function GridCross({ row, column, className }: GridCrossProps) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Compound export                                                    */
+/*  复合导出                                                            */
 /* ------------------------------------------------------------------ */
 
 Grid.System = GridSystem;

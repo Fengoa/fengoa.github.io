@@ -1,0 +1,141 @@
+# 搭建这个网站
+
+---
+
+## 秩序
+
+网站需要一种秩序。不是装饰性的，是结构性的——所有内容都被同一套规则约束，页面才不会散掉。
+
+网格是这个秩序的载体。我希望网格线始终完整地存在，不因为某个格子空着就断掉。线条本身构成了页面的视觉基底，内容只是填入其中的东西。
+
+这带来一个问题：常见的做法是让每个子元素画自己的边框。格子都填满时没问题，但只要有空格子，那个位置没有元素，线就断了。
+
+```css
+.grid { border: 1px solid; border-right: none; border-bottom: none; }
+.grid > div { border: 1px solid; border-left: none; border-top: none; }
+```
+
+我需要的是：组件知道自己有多少行和列，自己把所有的线画好，不依赖内容。
+
+做法是在容器里额外放一层参考线元素，用 `display: contents` 让它们在布局上消失，但仍参与 Grid 定位：
+
+```tsx
+<div className="grid relative" style={{
+  gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+  gridTemplateRows: `repeat(${rows}, auto)`,
+  borderTop: '1px solid var(--border)',
+  borderLeft: '1px solid var(--border)',
+}}>
+  <div className="contents">
+    {Array.from({ length: rows * columns }, (_, i) => (
+      <div key={i} className="absolute inset-0 pointer-events-none" style={{
+        gridColumnStart: (i % columns) + 1,
+        gridRowStart: Math.floor(i / columns) + 1,
+        borderRight: '1px solid var(--border)',
+        borderBottom: '1px solid var(--border)',
+      }} />
+    ))}
+  </div>
+  {children}
+</div>
+```
+
+`contents` 让包裹层在布局上不存在，里面的参考线直接参与父级的 Grid 上下文。像一个透明的信封——信封不存在，里面的东西直接散在桌面上。
+
+这样无论放三个 Cell 还是一个都不放，每条线都在。
+
+```tsx
+<Grid rows={4} columns={4}>
+  <Grid.Cell row={1} column={1}>What</Grid.Cell>
+  <Grid.Cell row={2} column={3}>will</Grid.Cell>
+  <Grid.Cell row={4} column="auto">?</Grid.Cell>
+</Grid>
+```
+
+整个组件不依赖客户端 API，可以完全在服务端渲染。
+
+---
+
+## 消失
+
+导航栏固定在顶部，页面向上滚动时它不能硬生生地截断内容。我想要的效果是：导航区域从上到下，模糊逐渐减弱，最终消失。不是一条分界线，而是一个过渡。
+
+直觉上的做法是把导航栏高度撑大，让 `backdrop-blur` 配合渐变自然淡出。但多出来的区域会挡住下方内容的点击。加 `pointer-events: none` 的话，导航按钮自己也点不了了。
+
+这是一个层级的问题。模糊背景和可交互的导航内容不应该是同一层。
+
+拆成两层之后就清楚了：
+
+```tsx
+<nav className="fixed top-0 left-0 right-0 z-50 h-14">
+  <div className="
+    absolute inset-0 -bottom-4
+    backdrop-blur-md
+    bg-linear-to-b from-background to-transparent
+    pointer-events-none
+    mask-[linear-gradient(black_30%,rgba(0,0,0,0.8)_70%,transparent_100%)]
+  " />
+  <div className="relative h-full flex items-center">
+    <NavTabs />
+  </div>
+</nav>
+```
+
+背景层向下溢出一段，用 CSS `mask` 从实到虚地遮掉，`pointer-events: none` 只在这一层。导航内容在另一层，不受影响。
+
+`mask` 的渐变数值没有什么依据，反复调到看着自然就行了。很多时候"看着对"就是唯一的标准。
+
+---
+
+## 滑动
+
+导航栏的 Tab 之间有一个跟随鼠标的高亮色块。我想要的是"滑动"而不是"闪烁"——色块从一个 Tab 滑到另一个，而不是每个 Tab 各自亮灭。
+
+这意味着整个导航只能有一个背景色块。它不属于任何一个 Tab，只是恰好在某个 Tab 的位置。
+
+用 Framer Motion 的 `layoutId` 可以做到。多个位置渲染同一个 `layoutId` 的元素，Framer Motion 会认为是同一个东西在换位置，自动补间：
+
+```tsx
+function AnimatedBackground({ children, className, transition }) {
+  const [activeId, setActiveId] = useState(null);
+  const uniqueId = useId();
+
+  return Children.map(children, (child) => {
+    const id = child.props['data-id'];
+
+    return cloneElement(child, {
+      onMouseEnter: () => setActiveId(id),
+      onMouseLeave: () => setActiveId(null),
+    }, <>
+      <AnimatePresence>
+        {activeId === id && (
+          <motion.div
+            layoutId={`background-${uniqueId}`}
+            className={cn('absolute inset-0', className)}
+            transition={transition}
+          />
+        )}
+      </AnimatePresence>
+      <div className="z-10">{child.props.children}</div>
+    </>);
+  });
+}
+```
+
+这个组件不渲染自己的容器 DOM，直接返回 `Children.map` 的结果。所以被它包裹的子元素仍然是父级的直接子级——放在 Grid 里定位正常，放在 flex 里排列也正常。
+
+这一点很重要。如果组件自己多套了一层 DOM，Grid 的定位就会作用在这个多余的容器上而不是子元素上。一个看不见的东西不应该影响看得见的东西的位置。
+
+导航栏、产品列表、推荐列表用的都是同一个组件。给子元素加上 `data-id` 就行。
+
+```tsx
+<Grid rows={rows} columns={3}>
+  <AnimatedBackground enableHover className="bg-black/2 dark:bg-white/4">
+    {products.map((product) => (
+      <Grid.Cell key={product.id} data-id={product.id} row={...} column={...}>
+        <ProductCard product={product} />
+      </Grid.Cell>
+    ))}
+  </AnimatedBackground>
+</Grid>
+```

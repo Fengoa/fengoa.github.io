@@ -22,12 +22,10 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group block"
+      className="group block transition-colors duration-200 hover:bg-white dark:hover:bg-white/5"
     >
       <article
-        className={cn(
-          "grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden"
-        )}
+        className={cn("grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden")}
       >
         {/* 文字区 */}
         <div

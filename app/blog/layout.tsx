@@ -17,7 +17,7 @@ export default function BlogLayout({
       </nav>
 
       {/* 主阅读区域 */}
-      <main className="max-w-2xl mx-auto py-16 px-6 md:px-8 lg:py-24">
+      <main className="max-w-4xl mx-auto py-16 px-6 md:px-8 lg:py-24">
         {children}
       </main>
     </div>

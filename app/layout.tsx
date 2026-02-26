@@ -41,7 +41,7 @@ export default function RootLayout({
           {/* 顶部导航 */}
           <nav className="fixed top-0 left-0 right-0 z-50 h-14">
             <div className="absolute inset-0 -bottom-4 backdrop-blur-md bg-linear-to-b from-background to-transparent pointer-events-none mask-[linear-gradient(black_30%,rgba(0,0,0,0.8)_70%,transparent_100%)]" />
-            <div className="relative mx-auto px-4 md:px-16 max-w-320 h-full flex items-center">
+            <div className="relative mx-auto px-4 md:px-16 max-w-7xl h-full flex items-center justify-center">
               <NavTabs />
             </div>
           </nav>
