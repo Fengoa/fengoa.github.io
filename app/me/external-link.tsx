@@ -10,9 +10,16 @@ import {
 interface ExternalLinkProps {
   href: string;
   children: ReactNode;
+  icon?: ReactNode;
+  showArrow?: boolean;
 }
 
-export function ExternalLink({ href, children }: ExternalLinkProps) {
+export function ExternalLink({
+  href,
+  children,
+  icon,
+  showArrow = true,
+}: ExternalLinkProps) {
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const hoveredRef = useRef(false);
   const [isShimmering, setIsShimmering] = useState(false);
@@ -71,6 +78,7 @@ export function ExternalLink({ href, children }: ExternalLinkProps) {
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >
+      {icon}
       {isShimmering ? (
         <TextShimmer
           as="span"
@@ -81,12 +89,14 @@ export function ExternalLink({ href, children }: ExternalLinkProps) {
       ) : (
         <span className="text-sm">{children}</span>
       )}
-      <ExternalLinkIcon
-        ref={iconRef}
-        size={14}
-        isAnimated={false}
-        className="opacity-70 group-hover:opacity-100"
-      />
+      {showArrow && (
+        <ExternalLinkIcon
+          ref={iconRef}
+          size={14}
+          isAnimated={false}
+          className="opacity-70 group-hover:opacity-100"
+        />
+      )}
     </a>
   );
 }

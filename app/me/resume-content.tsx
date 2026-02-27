@@ -7,13 +7,20 @@ import { ContactRoundIcon } from "@/components/ui/contact-round-icon";
 import { SwordsIcon } from "@/components/ui/swords-icon";
 import { GamepadIcon } from "@/components/ui/gamepad-icon";
 import { GithubIcon } from "@/components/ui/github-icon";
-import { MailIcon } from "@/components/ui/mail-icon";
-import { GlobeIcon } from "@/components/ui/globe-icon";
 import { HeartIcon } from "@/components/ui/heart-icon";
 import { ExternalLink } from "./external-link";
 import { BlocksIcon } from "@/components/ui/blocks-icon";
 import { QrCodeIcon } from "@/components/ui/qr-code-icon";
 import { InfoItem } from "./info-item";
+import { MousePointerClickIcon } from "@/components/ui/mouse-pointer-click-icon";
+import { TelescopeIcon } from "@/components/ui/telescope-icon";
+import { AudioLinesIcon } from "@/components/ui/audio-lines-icon";
+import { FigmaIcon } from "@/components/ui/figma-icon";
+import { ScanLineIcon } from "@/components/ui/scan-line-icon";
+import { TrendingUpDownIcon } from "@/components/ui/trending-up-down-icon";
+import { MessageCircleIcon } from "@/components/ui/message-circle-icon";
+import { SprayCanIcon } from "@/components/ui/spray-can-icon";
+import { AvatarIcon } from "@/components/ui/avatar-icon";
 
 interface ResumeContentProps {
   resumeRef: React.RefObject<HTMLDivElement | null>;
@@ -56,7 +63,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     )}
                     label="卢向东"
                   />
-                  <div className="mt-4 space-y-1.5">
+                  <div className="flex flex-col space-y-1.5">
                     <InfoItem>
                       <span className="size-1 rounded-full bg-muted-foreground/40" />
                       设计工程师
@@ -178,6 +185,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-4">
                       <InfoItem>
+                        <MousePointerClickIcon size={16} />
                         <ExternalLink href="https://e.qq.com/technology">
                           腾讯广告投放设计团队
                         </ExternalLink>
@@ -186,6 +194,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     </div>
                     <div className="flex items-start justify-between gap-4">
                       <InfoItem>
+                        <TelescopeIcon size={16} />
                         中山大学 ·
                         <ExternalLink href="https://ce.sysu.edu.cn/zh-hans">
                           应用化学
@@ -215,11 +224,14 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     {[
                       "React",
                       "TypeScript",
-                      "Vue 3",
                       "Next.js",
-                      "Node.js",
-                      "CSS",
-                      "小程序",
+                      "Tailwind CSS",
+                      "微信小程序",
+                      "CocosCreator",
+                      "Figma design",
+                      "PHP Laravel",
+                      "Vibe coding",
+                      "产品设计",
                     ].map((skill) => (
                       <span
                         key={skill}
@@ -229,15 +241,25 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                       </span>
                     ))}
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {["动效设计", "创意编程"].map((skill) => (
-                      <span
-                        key={skill}
-                        className="inline-block px-2.5 py-1 text-xs rounded-md bg-muted text-muted-foreground"
+                  <div className="border-t border-dashed my-6" />
+                  <div className="flex items-center flex-wrap">
+                    <InfoItem>
+                      <ExternalLink
+                        href="https://github.com/oriensx"
+                        icon={<GithubIcon size={14} />}
                       >
-                        {skill}
-                      </span>
-                    ))}
+                        GitHub
+                      </ExternalLink>
+                    </InfoItem>
+                    <div className="h-6 -my-1 mx-4 w-px rounded-full bg-linear-to-b from-transparent from-2% via-border to-transparent to-98%"></div>
+                    <InfoItem>
+                      <ExternalLink
+                        href="/taste"
+                        icon={<HeartIcon size={14} />}
+                      >
+                        收藏夹
+                      </ExternalLink>
+                    </InfoItem>
                   </div>
                 </Grid.Cell>
 
@@ -256,11 +278,26 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   />
                   <div className="space-y-3">
                     <InfoItem>
+                      <AvatarIcon src="/favicon.ico" size={16} />
+                      <ExternalLink href="https://oriensx.github.io">
+                        个人网站 oriensx.github.io
+                      </ExternalLink>
+                    </InfoItem>
+                    <InfoItem>
+                      <TrendingUpDownIcon size={16} />
+                      交易分析产品
+                      <ExternalLink href="https://tradexcellet.com">
+                        Tradexcellet.com
+                      </ExternalLink>
+                    </InfoItem>
+                    <InfoItem>
+                      <MessageCircleIcon size={16} />
                       <ExternalLink href="https://lab.logeast.cc/chat">
                         微信聊天生成视频工具
                       </ExternalLink>
                     </InfoItem>
                     <InfoItem>
+                      <AudioLinesIcon size={16} />
                       在线音频
                       <ExternalLink href="https://lab.logeast.cc/en/audio-merge">
                         合并
@@ -271,17 +308,20 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                       工具
                     </InfoItem>
                     <InfoItem>
-                      交易分析产品
-                      <ExternalLink href="https://tradexcellet.com">
-                        Tradexcellet.com
-                      </ExternalLink>
-                    </InfoItem>
-                    <InfoItem>
+                      <SprayCanIcon size={16} />
                       <ExternalLink href="https://orienslu.github.io/magic-lottery/zh/">
                         用于抽奖的库 Magic Lottery
                       </ExternalLink>
                     </InfoItem>
                     <InfoItem>
+                      <FigmaIcon size={16} />
+                      <ExternalLink href="https://www.figma.com/community/widget/1190104377571373751/uml-table-diagram">
+                        Figma UML Table Diagram
+                      </ExternalLink>
+                    </InfoItem>
+
+                    <InfoItem>
+                      <ScanLineIcon size={16} />
                       和公众人物
                       <ExternalLink href="https://github.com/WeDaHub/incubator-scan-stars">
                         比较相似度
@@ -290,47 +330,6 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     </InfoItem>
                   </div>
                 </Grid.Cell>
-              </Grid>
-
-              {/* 第 4 行：联系方式，跨满 */}
-              <Grid
-                rows={1}
-                columns={2}
-                smColumns={1}
-                mergedAreas={[{ row: 1, column: 1, colSpan: 2 }]}
-              >
-                <Grid.Cell
-                  row={1}
-                  column={1}
-                  colSpan={2}
-                  smColSpan={1}
-                  className="p-6 md:p-8"
-                >
-                  <div className="flex flex-wrap gap-4 md:gap-6">
-                    <InfoItem
-                      icon={<MailIcon size={14} />}
-                      href="mailto:oriensx@outlook.com"
-                    >
-                      oriensx@outlook.com
-                    </InfoItem>
-                    <InfoItem
-                      icon={<GithubIcon size={14} />}
-                      href="https://github.com/orienslu"
-                    >
-                      oriensx
-                    </InfoItem>
-                    <InfoItem
-                      icon={<GlobeIcon size={14} />}
-                      href="https://moodl.ink/me"
-                    >
-                      moodl.ink/me
-                    </InfoItem>
-                    <InfoItem icon={<HeartIcon size={14} />} href="/taste">
-                      收藏夹
-                    </InfoItem>
-                  </div>
-                </Grid.Cell>
-                <Grid.Cross row={1} column={2} anchor="bottom-right" />
               </Grid>
             </Grid.System>
           </div>
