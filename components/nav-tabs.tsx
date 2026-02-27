@@ -71,9 +71,7 @@ export function NavTabs() {
               />
             )}
             {seq.isShimmering ? (
-              <TextShimmer as="span" duration={0.8}>
-                {tab.label}
-              </TextShimmer>
+              <TextShimmer as="span">{tab.label}</TextShimmer>
             ) : (
               <span>{tab.label}</span>
             )}

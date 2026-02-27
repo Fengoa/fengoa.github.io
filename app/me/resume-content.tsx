@@ -10,6 +10,7 @@ import { GithubIcon } from "@/components/ui/github-icon";
 import { MailIcon } from "@/components/ui/mail-icon";
 import { GlobeIcon } from "@/components/ui/globe-icon";
 import { HeartIcon } from "@/components/ui/heart-icon";
+import { ExternalLink } from "./external-link";
 
 interface ResumeContentProps {
   resumeRef: React.RefObject<HTMLDivElement | null>;
@@ -27,7 +28,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
           <div
             ref={resumeRef}
             id="resume"
-            className="w-full max-w-3xl md:aspect-210/297 p-4 md:p-8 hover:bg-white dark:hover:bg-white/5 transition-all duration-300"
+            className="w-full max-w-200 md:aspect-210/297 p-4 md:p-8 hover:bg-white dark:hover:bg-white/5 transition-all duration-300"
           >
             <Grid.System>
               {/* 第 1 行：移动端 1 列（照片在前），桌面端 2 列（照片跨 2 行） */}
@@ -55,7 +56,10 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2">
                       <span className="size-1 rounded-full bg-muted-foreground/40" />
-                      设计工程师 @腾讯
+                      设计工程师 @
+                      <ExternalLink href="https://www.tencent.com/">
+                        腾讯
+                      </ExternalLink>
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="size-1 rounded-full bg-muted-foreground/40" />
@@ -63,7 +67,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="size-1 rounded-full bg-muted-foreground/40" />
-                      1996.11.11，中国深圳
+                      1996-11-11；中国深圳
                     </li>
                   </ul>
                 </Grid.Cell>
@@ -102,8 +106,11 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
                     我保持着对这些事的热情：
                     <br />
-                    产品体验设计，工具，AI
-                    应用探索，游戏制作，微信小程序和阅读。
+                    产品体验设计，广告平台，AI 应用探索，微信小程序，游戏制作和
+                    <ExternalLink href="https://fanqienovel.com/page/7553065438549117976">
+                      阅读
+                    </ExternalLink>
+                    。
                   </p>
                   <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
                     我在做出伟大产品的路上持续耕耘。
@@ -127,32 +134,14 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     label="作品"
                   />
                   <div className="space-y-3">
-                    <a
-                      href="https://moodl.ink"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block group"
-                    >
-                      <p className="text-sm font-medium text-foreground group-hover:underline">
-                        Moodl.ink
+                    <ExternalLink href="https://ad.qq.com/">
+                      腾讯广告投放平台
+                    </ExternalLink>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        腾讯广告助手小程序
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        多媒体工具集合平台，让每一份情绪都能完美表达
-                      </p>
-                    </a>
-                    <a
-                      href="https://tradexcellet.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block group"
-                    >
-                      <p className="text-sm font-medium text-foreground group-hover:underline">
-                        Tradexcellet.com
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        交易分析产品，正在为上千用户提供服务
-                      </p>
-                    </a>
+                    </div>
                   </div>
                 </Grid.Cell>
 
@@ -262,6 +251,32 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     label="玩具"
                   />
                   <div className="space-y-3">
+                    <a
+                      href="https://moodl.ink"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block group"
+                    >
+                      <p className="text-sm font-medium text-foreground group-hover:underline">
+                        Moodl.ink
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        多媒体工具集合平台，让每一份情绪都能完美表达
+                      </p>
+                    </a>
+                    <a
+                      href="https://tradexcellet.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block group"
+                    >
+                      <p className="text-sm font-medium text-foreground group-hover:underline">
+                        Tradexcellet.com
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        交易分析产品，正在为上千用户提供服务
+                      </p>
+                    </a>
                     <a
                       href="https://orienslu.github.io/magic-lottery/zh/"
                       target="_blank"

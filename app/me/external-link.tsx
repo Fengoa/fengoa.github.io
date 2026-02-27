@@ -1,0 +1,87 @@
+"use client";
+
+import { useRef, useState, useCallback, type ReactNode } from "react";
+import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
+import {
+  ExternalLinkIcon,
+  type ExternalLinkIconHandle,
+} from "@/components/ui/external-link-icon";
+
+interface ExternalLinkProps {
+  href: string;
+  children: ReactNode;
+}
+
+export function ExternalLink({ href, children }: ExternalLinkProps) {
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const hoveredRef = useRef(false);
+  const [isShimmering, setIsShimmering] = useState(false);
+  const iconRef = useRef<ExternalLinkIconHandle>(null);
+
+  const clearTimers = useCallback(() => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+  }, []);
+
+  const addTimer = useCallback((fn: () => void, delay: number) => {
+    timersRef.current.push(setTimeout(fn, delay));
+  }, []);
+
+  const playSequence = useCallback(() => {
+    setIsShimmering(true);
+
+    addTimer(() => {
+      setIsShimmering(false);
+
+      addTimer(() => {
+        if (!hoveredRef.current) return;
+        iconRef.current?.startAnimation();
+
+        addTimer(() => {
+          if (!hoveredRef.current) return;
+          playSequence();
+        }, 2000);
+      }, 300);
+    }, 800);
+  }, [addTimer]);
+
+  const handleEnter = useCallback(() => {
+    clearTimers();
+    hoveredRef.current = true;
+
+    addTimer(() => {
+      if (!hoveredRef.current) return;
+      playSequence();
+    }, 600);
+  }, [clearTimers, addTimer, playSequence]);
+
+  const handleLeave = useCallback(() => {
+    clearTimers();
+    hoveredRef.current = false;
+    iconRef.current?.stopAnimation();
+    setIsShimmering(false);
+  }, [clearTimers]);
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center text-muted-foreground hover:text-blue-600 transition-colors"
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+    >
+      {isShimmering ? (
+        <TextShimmer
+          as="span"
+          className="text-sm [--base-color:var(--color-blue-600)]"
+        >
+          {children as string}
+        </TextShimmer>
+      ) : (
+        <span className="text-sm">{children}</span>
+      )}
+      <ExternalLinkIcon ref={iconRef} size={12} isAnimated={false} />
+    </a>
+  );
+}

@@ -23,11 +23,11 @@ export function SectionLabel({ icon, label }: SectionLabelProps) {
       onMouseEnter={seq.handleEnter}
       onMouseLeave={seq.handleLeave}
     >
-      <div className="size-8 flex items-center justify-center border rounded-md bg-white dark:bg-white/10">
+      <div className="size-8 flex items-center justify-center border rounded-md bg-white dark:bg-white/10 shadow-xs">
         {icon(seq.iconRef)}
       </div>
       {seq.isShimmering ? (
-        <TextShimmer as="span" className="font-semibold ml-1" duration={0.8}>
+        <TextShimmer as="span" className="font-semibold ml-1">
           {label}
         </TextShimmer>
       ) : (

@@ -93,7 +93,7 @@ export function DownloadButton({ targetRef }: DownloadButtonProps) {
         />
       )}
       {download.isShimmering ? (
-        <TextShimmer as="span" duration={0.8}>
+        <TextShimmer as="span">
           下载简历
         </TextShimmer>
       ) : (
