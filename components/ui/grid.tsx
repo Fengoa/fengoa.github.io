@@ -11,14 +11,13 @@ interface GridSystemProps {
   className?: string;
 }
 
-function GridSystem({
-  guideWidth = 1,
-  children,
-  className,
-}: GridSystemProps) {
+function GridSystem({ guideWidth = 1, children, className }: GridSystemProps) {
   return (
     <div
-      className={cn("flex flex-col [&>.grid+.grid]:mt-[calc(var(--guide-width)*-1)]", className)}
+      className={cn(
+        "flex flex-col [&>.grid+.grid]:mt-[calc(var(--guide-width)*-1)]",
+        className
+      )}
       style={{ "--guide-width": `${guideWidth}px` } as CSSProperties}
     >
       {children}
@@ -149,8 +148,12 @@ export function Grid({
                 gridColumnEnd: "span 1",
                 gridRowStart: y,
                 gridRowEnd: "span 1",
-                borderRight: hideRight ? "none" : `var(--gw, 1px) solid var(--border)`,
-                borderBottom: hideBottom ? "none" : `var(--gw, 1px) solid var(--border)`,
+                borderRight: hideRight
+                  ? "none"
+                  : `var(--gw, 1px) solid var(--border)`,
+                borderBottom: hideBottom
+                  ? "none"
+                  : `var(--gw, 1px) solid var(--border)`,
               } as CSSProperties
             }
           />
@@ -170,8 +173,12 @@ export function Grid({
                   gridColumnEnd: "span 1",
                   gridRowStart: y,
                   gridRowEnd: "span 1",
-                  borderRight: hideRight ? "none" : `var(--gw, 1px) solid var(--border)`,
-                  borderBottom: hideBottom ? "none" : `var(--gw, 1px) solid var(--border)`,
+                  borderRight: hideRight
+                    ? "none"
+                    : `var(--gw, 1px) solid var(--border)`,
+                  borderBottom: hideBottom
+                    ? "none"
+                    : `var(--gw, 1px) solid var(--border)`,
                 } as CSSProperties
               }
             />
@@ -190,7 +197,12 @@ export function Grid({
           }
         `}</style>
       )}
-      {hasResponsive && <div data-responsive={`${smColumns}-${smRows ?? rows}`} className="hidden" />}
+      {hasResponsive && (
+        <div
+          data-responsive={`${smColumns}-${smRows ?? rows}`}
+          className="hidden"
+        />
+      )}
 
       {children}
     </div>
@@ -232,7 +244,8 @@ function GridCell({
   style,
   ...rest
 }: GridCellProps) {
-  const hasResponsive = smRow != null || smColumn != null || smRowSpan != null || smColSpan != null;
+  const hasResponsive =
+    smRow != null || smColumn != null || smRowSpan != null || smColSpan != null;
 
   const mRow = smRow ?? row;
   const mCol = smColumn ?? column;
@@ -240,7 +253,9 @@ function GridCell({
   const mColSpan = smColSpan ?? colSpan;
 
   // 如果有响应式，用 CSS 变量 + 媒体查询
-  const cellId = hasResponsive ? `cell-${mRow}-${mCol}-${row}-${column}` : undefined;
+  const cellId = hasResponsive
+    ? `cell-${mRow}-${mCol}-${row}-${column}`
+    : undefined;
 
   return (
     <>
@@ -248,8 +263,12 @@ function GridCell({
         <style>{`
           @media (max-width: 767px) {
             [data-cell-id="${cellId}"] {
-              grid-row: ${mRow === "auto" ? "auto" : `${mRow} / span ${mRowSpan}`} !important;
-              grid-column: ${mCol === "auto" ? "auto" : `${mCol} / span ${mColSpan}`} !important;
+              grid-row: ${
+                mRow === "auto" ? "auto" : `${mRow} / span ${mRowSpan}`
+              } !important;
+              grid-column: ${
+                mCol === "auto" ? "auto" : `${mCol} / span ${mColSpan}`
+              } !important;
             }
           }
         `}</style>
@@ -258,8 +277,7 @@ function GridCell({
         data-cell-id={cellId}
         className={cn("relative z-1 min-w-0", className)}
         style={{
-          gridRow:
-            row === "auto" ? "auto" : `${row} / span ${rowSpan}`,
+          gridRow: row === "auto" ? "auto" : `${row} / span ${rowSpan}`,
           gridColumn:
             column === "auto" ? "auto" : `${column} / span ${colSpan}`,
           ...style,
@@ -285,26 +303,46 @@ interface GridCrossProps {
   className?: string;
 }
 
-const anchorStyles: Record<CrossAnchor, { position: CSSProperties; translate: string }> = {
+const anchorStyles: Record<
+  CrossAnchor,
+  { position: CSSProperties; translate: string }
+> = {
   "top-left": {
-    position: { top: "calc(var(--gw, 1px) * -0.5)", left: "calc(var(--gw, 1px) * -0.5)" },
+    position: {
+      top: "calc(var(--gw, 1px) * -0.5)",
+      left: "calc(var(--gw, 1px) * -0.5)",
+    },
     translate: "-translate-x-1/2 -translate-y-1/2",
   },
   "top-right": {
-    position: { top: "calc(var(--gw, 1px) * -0.5)", right: "calc(var(--gw, 1px) * 0.5)" },
+    position: {
+      top: "calc(var(--gw, 1px) * -0.5)",
+      right: "calc(var(--gw, 1px) * 0.5)",
+    },
     translate: "translate-x-1/2 -translate-y-1/2",
   },
   "bottom-left": {
-    position: { bottom: "calc(var(--gw, 1px) * 0.5)", left: "calc(var(--gw, 1px) * -0.5)" },
+    position: {
+      bottom: "calc(var(--gw, 1px) * 0.5)",
+      left: "calc(var(--gw, 1px) * -0.5)",
+    },
     translate: "-translate-x-1/2 translate-y-1/2",
   },
   "bottom-right": {
-    position: { bottom: "calc(var(--gw, 1px) * 0.5)", right: "calc(var(--gw, 1px) * 0.5)" },
+    position: {
+      bottom: "calc(var(--gw, 1px) * 0.5)",
+      right: "calc(var(--gw, 1px) * 0.5)",
+    },
     translate: "translate-x-1/2 translate-y-1/2",
   },
 };
 
-function GridCross({ row, column, anchor = "top-left", className }: GridCrossProps) {
+function GridCross({
+  row,
+  column,
+  anchor = "top-left",
+  className,
+}: GridCrossProps) {
   const { position, translate } = anchorStyles[anchor];
 
   return (
@@ -316,14 +354,14 @@ function GridCross({ row, column, anchor = "top-left", className }: GridCrossPro
       style={{ gridRow: row, gridColumn: column } as CSSProperties}
     >
       <svg
-        width="17"
-        height="17"
-        viewBox="0 0 17 17"
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
         fill="none"
         className={cn("absolute", translate)}
         style={position}
       >
-        <path d="M8.5 0V17M0 8.5H17" stroke="currentColor" strokeWidth="1" />
+        <path d="M10 0V20M0 10H20" stroke="currentColor" strokeWidth="0.6" />
       </svg>
     </div>
   );
