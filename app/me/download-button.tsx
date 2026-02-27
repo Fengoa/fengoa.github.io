@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Loader2 } from "lucide-react";
+import {
+  DownloadIcon,
+  type DownloadHandle,
+} from "@/components/ui/download-icon";
+import {
+  LoaderCircleIcon,
+} from "@/components/ui/loader-circle-icon";
+import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
+import { useHoverSequence } from "@/hooks/use-hover-sequence";
 
 interface DownloadButtonProps {
   targetRef: React.RefObject<HTMLDivElement | null>;
@@ -9,6 +17,10 @@ interface DownloadButtonProps {
 
 export function DownloadButton({ targetRef }: DownloadButtonProps) {
   const [downloading, setDownloading] = useState(false);
+
+  const download = useHoverSequence({
+    initialDelay: 2000,
+  });
 
   const handleDownload = async () => {
     const el = targetRef.current;
@@ -43,14 +55,28 @@ export function DownloadButton({ targetRef }: DownloadButtonProps) {
     <button
       onClick={handleDownload}
       disabled={downloading}
+      onMouseEnter={download.handleEnter}
+      onMouseLeave={download.handleLeave}
       className="inline-flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white dark:hover:bg-white/5 border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {downloading ? (
-        <Loader2 className="size-3.5 animate-spin" />
+        <LoaderCircleIcon size={14} isAnimated duration={0.8} />
       ) : (
-        <Download className="size-3.5" />
+        <DownloadIcon
+          ref={download.iconRef as React.Ref<DownloadHandle>}
+          size={14}
+          isAnimated={false}
+        />
       )}
-      下载简历
+      {downloading ? (
+        "生成中…"
+      ) : download.isShimmering ? (
+        <TextShimmer as="span" duration={0.8}>
+          下载简历
+        </TextShimmer>
+      ) : (
+        <span>下载简历</span>
+      )}
     </button>
   );
 }

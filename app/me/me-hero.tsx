@@ -32,14 +32,16 @@ export function MeHero({ resumeRef }: MeHeroProps) {
         <Grid.Cross row={2} column={12} />
         <Grid.Cell row={1} column={1} />
         <Grid.Cell row={1} column={2} colSpan={10}>
-          <div className="flex items-center flex-col justify-center p-12">
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+          <div className="flex flex-col items-center justify-center py-8">
+            <h1 className="text-4xl md:text-5xl font-bold leading-tight text-foreground text-center">
               Oriensx.
             </h1>
-            <p className="text-base text-muted-foreground mt-2">
+            <p className="text-base text-muted-foreground text-center max-w-md mt-4">
               我在做出伟大产品的路上持续耕耘。
             </p>
-            <DownloadButton targetRef={resumeRef} />
+            <div className="mt-4 flex items-center justify-center">
+              <DownloadButton targetRef={resumeRef} />
+            </div>
           </div>
         </Grid.Cell>
         <Grid.Cell row={1} column={12} />
