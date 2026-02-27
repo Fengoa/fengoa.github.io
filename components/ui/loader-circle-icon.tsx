@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import type { HTMLMotionProps } from "motion/react";
 import { motion, useAnimation, useReducedMotion } from "motion/react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 
 export interface LoaderCircleIconHandle {
  startAnimation: () => void;
@@ -44,6 +44,12 @@ const LoaderCircleIcon = forwardRef<
     stopAnimation: () => controls.start("normal"),
    };
   });
+
+  useEffect(() => {
+   if (isAnimated && !reduced && !isControlled.current) {
+    controls.start("animate");
+   }
+  }, [isAnimated, reduced, controls]);
 
   const handleEnter = useCallback(
    (e?: React.MouseEvent<HTMLDivElement>) => {

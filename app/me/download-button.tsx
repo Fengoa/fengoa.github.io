@@ -5,9 +5,7 @@ import {
   DownloadIcon,
   type DownloadHandle,
 } from "@/components/ui/download-icon";
-import {
-  LoaderCircleIcon,
-} from "@/components/ui/loader-circle-icon";
+import { LoaderCircleIcon } from "@/components/ui/loader-circle-icon";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import { useHoverSequence } from "@/hooks/use-hover-sequence";
 
@@ -27,6 +25,7 @@ export function DownloadButton({ targetRef }: DownloadButtonProps) {
     if (!el || downloading) return;
 
     setDownloading(true);
+    const minDelay = new Promise((r) => setTimeout(r, 1000));
     try {
       const html2canvas = (await import("html2canvas-pro")).default;
       const { jsPDF } = await import("jspdf");
@@ -65,7 +64,10 @@ export function DownloadButton({ targetRef }: DownloadButtonProps) {
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save("卢向东-简历.pdf");
+      pdf.save(
+        `卢向东-设计工程师简历-${new Date().toISOString().split("T")[0]}.pdf`
+      );
+      await minDelay;
     } catch (e) {
       console.error("PDF 生成失败", e);
     } finally {
