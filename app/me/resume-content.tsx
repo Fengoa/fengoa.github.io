@@ -56,9 +56,9 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2">
                       <span className="size-1 rounded-full bg-muted-foreground/40" />
-                      设计工程师 @
+                      设计工程师
                       <ExternalLink href="https://www.tencent.com/">
-                        腾讯
+                        @腾讯
                       </ExternalLink>
                     </li>
                     <li className="flex items-center gap-2">
@@ -97,13 +97,13 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   column={1}
                   smRow={3}
                   smColumn={1}
-                  className="p-6 md:p-8"
+                  className="p-6 md:p-8 space-y-3"
                 >
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     我在广告投放设计团队担任设计工程师（UX 工程师），已超过 6
                     年。
                   </p>
-                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     我保持着对这些事的热情：
                     <br />
                     产品体验设计，广告平台，AI 应用探索，微信小程序，游戏制作和
@@ -112,7 +112,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     </ExternalLink>
                     。
                   </p>
-                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     我在做出伟大产品的路上持续耕耘。
                   </p>
                 </Grid.Cell>
@@ -134,14 +134,18 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     label="作品"
                   />
                   <div className="space-y-3">
-                    <ExternalLink href="https://ad.qq.com/">
-                      腾讯广告投放平台
-                    </ExternalLink>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        腾讯广告助手小程序
-                      </p>
-                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      广告
+                      <ExternalLink href="https://ad.qq.com/">
+                        投放平台/工作台
+                      </ExternalLink>
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      腾讯广告助手/客户工作台
+                      <ExternalLink href="https://ad.qq.com/">
+                        小程序
+                      </ExternalLink>
+                    </p>
                   </div>
                 </Grid.Cell>
 

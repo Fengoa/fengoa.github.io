@@ -67,7 +67,7 @@ export function ExternalLink({ href, children }: ExternalLinkProps) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center text-muted-foreground hover:text-blue-600 transition-colors"
+      className="inline-flex items-center text-muted-foreground gap-0.5 hover:text-blue-600 transition-colors"
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >
@@ -81,7 +81,12 @@ export function ExternalLink({ href, children }: ExternalLinkProps) {
       ) : (
         <span className="text-sm">{children}</span>
       )}
-      <ExternalLinkIcon ref={iconRef} size={12} isAnimated={false} />
+      <ExternalLinkIcon
+        ref={iconRef}
+        size={14}
+        isAnimated={false}
+        className="opacity-70 group-hover:opacity-100"
+      />
     </a>
   );
 }
