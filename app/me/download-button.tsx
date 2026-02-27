@@ -50,7 +50,7 @@ export function DownloadButton({ targetRef }: DownloadButtonProps) {
       ) : (
         <Download className="size-3.5" />
       )}
-      {downloading ? "生成中…" : "下载简历"}
+      下载简历
     </button>
   );
 }
