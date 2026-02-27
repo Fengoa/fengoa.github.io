@@ -217,14 +217,14 @@ function GridCross({ row, column, anchor = "top-left", className }: GridCrossPro
       style={{ gridRow: row, gridColumn: column } as CSSProperties}
     >
       <svg
-        width="11"
-        height="11"
-        viewBox="0 0 11 11"
+        width="17"
+        height="17"
+        viewBox="0 0 17 17"
         fill="none"
         className={cn("absolute", translate)}
         style={position}
       >
-        <path d="M5.5 0V11M0 5.5H11" stroke="currentColor" strokeWidth="1" />
+        <path d="M8.5 0V17M0 8.5H17" stroke="currentColor" strokeWidth="1" />
       </svg>
     </div>
   );
