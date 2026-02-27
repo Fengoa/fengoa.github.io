@@ -27,11 +27,11 @@ export function SectionLabel({ icon, label }: SectionLabelProps) {
         {icon(seq.iconRef)}
       </div>
       {seq.isShimmering ? (
-        <TextShimmer as="span" className="font-semibold ml-1">
+        <TextShimmer as="span" className="font-semibold ml-0.5">
           {label}
         </TextShimmer>
       ) : (
-        <span className="font-semibold ml-1">{label}</span>
+        <span className="font-semibold ml-0.5">{label}</span>
       )}
     </div>
   );

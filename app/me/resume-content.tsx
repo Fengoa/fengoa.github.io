@@ -11,6 +11,9 @@ import { MailIcon } from "@/components/ui/mail-icon";
 import { GlobeIcon } from "@/components/ui/globe-icon";
 import { HeartIcon } from "@/components/ui/heart-icon";
 import { ExternalLink } from "./external-link";
+import { BlocksIcon } from "@/components/ui/blocks-icon";
+import { QrCodeIcon } from "@/components/ui/qr-code-icon";
+import { InfoItem } from "./info-item";
 
 interface ResumeContentProps {
   resumeRef: React.RefObject<HTMLDivElement | null>;
@@ -53,23 +56,23 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     )}
                     label="卢向东"
                   />
-                  <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
-                    <li className="flex items-center gap-2">
+                  <div className="mt-4 space-y-1.5">
+                    <InfoItem>
                       <span className="size-1 rounded-full bg-muted-foreground/40" />
                       设计工程师
                       <ExternalLink href="https://www.tencent.com/">
                         @腾讯
                       </ExternalLink>
-                    </li>
-                    <li className="flex items-center gap-2">
+                    </InfoItem>
+                    <InfoItem>
                       <span className="size-1 rounded-full bg-muted-foreground/40" />
                       oriensx@outlook.com
-                    </li>
-                    <li className="flex items-center gap-2">
+                    </InfoItem>
+                    <InfoItem>
                       <span className="size-1 rounded-full bg-muted-foreground/40" />
                       1996-11-11；中国深圳
-                    </li>
-                  </ul>
+                    </InfoItem>
+                  </div>
                 </Grid.Cell>
 
                 {/* 照片：桌面 r1c2 跨 2 行，移动 r1c1 */}
@@ -134,18 +137,24 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     label="作品"
                   />
                   <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      广告
-                      <ExternalLink href="https://ad.qq.com/">
-                        投放平台/工作台
-                      </ExternalLink>
-                    </p>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      腾讯广告助手/客户工作台
-                      <ExternalLink href="https://ad.qq.com/">
-                        小程序
-                      </ExternalLink>
-                    </p>
+                    <InfoItem>
+                      <BlocksIcon size={16} />
+                      <span>
+                        广告
+                        <ExternalLink href="https://ad.qq.com/">
+                          投放平台/工作台
+                        </ExternalLink>
+                      </span>
+                    </InfoItem>
+                    <InfoItem>
+                      <QrCodeIcon size={16} />
+                      <span>
+                        腾讯广告助手/客户工作台
+                        <ExternalLink href="https://ad.qq.com/">
+                          小程序
+                        </ExternalLink>
+                      </span>
+                    </InfoItem>
                   </div>
                 </Grid.Cell>
 
@@ -166,32 +175,23 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     )}
                     label="经历"
                   />
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          腾讯 · 广告投放设计团队
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          设计工程师
-                        </p>
-                      </div>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        2019 - 至今
-                      </span>
+                      <InfoItem>
+                        <ExternalLink href="https://e.qq.com/technology">
+                          腾讯广告投放设计团队
+                        </ExternalLink>
+                      </InfoItem>
+                      <InfoItem>2019 - 至今</InfoItem>
                     </div>
                     <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          中山大学
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          本科
-                        </p>
-                      </div>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        2015 - 2019
-                      </span>
+                      <InfoItem>
+                        中山大学 ·
+                        <ExternalLink href="https://ce.sysu.edu.cn/zh-hans">
+                          应用化学
+                        </ExternalLink>
+                      </InfoItem>
+                      <InfoItem>2015 - 2019</InfoItem>
                     </div>
                   </div>
                 </Grid.Cell>
@@ -255,71 +255,39 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     label="玩具"
                   />
                   <div className="space-y-3">
-                    <a
-                      href="https://moodl.ink"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block group"
-                    >
-                      <p className="text-sm font-medium text-foreground group-hover:underline">
-                        Moodl.ink
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        多媒体工具集合平台，让每一份情绪都能完美表达
-                      </p>
-                    </a>
-                    <a
-                      href="https://tradexcellet.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block group"
-                    >
-                      <p className="text-sm font-medium text-foreground group-hover:underline">
+                    <InfoItem>
+                      <ExternalLink href="https://lab.logeast.cc/chat">
+                        微信聊天生成视频工具
+                      </ExternalLink>
+                    </InfoItem>
+                    <InfoItem>
+                      在线音频
+                      <ExternalLink href="https://lab.logeast.cc/en/audio-merge">
+                        合并
+                      </ExternalLink>
+                      <ExternalLink href="https://lab.logeast.cc/en/audio-trim">
+                        裁剪
+                      </ExternalLink>
+                      工具
+                    </InfoItem>
+                    <InfoItem>
+                      交易分析产品
+                      <ExternalLink href="https://tradexcellet.com">
                         Tradexcellet.com
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        交易分析产品，正在为上千用户提供服务
-                      </p>
-                    </a>
-                    <a
-                      href="https://orienslu.github.io/magic-lottery/zh/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block group"
-                    >
-                      <p className="text-sm font-medium text-foreground group-hover:underline">
-                        Magic Lottery
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        一款用于抽奖的库
-                      </p>
-                    </a>
-                    <a
-                      href="https://github.com/logeast/figma-dark-theme"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block group"
-                    >
-                      <p className="text-sm font-medium text-foreground group-hover:underline">
-                        Figma Dark Theme
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        改变 Figma 网页端皮肤的浏览器插件
-                      </p>
-                    </a>
-                    <a
-                      href="https://github.com/WeDaHub/incubator-scan-stars"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block group"
-                    >
-                      <p className="text-sm font-medium text-foreground group-hover:underline">
-                        Incubator Scan Stars
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        识别公众人物的小程序
-                      </p>
-                    </a>
+                      </ExternalLink>
+                    </InfoItem>
+                    <InfoItem>
+                      <ExternalLink href="https://orienslu.github.io/magic-lottery/zh/">
+                        用于抽奖的库 Magic Lottery
+                      </ExternalLink>
+                    </InfoItem>
+                    <InfoItem>
+                      和公众人物
+                      <ExternalLink href="https://github.com/WeDaHub/incubator-scan-stars">
+                        比较相似度
+                      </ExternalLink>
+                      的小程序
+                    </InfoItem>
                   </div>
                 </Grid.Cell>
               </Grid>
@@ -338,39 +306,28 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   smColSpan={1}
                   className="p-6 md:p-8"
                 >
-                  <div className="flex flex-wrap gap-4 md:gap-6 text-sm">
-                    <a
+                  <div className="flex flex-wrap gap-4 md:gap-6">
+                    <InfoItem
+                      icon={<MailIcon size={14} />}
                       href="mailto:oriensx@outlook.com"
-                      className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <MailIcon size={14} />
                       oriensx@outlook.com
-                    </a>
-                    <a
+                    </InfoItem>
+                    <InfoItem
+                      icon={<GithubIcon size={14} />}
                       href="https://github.com/orienslu"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <GithubIcon size={14} />
                       oriensx
-                    </a>
-                    <a
+                    </InfoItem>
+                    <InfoItem
+                      icon={<GlobeIcon size={14} />}
                       href="https://moodl.ink/me"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <GlobeIcon size={14} />
                       moodl.ink/me
-                    </a>
-                    <a
-                      href="/taste"
-                      className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <HeartIcon size={14} />
+                    </InfoItem>
+                    <InfoItem icon={<HeartIcon size={14} />} href="/taste">
                       收藏夹
-                    </a>
+                    </InfoItem>
                   </div>
                 </Grid.Cell>
                 <Grid.Cross row={1} column={2} anchor="bottom-right" />
