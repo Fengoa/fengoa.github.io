@@ -59,14 +59,12 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
             isEven ? "md:order-2 md:justify-end" : "md:order-1 md:justify-start"
           )}
         >
-          <div className="aspect-square rounded-full overflow-hidden size-90 border">
+          <div className="aspect-square rounded-full overflow-hidden w-[80%] flex-none md:size-90 border hover:scale-[1.01] transition-all duration-200">
             {post.cover && (
               <Image
                 src={post.cover}
                 alt={post.title}
                 className="size-full object-cover"
-                width={320}
-                height={320}
               />
             )}
           </div>
@@ -97,7 +95,7 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
           </div>
           <Link
             href={`/blog/${post.slug}`}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-secondary-foreground hover:text-foreground transition-all duration-200"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-secondary-foreground hover:text-blue-600 hover:gap-2 transition-all duration-200"
             draggable={false}
           >
             阅读文章

@@ -211,7 +211,7 @@ function GridCross({ row, column, anchor = "top-left", className }: GridCrossPro
   return (
     <div
       className={cn(
-        "absolute inset-0 z-[3] pointer-events-none",
+        "absolute inset-0 z-3 pointer-events-none text-secondary-foreground",
         className
       )}
       style={{ gridRow: row, gridColumn: column } as CSSProperties}
@@ -221,7 +221,7 @@ function GridCross({ row, column, anchor = "top-left", className }: GridCrossPro
         height="11"
         viewBox="0 0 11 11"
         fill="none"
-        className={cn("absolute text-foreground", translate)}
+        className={cn("absolute", translate)}
         style={position}
       >
         <path d="M5.5 0V11M0 5.5H11" stroke="currentColor" strokeWidth="1" />
