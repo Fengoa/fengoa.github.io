@@ -1,16 +1,15 @@
 import { Grid } from "@/components/ui/grid";
 import Image from "next/image";
-import {
-  Mail,
-  Github,
-  Globe,
-  Briefcase,
-  Lightbulb,
-  Sparkles,
-  Dice5,
-  Code,
-  Bookmark,
-} from "lucide-react";
+import { Lightbulb } from "lucide-react";
+import { SectionLabel } from "./section-label";
+import { UserPenIcon } from "@/components/ui/user-pen-icon";
+import { ContactRoundIcon } from "@/components/ui/contact-round-icon";
+import { SwordsIcon } from "@/components/ui/swords-icon";
+import { GamepadIcon } from "@/components/ui/gamepad-icon";
+import { GithubIcon } from "@/components/ui/github-icon";
+import { MailIcon } from "@/components/ui/mail-icon";
+import { GlobeIcon } from "@/components/ui/globe-icon";
+import { HeartIcon } from "@/components/ui/heart-icon";
 
 interface ResumeContentProps {
   resumeRef: React.RefObject<HTMLDivElement | null>;
@@ -47,13 +46,12 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   smColumn={1}
                   className="p-6 md:p-8"
                 >
-                  <div className="flex items-center gap-2 mb-4 text-muted-foreground">
-                    <Sparkles className="size-4" />
-                    <span className="text-sm font-medium">关于</span>
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
-                    卢向东
-                  </h2>
+                  <SectionLabel
+                    icon={(ref) => (
+                      <UserPenIcon ref={ref} size={16} isAnimated={false} />
+                    )}
+                    label="卢向东"
+                  />
                   <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2">
                       <span className="size-1 rounded-full bg-muted-foreground/50" />
@@ -116,10 +114,10 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   smColumn={1}
                   className="p-6 md:p-8"
                 >
-                  <div className="flex items-center gap-2 mb-4 text-muted-foreground">
-                    <Lightbulb className="size-4" />
-                    <span className="text-sm font-medium">产品</span>
-                  </div>
+                  <SectionLabel
+                    icon={() => <Lightbulb className="size-4" />}
+                    label="产品"
+                  />
                   <div className="space-y-3">
                     <a
                       href="https://moodl.ink"
@@ -157,10 +155,16 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   smColumn={1}
                   className="p-6 md:p-8"
                 >
-                  <div className="flex items-center gap-2 mb-4 text-muted-foreground">
-                    <Briefcase className="size-4" />
-                    <span className="text-sm font-medium">经历</span>
-                  </div>
+                  <SectionLabel
+                    icon={(ref) => (
+                      <ContactRoundIcon
+                        ref={ref}
+                        size={16}
+                        isAnimated={false}
+                      />
+                    )}
+                    label="经历"
+                  />
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -200,10 +204,12 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   smColumn={1}
                   className="p-6 md:p-8"
                 >
-                  <div className="flex items-center gap-2 mb-4 text-muted-foreground">
-                    <Dice5 className="size-4" />
-                    <span className="text-sm font-medium">技能</span>
-                  </div>
+                  <SectionLabel
+                    icon={(ref) => (
+                      <SwordsIcon ref={ref} size={16} isAnimated={false} />
+                    )}
+                    label="技能"
+                  />
                   <div className="flex flex-wrap gap-1.5">
                     {[
                       "React",
@@ -241,10 +247,12 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   smColumn={1}
                   className="p-6 md:p-8"
                 >
-                  <div className="flex items-center gap-2 mb-4 text-muted-foreground">
-                    <Code className="size-4" />
-                    <span className="text-sm font-medium">开源</span>
-                  </div>
+                  <SectionLabel
+                    icon={(ref) => (
+                      <GamepadIcon ref={ref} size={16} isAnimated={false} />
+                    )}
+                    label="玩具"
+                  />
                   <div className="space-y-3">
                     <a
                       href="https://orienslu.github.io/magic-lottery/zh/"
@@ -308,7 +316,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                       href="mailto:oriensx@outlook.com"
                       className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Mail className="size-3.5" />
+                      <MailIcon size={14} />
                       oriensx@outlook.com
                     </a>
                     <a
@@ -317,7 +325,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Github className="size-3.5" />
+                      <GithubIcon size={14} />
                       oriensx
                     </a>
                     <a
@@ -326,14 +334,14 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Globe className="size-3.5" />
+                      <GlobeIcon size={14} />
                       moodl.ink/me
                     </a>
                     <a
                       href="/taste"
                       className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Bookmark className="size-3.5" />
+                      <HeartIcon size={14} />
                       收藏夹
                     </a>
                   </div>
