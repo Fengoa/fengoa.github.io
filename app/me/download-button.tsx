@@ -31,11 +31,33 @@ export function DownloadButton({ targetRef }: DownloadButtonProps) {
       const html2canvas = (await import("html2canvas-pro")).default;
       const { jsPDF } = await import("jspdf");
 
-      const canvas = await html2canvas(el, {
+      // 克隆到屏幕外，强制浅色模式，不影响当前页面
+      const clone = el.cloneNode(true) as HTMLDivElement;
+      clone.style.cssText = `
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        width: ${el.offsetWidth}px;
+        height: ${el.offsetHeight}px;
+        background: #ffffff;
+        --background: hsl(0, 0%, 98%);
+        --foreground: oklch(0.145 0 0);
+        --muted: oklch(0.97 0 0);
+        --muted-foreground: oklch(0.556 0 0);
+        --border: oklch(0.942 0 0);
+        --secondary-foreground: oklch(0.305 0 0);
+        --accent-foreground: oklch(0.205 0 0);
+        color-scheme: light;
+      `;
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         backgroundColor: "#ffffff",
       });
+
+      document.body.removeChild(clone);
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
@@ -68,9 +90,7 @@ export function DownloadButton({ targetRef }: DownloadButtonProps) {
           isAnimated={false}
         />
       )}
-      {downloading ? (
-        "生成中…"
-      ) : download.isShimmering ? (
+      {download.isShimmering ? (
         <TextShimmer as="span" duration={0.8}>
           下载简历
         </TextShimmer>

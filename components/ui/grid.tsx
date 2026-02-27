@@ -41,6 +41,12 @@ export interface MergedArea {
 interface GridProps {
   rows: number;
   columns: number;
+  /** 移动端列数（< md），不传则与 columns 相同 */
+  smColumns?: number;
+  /** 移动端行数（< md），不传则根据内容自动 */
+  smRows?: number;
+  /** 移动端合并区域 */
+  smMergedAreas?: MergedArea[];
   children?: ReactNode;
   className?: string;
   guideWidth?: number;
@@ -50,7 +56,6 @@ interface GridProps {
 
 /**
  * 判断格子 (x, y) 在合并区域内时，哪些边框需要隐藏。
- * 隐藏规则：合并区域内部的竖线和横线都不画，但区域最右列的右边框和最底行的底边框保留。
  */
 function getHiddenBorders(
   x: number,
@@ -68,24 +73,50 @@ function getHiddenBorders(
     const rowEnd = area.row + rs - 1;
 
     if (x >= colStart && x <= colEnd && y >= rowStart && y <= rowEnd) {
-      // 不是最右列 → 隐藏右边框
       if (x < colEnd) hideRight = true;
-      // 不是最底行 → 隐藏底边框
       if (y < rowEnd) hideBottom = true;
     }
   }
   return { hideRight, hideBottom };
 }
 
+function generateGuides(
+  rows: number,
+  columns: number,
+  mergedAreas?: MergedArea[]
+) {
+  return Array.from({ length: rows * columns }, (_, index) => {
+    const x = (index % columns) + 1;
+    const y = Math.floor(index / columns) + 1;
+
+    const { hideRight, hideBottom } = mergedAreas
+      ? getHiddenBorders(x, y, mergedAreas)
+      : { hideRight: false, hideBottom: false };
+
+    return { x, y, hideRight, hideBottom };
+  });
+}
+
 export function Grid({
   rows,
   columns,
+  smColumns,
+  smRows,
+  smMergedAreas,
   children,
   className,
   guideWidth,
   mergedAreas,
 }: GridProps) {
   const gw = guideWidth != null ? `${guideWidth}px` : "var(--guide-width, 1px)";
+  const hasResponsive = smColumns != null && smColumns !== columns;
+
+  // 桌面端参考线
+  const desktopGuides = generateGuides(rows, columns, mergedAreas);
+  // 移动端参考线
+  const mobileGuides = hasResponsive
+    ? generateGuides(smRows ?? rows, smColumns!, smMergedAreas)
+    : null;
 
   return (
     <div
@@ -97,22 +128,41 @@ export function Grid({
           borderTop: `${gw} solid var(--border)`,
           borderLeft: `${gw} solid var(--border)`,
           "--gw": gw,
+          ...(hasResponsive
+            ? {
+                "--sm-cols": smColumns,
+                "--sm-rows": smRows ?? rows,
+              }
+            : {}),
         } as CSSProperties
       }
     >
-      {/* 参考线层 — display:contents 让子元素直接参与 Grid 布局 */}
-      <div className="contents">
-        {Array.from({ length: rows * columns }, (_, index) => {
-          const x = (index % columns) + 1;
-          const y = Math.floor(index / columns) + 1;
+      {/* 桌面端参考线 */}
+      <div className={cn("contents", hasResponsive && "max-md:hidden")}>
+        {desktopGuides.map(({ x, y, hideRight, hideBottom }, i) => (
+          <div
+            key={`d-${i}`}
+            className="absolute inset-0 z-2 pointer-events-none"
+            style={
+              {
+                gridColumnStart: x,
+                gridColumnEnd: "span 1",
+                gridRowStart: y,
+                gridRowEnd: "span 1",
+                borderRight: hideRight ? "none" : `var(--gw, 1px) solid var(--border)`,
+                borderBottom: hideBottom ? "none" : `var(--gw, 1px) solid var(--border)`,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </div>
 
-          const { hideRight, hideBottom } = mergedAreas
-            ? getHiddenBorders(x, y, mergedAreas)
-            : { hideRight: false, hideBottom: false };
-
-          return (
+      {/* 移动端参考线 */}
+      {mobileGuides && (
+        <div className="contents md:hidden">
+          {mobileGuides.map(({ x, y, hideRight, hideBottom }, i) => (
             <div
-              key={index}
+              key={`m-${i}`}
               className="absolute inset-0 z-2 pointer-events-none"
               style={
                 {
@@ -125,9 +175,23 @@ export function Grid({
                 } as CSSProperties
               }
             />
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {/* 响应式 gridTemplateColumns 覆盖 — 用 style 标签注入媒体查询 */}
+      {hasResponsive && (
+        <style>{`
+          @media (max-width: 767px) {
+            .grid:has(> [data-responsive="${smColumns}-${smRows ?? rows}"]) {
+              grid-template-columns: repeat(${smColumns}, minmax(0, 1fr)) !important;
+              grid-template-rows: repeat(${smRows ?? rows}, auto) !important;
+            }
+          }
+        `}</style>
+      )}
+      {hasResponsive && <div data-responsive={`${smColumns}-${smRows ?? rows}`} className="hidden" />}
+
       {children}
     </div>
   );
@@ -142,6 +206,14 @@ interface GridCellProps extends HTMLAttributes<HTMLDivElement> {
   column: number | "auto";
   rowSpan?: number;
   colSpan?: number;
+  /** 移动端行位置 */
+  smRow?: number | "auto";
+  /** 移动端列位置 */
+  smColumn?: number | "auto";
+  /** 移动端行跨度 */
+  smRowSpan?: number;
+  /** 移动端列跨度 */
+  smColSpan?: number;
   children?: ReactNode;
   className?: string;
 }
@@ -151,25 +223,52 @@ function GridCell({
   column,
   rowSpan = 1,
   colSpan = 1,
+  smRow,
+  smColumn,
+  smRowSpan,
+  smColSpan,
   children,
   className,
   style,
   ...rest
 }: GridCellProps) {
+  const hasResponsive = smRow != null || smColumn != null || smRowSpan != null || smColSpan != null;
+
+  const mRow = smRow ?? row;
+  const mCol = smColumn ?? column;
+  const mRowSpan = smRowSpan ?? rowSpan;
+  const mColSpan = smColSpan ?? colSpan;
+
+  // 如果有响应式，用 CSS 变量 + 媒体查询
+  const cellId = hasResponsive ? `cell-${mRow}-${mCol}-${row}-${column}` : undefined;
+
   return (
-    <div
-      className={cn("relative z-1 min-w-0", className)}
-      style={{
-        gridRow:
-          row === "auto" ? "auto" : `${row} / span ${rowSpan}`,
-        gridColumn:
-          column === "auto" ? "auto" : `${column} / span ${colSpan}`,
-        ...style,
-      }}
-      {...rest}
-    >
-      {children}
-    </div>
+    <>
+      {hasResponsive && (
+        <style>{`
+          @media (max-width: 767px) {
+            [data-cell-id="${cellId}"] {
+              grid-row: ${mRow === "auto" ? "auto" : `${mRow} / span ${mRowSpan}`} !important;
+              grid-column: ${mCol === "auto" ? "auto" : `${mCol} / span ${mColSpan}`} !important;
+            }
+          }
+        `}</style>
+      )}
+      <div
+        data-cell-id={cellId}
+        className={cn("relative z-1 min-w-0", className)}
+        style={{
+          gridRow:
+            row === "auto" ? "auto" : `${row} / span ${rowSpan}`,
+          gridColumn:
+            column === "auto" ? "auto" : `${column} / span ${colSpan}`,
+          ...style,
+        }}
+        {...rest}
+      >
+        {children}
+      </div>
+    </>
   );
 }
 
