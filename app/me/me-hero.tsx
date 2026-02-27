@@ -36,7 +36,7 @@ export function MeHero({ resumeRef }: MeHeroProps) {
             <h1 className="text-4xl md:text-5xl font-bold leading-tight text-foreground text-center">
               Oriensx.
             </h1>
-            <p className="text-base text-muted-foreground text-center max-w-md mt-4">
+            <p className="text-secondary-foreground text-center max-w-md mt-4">
               我在做出伟大产品的路上持续耕耘。
             </p>
             <div className="mt-4 flex items-center justify-center">

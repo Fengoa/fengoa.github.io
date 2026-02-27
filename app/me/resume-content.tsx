@@ -54,12 +54,16 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   />
                   <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2">
-                      <span className="size-1 rounded-full bg-muted-foreground/50" />
+                      <span className="size-1 rounded-full bg-muted-foreground/40" />
                       设计工程师 @腾讯
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="size-1 rounded-full bg-muted-foreground/50" />
+                      <span className="size-1 rounded-full bg-muted-foreground/40" />
                       oriensx@outlook.com
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="size-1 rounded-full bg-muted-foreground/40" />
+                      1996.11.11，中国深圳
                     </li>
                   </ul>
                 </Grid.Cell>
@@ -72,7 +76,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   smRow={1}
                   smColumn={1}
                   smRowSpan={1}
-                  className="relative overflow-hidden aspect-3/4"
+                  className="relative overflow-hidden aspect-3/3.6"
                 >
                   <Image
                     src="/oriens_pure.png"
@@ -92,13 +96,17 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   className="p-6 md:p-8"
                 >
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    我在腾讯微信广告设计团队担任设计工程师，已超过 6 年。
+                    我在广告投放设计团队担任设计工程师（UX 工程师），已超过 6
+                    年。
                   </p>
                   <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                    保持着对这些事的热情：创意设计、动效设计、交互动画、React、CSS。
+                    我保持着对这些事的热情：
+                    <br />
+                    产品体验设计，工具，AI
+                    应用探索，游戏制作，微信小程序和阅读。
                   </p>
                   <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                    我的使命是创造优雅而精致的用户界面。
+                    我在做出伟大产品的路上持续耕耘。
                   </p>
                 </Grid.Cell>
 
@@ -116,7 +124,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                 >
                   <SectionLabel
                     icon={() => <Lightbulb className="size-4" />}
-                    label="产品"
+                    label="作品"
                   />
                   <div className="space-y-3">
                     <a
@@ -169,7 +177,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-sm font-medium text-foreground">
-                          腾讯 · 微信广告设计团队
+                          腾讯 · 广告投放设计团队
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           设计工程师

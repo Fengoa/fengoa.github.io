@@ -19,17 +19,19 @@ export function SectionLabel({ icon, label }: SectionLabelProps) {
 
   return (
     <div
-      className="flex flex-col items-center gap-1.5 mb-4 text-muted-foreground w-fit"
+      className="flex flex-col items-start gap-1.5 mb-4 text-foreground w-fit cursor-default"
       onMouseEnter={seq.handleEnter}
       onMouseLeave={seq.handleLeave}
     >
-      {icon(seq.iconRef)}
+      <div className="size-8 flex items-center justify-center border rounded-md bg-white dark:bg-white/10">
+        {icon(seq.iconRef)}
+      </div>
       {seq.isShimmering ? (
-        <TextShimmer as="span" className="font-medium" duration={0.8}>
+        <TextShimmer as="span" className="font-semibold ml-1" duration={0.8}>
           {label}
         </TextShimmer>
       ) : (
-        <span className="font-medium">{label}</span>
+        <span className="font-semibold ml-1">{label}</span>
       )}
     </div>
   );

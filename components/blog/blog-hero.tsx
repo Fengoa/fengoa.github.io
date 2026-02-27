@@ -30,7 +30,7 @@ export function BlogHero() {
               <br />
               持续探索和思考
             </h1>
-            <p className="text-base text-muted-foreground text-center max-w-md mt-4">
+            <p className="text-secondary-foreground text-center max-w-md mt-4">
               沙漠中融化的雪，加快了春暖花开。
             </p>
           </div>

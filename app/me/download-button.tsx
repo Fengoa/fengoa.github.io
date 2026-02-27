@@ -81,7 +81,7 @@ export function DownloadButton({ targetRef }: DownloadButtonProps) {
       disabled={downloading}
       onMouseEnter={download.handleEnter}
       onMouseLeave={download.handleLeave}
-      className="inline-flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white dark:hover:bg-white/5 border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex items-center gap-2 px-4 py-2 text-sm text-secondary-foreground hover:text-foreground hover:bg-white dark:hover:bg-white/10 border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {downloading ? (
         <LoaderCircleIcon size={14} isAnimated duration={0.8} />

@@ -28,7 +28,7 @@ export function ProductHero() {
             <h1 className="text-4xl md:text-5xl font-bold leading-tight text-foreground text-center">
               打造过的一些东西
             </h1>
-            <p className="text-base text-muted-foreground text-center max-w-md mt-4">
+            <p className="text-secondary-foreground text-center max-w-md mt-4">
               独立项目、开源工具与设计探索。
             </p>
           </div>
