@@ -113,7 +113,7 @@ export function Grid({
           return (
             <div
               key={index}
-              className="absolute inset-0 z-[2] pointer-events-none"
+              className="absolute inset-0 z-2 pointer-events-none"
               style={
                 {
                   gridColumnStart: x,
@@ -158,7 +158,7 @@ function GridCell({
 }: GridCellProps) {
   return (
     <div
-      className={cn("relative z-[1] min-w-0", className)}
+      className={cn("relative z-1 min-w-0", className)}
       style={{
         gridRow:
           row === "auto" ? "auto" : `${row} / span ${rowSpan}`,

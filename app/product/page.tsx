@@ -1,3 +1,4 @@
+import { ProductHero } from "@/components/product/product-hero";
 import { ProductList } from "@/components/product/product-list";
 import type { ProductItem } from "@/components/product/product-card";
 import { Grid } from "@/components/ui/grid";
@@ -75,29 +76,11 @@ const products: ProductItem[] = [
 
 export default function ProductPage() {
   return (
-    <main className="py-12 space-y-0">
-      {/* Hero: Grid 网格背景 + 居中文字 */}
-      <div className="relative">
-        <Grid rows={1} columns={8}>
-          <Grid.Cross row={1} column={1} />
-          <Grid.Cell
-            row={1}
-            column={1}
-            colSpan={8}
-            className="py-16 sm:py-24 flex flex-col items-center justify-center text-center"
-          >
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
-              打造过的一些东西
-            </h1>
-            <p className="mt-4 text-muted-foreground text-base sm:text-lg max-w-md">
-              独立项目、开源工具与设计探索。
-            </p>
-          </Grid.Cell>
-        </Grid>
-      </div>
-
-      {/* Product Grid */}
-      <ProductList products={products} />
+    <main className="py-20">
+      <Grid.System>
+        <ProductHero />
+        <ProductList products={products} />
+      </Grid.System>
     </main>
   );
 }

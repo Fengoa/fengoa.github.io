@@ -4,7 +4,7 @@ import { ProductCard, type ProductItem } from "./product-card";
 import { Grid } from "@/components/ui/grid";
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 
-const COLUMNS = 3;
+const COLUMNS = 2;
 
 export function ProductList({ products }: { products: ProductItem[] }) {
   const rows = Math.ceil(products.length / COLUMNS);
