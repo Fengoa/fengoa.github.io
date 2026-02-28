@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Oriens",
-  description: "Oriens",
+  title: "Oriensx",
+  description: "Oriensx's personal website",
 };
 
 export default function RootLayout({
@@ -63,7 +63,7 @@ export default function RootLayout({
                 interval={6}
                 className="text-xs text-muted-foreground overflow-hidden"
               >
-                <span>© {new Date().getFullYear()} Oriens.</span>
+                <span>© {new Date().getFullYear()} Oriensx.</span>
                 <span>Be quiet.</span>
               </TextLoop>
               <ThemeSwitcher />
