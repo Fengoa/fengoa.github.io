@@ -17,8 +17,7 @@ export type TasteItem = {
 };
 
 function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+  return dateStr;
 }
 
 function ShareIcon() {
@@ -56,7 +55,7 @@ export function TasteCard({ item }: { item: TasteItem }) {
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex flex-col justify-between h-full p-6 sm:p-8"
+      className="group flex flex-col justify-between h-full p-6 sm:p-8 transition-colors duration-300 hover:bg-white dark:hover:bg-white/5"
     >
       {/* 顶部：分类 + 日期 + 外链图标 */}
       <div className="flex items-start justify-between gap-4">
@@ -75,7 +74,7 @@ export function TasteCard({ item }: { item: TasteItem }) {
         <h3 className="text-lg sm:text-xl font-bold leading-snug text-foreground mb-3">
           {item.title}
         </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 group-hover:text-secondary-foreground transition-colors duration-200">
           {item.description}
         </p>
       </div>

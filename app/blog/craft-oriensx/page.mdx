@@ -1,168 +1,129 @@
-# 搭建这个网站
+# Crafting Oriensx
 
----
+做这个网站的时候，我一直在想一个问题：一个安静的页面，怎样才不会显得空洞？
 
-## 秩序
+答案藏在那些大多数人注意不到的地方——一条沿着边框缓慢移动的光束，极浅的网格参考线，鼠标悬停一秒后才开始的动画序列。它们都很小，但去掉任何一个，页面就会少点什么。
 
-网站需要一种秩序。不是装饰性的，是结构性的——所有内容都被同一套规则约束，页面才不会散掉。
+这篇文章记录搭建这个网站时的一些思考和实现。不是教程，更像是做一件小事时留下的笔记。
 
-网格是这个秩序的载体。我希望网格线始终完整地存在，不因为某个格子空着就断掉。线条本身构成了页面的视觉基底，内容只是填入其中的东西。
+## 设计垂点
 
-这带来一个问题：常见的做法是让每个子元素画自己的边框。格子都填满时没问题，但只要有空格子，那个位置没有元素，线就断了。
+动手之前我花了不少时间看别人的网站。[Rauno](https://rauno.me) 的站一直是我喜欢的，还有 [Paco](https://paco.me)、[Lee Robinson](https://leerob.com)。整体的视觉语言很大程度上参考了 [Vercel](https://vercel.com) 的设计——网格、留白、克制的动效，这些东西在 Vercel 的产品里已经被打磨得很成熟了，我没有理由不从中学习。
+
+另一个对我影响很大的是 [wxad.design/abc](https://wxad.design/abc)。这个站让我意识到，一个个人站点可以同时是作品集、是设计表达、也是技术实验场。它对细节的处理方式——交互的节奏、动画的分寸感——给了我很多灵感。
+
+它们有一个共同点：安静，但不无聊。
+
+"安静"如果处理不好就会变成"空洞"。我需要找到一个垂点——一个细微的、持续的动态元素，让页面在安静中透出一点生命力。
+
+这个垂点最终是页面边缘的那条光束。
+
+## 边框光束
+
+`BorderBeam` 是我从 [Magic UI](https://magicui.design) 借鉴的组件。一个小方块沿着页面的矩形边框缓慢移动，80 秒绕一圈。
+
+技术上，它用了 CSS 的 [offset-path](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-path)，让元素沿着 `rect(...)` 路径运动。光束本身是一个带渐变的正方形——从金色 `#ffaa40` 到紫色 `#9c40ff` 再到透明，模拟彗星拖尾的效果。
+
+比较巧妙的是外层容器的遮罩处理。它用了两层 CSS mask：
+
+- 第一层在 `padding-box` 上是全透明的
+- 第二层在 `border-box` 上是全不透明的
+
+两者取交集（`mask-composite: intersect`），最终只有边框区域可见。这意味着光束只会在边框上"露出来"，不会侵入内容区域。
 
 ```css
-.grid {
-  border: 1px solid;
-  border-right: none;
-  border-bottom: none;
-}
-.grid > div {
-  border: 1px solid;
-  border-left: none;
-  border-top: none;
-}
+mask: linear-gradient(transparent, transparent),
+      linear-gradient(#000, #000);
+mask-clip: padding-box, border-box;
+mask-composite: intersect;
 ```
 
-我需要的是：组件知道自己有多少行和列，自己把所有的线画好，不依赖内容。
+然后交给 Framer Motion 做 `offsetDistance` 从 0% 到 100% 的无限循环动画。匀速、安静、持续。
 
-做法是在容器里额外放一层参考线元素，用 `display: contents` 让它们在布局上消失，但仍参与 Grid 定位：
+我觉得这就是我要的那个"垂点"。
 
-```tsx
-<div
-  className="grid relative"
-  style={{
-    gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-    gridTemplateRows: `repeat(${rows}, auto)`,
-    borderTop: "1px solid var(--border)",
-    borderLeft: "1px solid var(--border)",
-  }}
->
-  <div className="contents">
-    {Array.from({ length: rows * columns }, (_, i) => (
-      <div
-        key={i}
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          gridColumnStart: (i % columns) + 1,
-          gridRowStart: Math.floor(i / columns) + 1,
-          borderRight: "1px solid var(--border)",
-          borderBottom: "1px solid var(--border)",
-        }}
-      />
-    ))}
-  </div>
-  {children}
-</div>
-```
+## 网格系统
 
-`contents` 让包裹层在布局上不存在，里面的参考线直接参与父级的 Grid 上下文。像一个透明的信封——信封不存在，里面的东西直接散在桌面上。
+网格是这个网站的骨架。不只是布局意义上的，更是视觉语言上的。
 
-这样无论放三个 Cell 还是一个都不放，每条线都在。
+我搭建了一套 `Grid` 复合组件：`Grid.System`、`Grid.Cell`、`Grid.Cross`。它做的事情本质上很简单——生成 CSS Grid 容器和参考线，但细节不少。
 
-```tsx
-<Grid rows={4} columns={4}>
-  <Grid.Cell row={1} column={1}>
-    What
-  </Grid.Cell>
-  <Grid.Cell row={2} column={3}>
-    will
-  </Grid.Cell>
-  <Grid.Cell row={4} column="auto">
-    ?
-  </Grid.Cell>
-</Grid>
-```
+**参考线的生成。** 每个网格容器会根据行列数自动计算需要多少条参考线，然后用绝对定位的 `div` 画出来。每个格子有右边框和下边框，相邻网格之间通过负 margin（`mt-[calc(var(--guide-width)*-1)]`）让边框重叠，避免双倍粗线。
 
-整个组件不依赖客户端 API，可以完全在服务端渲染。
+**合并区域的处理。** 当某些格子需要合并时（比如 Hero 区域横跨 10 列），内部多余的参考线要自动隐藏。`getHiddenBorders` 函数会遍历所有合并区域，判断当前格子是否在某个合并区域内部，如果是，就把它的右/下边框去掉。
 
----
+**响应式。** 桌面端和移动端各维护一套独立的参考线，通过 `max-md:hidden` / `md:hidden` 切换，并用内联 `<style>` 标签注入媒体查询覆盖 `grid-template-columns`。
 
-## 消失
+**十字交叉点。** `Grid.Cross` 在网格线的交叉点绘制一个小小的 SVG 十字，支持四个锚点位置。这是一个纯装饰元素，但它让网格系统从"布局工具"变成了"视觉语言"。
 
-导航栏固定在顶部，页面向上滚动时它不能硬生生地截断内容。我想要的效果是：导航区域从上到下，模糊逐渐减弱，最终消失。不是一条分界线，而是一个过渡。
+这些参考线在最终呈现时是极浅的，大多数人可能注意不到。但它们让整个页面有了一种"对齐的安心感"——像稿纸上的格线一样。
 
-直觉上的做法是把导航栏高度撑大，让 `backdrop-blur` 配合渐变自然淡出。但多出来的区域会挡住下方内容的点击。加 `pointer-events: none` 的话，导航按钮自己也点不了了。
+## 导航的悬停序列
 
-这是一个层级的问题。模糊背景和可交互的导航内容不应该是同一层。
+导航栏只有四个入口：博客、品味、产品、我的。每个搭配一个小图标。
 
-拆成两层之后就清楚了：
+我给它们做了一个悬停时的序列动画。不是简单的颜色变化或缩放，而是一个有节奏的多步骤过程：
 
-```tsx
-<nav className="fixed top-0 left-0 right-0 z-50 h-14">
-  <div
-    className="
-    absolute inset-0 -bottom-4
-    backdrop-blur-md
-    bg-linear-to-b from-background to-transparent
-    pointer-events-none
-    mask-[linear-gradient(black_30%,rgba(0,0,0,0.8)_70%,transparent_100%)]
-  "
-  />
-  <div className="relative h-full flex items-center">
-    <NavTabs />
-  </div>
-</nav>
-```
+1. 鼠标悬停，等待 1 秒
+2. 图标播放自己的动画
+3. 等待 500 毫秒
+4. 文字出现闪光（TextShimmer）扫过
+5. 闪光持续 800 毫秒后消失
+6. 等待 2 秒，回到步骤 2 循环
 
-背景层向下溢出一段，用 CSS `mask` 从实到虚地遮掉，`pointer-events: none` 只在这一层。导航内容在另一层，不受影响。
+这些全部由一个自定义 hook `useHoverSequence` 编排。核心是嵌套的 `setTimeout`，在每一步结束时检查鼠标是否还在（`hoveredRef.current`），如果离开了就立刻停止，清掉所有定时器。
 
-`mask` 的渐变数值没有什么依据，反复调到看着自然就行了。很多时候"看着对"就是唯一的标准。
+`TextShimmer` 的实现也值得一提。它用了双层 `background-image` 配合 `background-clip: text`：底层是纯色作为文字基色，上层是一条移动的高亮渐变带。通过 `backgroundPosition` 动画从 100% 扫到 0%，产生闪光效果。渐变带的宽度还会根据文字长度动态调整。
 
----
+整个序列的目的只是让鼠标悬停时，那个小区域有一点"活起来"的感觉。不急不缓。
 
-## 滑动
+## 主题切换
 
-导航栏的 Tab 之间有一个跟随鼠标的高亮色块。我想要的是"滑动"而不是"闪烁"——色块从一个 Tab 滑到另一个，而不是每个 Tab 各自亮灭。
+主题切换器放在页脚。三个小图标：系统、亮色、暗色。
 
-这意味着整个导航只能有一个背景色块。它不属于任何一个 Tab，只是恰好在某个 Tab 的位置。
+它用了 `AnimatedBackground` 组件——这是基于 Framer Motion 的 `layoutId` 共享布局动画。所有按钮背后共享同一个 `layoutId` 的半透明背景 div，点击时背景会平滑地"滑"到被选中的按钮上。
 
-用 Framer Motion 的 `layoutId` 可以做到。多个位置渲染同一个 `layoutId` 的元素，Framer Motion 会认为是同一个东西在换位置，自动补间：
+用 `next-themes` 管理主题状态，为了避免 SSR 和 CSR 之间主题不匹配导致的闪烁，组件在 `useEffect` 后才渲染。
 
-```tsx
-function AnimatedBackground({ children, className, transition }) {
-  const [activeId, setActiveId] = useState(null);
-  const uniqueId = useId();
+一个很小的交互，但用对了动画之后，三个按钮之间的切换变得非常自然。
 
-  return Children.map(children, (child) => {
-    const id = child.props["data-id"];
+## 博客与 MDX
 
-    return cloneElement(
-      child,
-      {
-        onMouseEnter: () => setActiveId(id),
-        onMouseLeave: () => setActiveId(null),
-      },
-      <>
-        <AnimatePresence>
-          {activeId === id && (
-            <motion.div
-              layoutId={`background-${uniqueId}`}
-              className={cn("absolute inset-0", className)}
-              transition={transition}
-            />
-          )}
-        </AnimatePresence>
-        <div className="z-10">{child.props.children}</div>
-      </>
-    );
-  });
-}
-```
+博客用的是 MDX。Next.js 通过 `@next/mdx` 插件直接支持在 `app` 目录下使用 `.mdx` 文件作为页面。
 
-这个组件不渲染自己的容器 DOM，直接返回 `Children.map` 的结果。所以被它包裹的子元素仍然是父级的直接子级——放在 Grid 里定位正常，放在 flex 里排列也正常。
+MDX 的好处是可以在 Markdown 中嵌入 React 组件。不过目前我还没有做太多花哨的事，主要是在 `mdx-components.tsx` 中定义了所有基础元素的样式映射：
 
-这一点很重要。如果组件自己多套了一层 DOM，Grid 的定位就会作用在这个多余的容器上而不是子元素上。一个看不见的东西不应该影响看得见的东西的位置。
+- 标题会自动生成 `id`，配合侧边栏的 `TableOfContents` 组件实现目录锚点跳转
+- H2 标题上方有一条 3px 高、24px 宽的短横线装饰
+- 外部链接会自动添加右上角的小箭头图标，并在新标签页打开
+- 有序列表使用 CSS `counter` 自定义序号样式
+- 加粗文字带虚线下划线
+- 代码高亮使用 [sugar-high](https://github.com/huozhi/sugar-high)，一个非常轻量的高亮库
 
-导航栏、产品列表、推荐列表用的都是同一个组件。给子元素加上 `data-id` 就行。
+代码高亮的选择也是一个取舍。`sugar-high` 不到 1KB，没有外部依赖，直接输出 HTML。它不如 Shiki 或 Prism 那么精细，但对于一个以散文为主的博客来说，够用了。轻量、简单、不引入额外复杂性。
 
-```tsx
-<Grid rows={rows} columns={3}>
-  <AnimatedBackground enableHover className="bg-black/2 dark:bg-white/4">
-    {products.map((product) => (
-      <Grid.Cell key={product.id} data-id={product.id} row={...} column={...}>
-        <ProductCard product={product} />
-      </Grid.Cell>
-    ))}
-  </AnimatedBackground>
-</Grid>
-```
+## 页脚的两句话
+
+页脚有一个文字循环组件 `TextLoop`，每 6 秒切换一次：
+
+> © 2026 Oriensx.
+
+> Be quiet.
+
+"Be quiet" 是对整个网站气质的一句概括。它用 `AnimatePresence` 做了一个很轻的进出动画——新文本从下方 20px 滑入，旧文本向上 20px 滑出，同时透明度渐变。`popLayout` 模式让退出的元素脱离布局流，不影响进入元素的位置。
+
+## 静态导出
+
+整个网站用 `output: "export"` 做静态导出，部署在 GitHub Pages 上。这意味着没有服务端渲染，没有 API 路由，没有图片优化。
+
+这是一个限制，但也是一种简化。不需要维护服务器，不需要担心运行时环境。构建完成后就是一堆 HTML、CSS、JS 文件，放到任何静态托管上都能跑。
+
+对于一个个人网站来说，这足够了。
+
+## 最后
+
+回头看这个网站，它的每一个部分都不复杂。边框光束、网格参考线、导航悬停动画、主题切换——单独拿出来都是很小的事情。但把它们放在一起、调到合适的节奏，整体就有了一种气质。
+
+这种气质来自于那些"几乎注意不到"的细节。参考线让页面有了结构的暗示，光束让边缘有了呼吸，悬停序列让导航有了不急不缓的节奏。它们都不显眼，但如果去掉，页面就只是一个页面了。
+
+页脚写着 "Be quiet"，这大概是对整个网站最准确的概括。安静，但不是什么都没有。

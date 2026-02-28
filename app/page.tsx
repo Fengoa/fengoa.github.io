@@ -5,11 +5,11 @@ import type { PostData } from "@/components/blog/post-card";
 
 const posts: PostData[] = [
   {
-    slug: "crafting-oriensx",
-    title: "制作稳定的界面：个人网站的搭建",
+    slug: "craft-oriensx",
+    title: "Crafting Oriensx",
     date: "2026-02-26",
     summary:
-      "秩序，平和，隐藏一点俏皮，是我为这个网站设定的风格，我确实很喜欢这个风格。",
+      "一个安静的页面，怎样才不会显得空洞？答案藏在那些大多数人注意不到的地方。",
   },
 ];
 

@@ -3,18 +3,22 @@
 import { useRouter, usePathname } from "next/navigation";
 import { BrainIcon } from "@/components/ui/brain-icon";
 import { DashboardIcon } from "@/components/ui/dashboard-icon";
+import { HeartIcon } from "@/components/ui/heart-icon";
 import { AvatarIcon } from "@/components/ui/avatar-icon";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import { useHoverSequence } from "@/hooks/use-hover-sequence";
 
 const tabs = [
   { id: "blog", label: "博客", href: "/" },
+  { id: "taste", label: "品味", href: "/taste" },
   { id: "product", label: "产品", href: "/product" },
   { id: "me", label: "我的", href: "/me" },
 ];
 
 function getActiveTab(pathname: string): string {
   if (pathname === "/") return "blog";
+  if (pathname.startsWith("/blog")) return "blog";
+  if (pathname.startsWith("/taste")) return "taste";
   if (pathname.startsWith("/product")) return "product";
   if (pathname.startsWith("/me")) return "me";
   return "blog";
@@ -26,11 +30,13 @@ export function NavTabs() {
   const activeTab = getActiveTab(pathname);
 
   const blog = useHoverSequence();
+  const taste = useHoverSequence();
   const product = useHoverSequence();
   const me = useHoverSequence();
 
   const sequences: Record<string, ReturnType<typeof useHoverSequence>> = {
     blog,
+    taste,
     product,
     me,
   };
@@ -56,6 +62,9 @@ export function NavTabs() {
           >
             {tab.id === "blog" && (
               <BrainIcon ref={seq.iconRef} size={20} isAnimated={false} />
+            )}
+            {tab.id === "taste" && (
+              <HeartIcon ref={seq.iconRef} size={20} isAnimated={false} />
             )}
             {tab.id === "product" && (
               <DashboardIcon ref={seq.iconRef} size={20} isAnimated={false} />
