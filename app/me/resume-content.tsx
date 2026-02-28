@@ -34,7 +34,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
       mergedAreas={[{ row: 1, column: 1, colSpan: 12 }]}
     >
       <Grid.Cell row={1} column={1} colSpan={12}>
-        <div className="flex justify-center p-4 md:p-12">
+        <div className="flex justify-center md:p-12">
           <div
             ref={resumeRef}
             id="resume"
@@ -183,7 +183,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     label="经历"
                   />
                   <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
                       <InfoItem>
                         <MousePointerClickIcon size={16} />
                         <ExternalLink href="https://e.qq.com/technology">
@@ -192,7 +192,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                       </InfoItem>
                       <InfoItem>2019 - 至今</InfoItem>
                     </div>
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
                       <InfoItem>
                         <TelescopeIcon size={16} />
                         中山大学 ·

@@ -10,7 +10,7 @@ interface InfoItemProps {
 
 export function InfoItem({ icon, href, children, className }: InfoItemProps) {
   const classes = cn(
-    "text-sm text-muted-foreground leading-relaxed inline-flex items-center gap-1.5",
+    "text-sm text-muted-foreground leading-relaxed inline-flex items-center gap-x-1.5 flex-wrap",
     href && "hover:text-foreground transition-colors",
     className
   );
