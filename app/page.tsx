@@ -6,7 +6,7 @@ import type { PostData } from "@/components/blog/post-card";
 const posts: PostData[] = [
   {
     slug: "craft-oriensx",
-    title: "Crafting Oriensx",
+    title: "安静但不是什么都没有",
     date: "2026-02-26",
     summary:
       "一个安静的页面，怎样才不会显得空洞？答案藏在那些大多数人注意不到的地方。",

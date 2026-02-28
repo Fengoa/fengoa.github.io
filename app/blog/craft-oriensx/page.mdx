@@ -1,10 +1,15 @@
-# Crafting Oriensx
+# 安静但不是什么都没有
 
 做这个网站的时候，我一直在想一个问题：一个安静的页面，怎样才不会显得空洞？
 
 答案藏在那些大多数人注意不到的地方——一条沿着边框缓慢移动的光束，极浅的网格参考线，鼠标悬停一秒后才开始的动画序列。它们都很小，但去掉任何一个，页面就会少点什么。
 
-这篇文章记录搭建这个网站时的一些思考和实现。不是教程，更像是做一件小事时留下的笔记。
+这篇文章记录搭建这个网站时的一些思考和实现。
+
+{/* TODO: 插入网站整体截图 */}
+{/* ![网站整体预览](/images/blog/craft-oriensx/overview.png) */}
+
+---
 
 ## 设计垂点
 
@@ -14,22 +19,18 @@
 
 它们有一个共同点：安静，但不无聊。
 
-"安静"如果处理不好就会变成"空洞"。我需要找到一个垂点——一个细微的、持续的动态元素，让页面在安静中透出一点生命力。
-
-这个垂点最终是页面边缘的那条光束。
+"安静"如果处理不好就会变成"空洞"。我需要找到一个垂点——一个细微的、持续的动态元素，让页面在安静中透出一点生命力。这个垂点最终是页面边缘的那条光束。
 
 ## 边框光束
 
 `BorderBeam` 是我从 [Magic UI](https://magicui.design) 借鉴的组件。一个小方块沿着页面的矩形边框缓慢移动，80 秒绕一圈。
 
-技术上，它用了 CSS 的 [offset-path](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-path)，让元素沿着 `rect(...)` 路径运动。光束本身是一个带渐变的正方形——从金色 `#ffaa40` 到紫色 `#9c40ff` 再到透明，模拟彗星拖尾的效果。
+{/* TODO: 插入边框光束的录屏/动图 */}
+{/* ![边框光束效果](/images/blog/craft-oriensx/border-beam.gif) */}
 
-比较巧妙的是外层容器的遮罩处理。它用了两层 CSS mask：
+技术上，它用了 CSS 的 [offset-path](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-path)，让元素沿着 `rect(...)` 路径运动。光束本身是一个带渐变的正方形——从金色到紫色再到透明，模拟彗星拖尾的效果。
 
-- 第一层在 `padding-box` 上是全透明的
-- 第二层在 `border-box` 上是全不透明的
-
-两者取交集（`mask-composite: intersect`），最终只有边框区域可见。这意味着光束只会在边框上"露出来"，不会侵入内容区域。
+比较巧妙的是遮罩处理。外层容器用了两层 CSS mask，取交集后只保留边框区域可见：
 
 ```css
 mask: linear-gradient(transparent, transparent),
@@ -38,87 +39,96 @@ mask-clip: padding-box, border-box;
 mask-composite: intersect;
 ```
 
-然后交给 Framer Motion 做 `offsetDistance` 从 0% 到 100% 的无限循环动画。匀速、安静、持续。
-
-我觉得这就是我要的那个"垂点"。
+然后交给 Framer Motion 做 `offsetDistance` 从 0% 到 100% 的无限循环。匀速、安静、持续。这就是我要的那个"垂点"。
 
 ## 网格系统
 
 网格是这个网站的骨架。不只是布局意义上的，更是视觉语言上的。
 
+{/* TODO: 插入网格参考线的截图，展示参考线和十字交叉点 */}
+{/* ![网格参考线](/images/blog/craft-oriensx/grid-system.png) */}
+
 我搭建了一套 `Grid` 复合组件：`Grid.System`、`Grid.Cell`、`Grid.Cross`。它做的事情本质上很简单——生成 CSS Grid 容器和参考线，但细节不少。
 
-**参考线的生成。** 每个网格容器会根据行列数自动计算需要多少条参考线，然后用绝对定位的 `div` 画出来。每个格子有右边框和下边框，相邻网格之间通过负 margin（`mt-[calc(var(--guide-width)*-1)]`）让边框重叠，避免双倍粗线。
+每个网格容器会根据行列数自动生成参考线。每个格子用绝对定位的 `div` 画右边框和下边框，相邻网格之间通过负 margin 让边框重叠，避免双倍粗线：
 
-**合并区域的处理。** 当某些格子需要合并时（比如 Hero 区域横跨 10 列），内部多余的参考线要自动隐藏。`getHiddenBorders` 函数会遍历所有合并区域，判断当前格子是否在某个合并区域内部，如果是，就把它的右/下边框去掉。
+```tsx
+<div
+  className="flex flex-col [&>.grid+.grid]:mt-[calc(var(--guide-width)*-1)]"
+  style={{ "--guide-width": `${guideWidth}px` }}
+>
+  {children}
+</div>
+```
 
-**响应式。** 桌面端和移动端各维护一套独立的参考线，通过 `max-md:hidden` / `md:hidden` 切换，并用内联 `<style>` 标签注入媒体查询覆盖 `grid-template-columns`。
+当某些格子需要合并时（比如 Hero 区域横跨 10 列），内部多余的参考线要自动隐藏。`getHiddenBorders` 会遍历所有合并区域，判断当前格子是否在内部，如果是就把对应的边框去掉。
 
-**十字交叉点。** `Grid.Cross` 在网格线的交叉点绘制一个小小的 SVG 十字，支持四个锚点位置。这是一个纯装饰元素，但它让网格系统从"布局工具"变成了"视觉语言"。
+`Grid.Cross` 在网格线的交叉点绘制一个小小的 SVG 十字。这是一个纯装饰元素，但它让网格系统从"布局工具"变成了"视觉语言"。
 
-这些参考线在最终呈现时是极浅的，大多数人可能注意不到。但它们让整个页面有了一种"对齐的安心感"——像稿纸上的格线一样。
+这些参考线在最终呈现时是极浅的，大多数人可能注意不到。但它们让整个页面有了一种对齐的安心感——像稿纸上的格线一样。
 
 ## 导航的悬停序列
 
 导航栏只有四个入口：博客、品味、产品、我的。每个搭配一个小图标。
+
+{/* TODO: 插入导航悬停动画的录屏/动图 */}
+{/* ![导航悬停序列](/images/blog/craft-oriensx/nav-hover.gif) */}
 
 我给它们做了一个悬停时的序列动画。不是简单的颜色变化或缩放，而是一个有节奏的多步骤过程：
 
 1. 鼠标悬停，等待 1 秒
 2. 图标播放自己的动画
 3. 等待 500 毫秒
-4. 文字出现闪光（TextShimmer）扫过
+4. 文字出现闪光扫过
 5. 闪光持续 800 毫秒后消失
-6. 等待 2 秒，回到步骤 2 循环
+6. 等待 2 秒，循环
 
-这些全部由一个自定义 hook `useHoverSequence` 编排。核心是嵌套的 `setTimeout`，在每一步结束时检查鼠标是否还在（`hoveredRef.current`），如果离开了就立刻停止，清掉所有定时器。
+这些全部由一个自定义 hook `useHoverSequence` 编排。核心是嵌套的 `setTimeout`，在每一步结束时检查鼠标是否还在，离开就立刻停止并清掉所有定时器：
 
-`TextShimmer` 的实现也值得一提。它用了双层 `background-image` 配合 `background-clip: text`：底层是纯色作为文字基色，上层是一条移动的高亮渐变带。通过 `backgroundPosition` 动画从 100% 扫到 0%，产生闪光效果。渐变带的宽度还会根据文字长度动态调整。
+```ts
+const playSequence = useCallback(() => {
+  iconRef.current?.startAnimation();
+  addTimer(() => {
+    if (!hoveredRef.current) return;
+    setIsShimmering(true);
+    addTimer(() => {
+      setIsShimmering(false);
+      addTimer(() => {
+        if (!hoveredRef.current) return;
+        playSequence();
+      }, loopDelay);
+    }, shimmerDuration);
+  }, shimmerDelay);
+}, [addTimer, shimmerDelay, shimmerDuration, loopDelay]);
+```
+
+文字闪光（`TextShimmer`）用了双层 `background-image` 配合 `background-clip: text`：底层是纯色作为文字基色，上层是一条移动的高亮渐变带，通过 `backgroundPosition` 动画扫过产生闪光。
 
 整个序列的目的只是让鼠标悬停时，那个小区域有一点"活起来"的感觉。不急不缓。
 
 ## 主题切换
 
-主题切换器放在页脚。三个小图标：系统、亮色、暗色。
+主题切换器放在页脚，三个小图标：系统、亮色、暗色。
 
-它用了 `AnimatedBackground` 组件——这是基于 Framer Motion 的 `layoutId` 共享布局动画。所有按钮背后共享同一个 `layoutId` 的半透明背景 div，点击时背景会平滑地"滑"到被选中的按钮上。
+{/* TODO: 插入主题切换的录屏/动图 */}
+{/* ![主题切换](/images/blog/craft-oriensx/theme-switcher.gif) */}
 
-用 `next-themes` 管理主题状态，为了避免 SSR 和 CSR 之间主题不匹配导致的闪烁，组件在 `useEffect` 后才渲染。
+它用了 `AnimatedBackground` 组件——基于 Framer Motion 的 `layoutId` 共享布局动画。所有按钮背后共享同一个 `layoutId` 的半透明背景 div，点击时背景平滑地"滑"到被选中的按钮上。
 
 一个很小的交互，但用对了动画之后，三个按钮之间的切换变得非常自然。
 
 ## 博客与 MDX
 
-博客用的是 MDX。Next.js 通过 `@next/mdx` 插件直接支持在 `app` 目录下使用 `.mdx` 文件作为页面。
+博客用的是 MDX，在 `mdx-components.tsx` 中定义了所有基础元素的样式映射：
 
-MDX 的好处是可以在 Markdown 中嵌入 React 组件。不过目前我还没有做太多花哨的事，主要是在 `mdx-components.tsx` 中定义了所有基础元素的样式映射：
+{/* TODO: 插入文章排版效果的截图，展示标题装饰线、外链箭头、代码高亮等 */}
+{/* ![MDX 排版细节](/images/blog/craft-oriensx/mdx-typography.png) */}
 
-- 标题会自动生成 `id`，配合侧边栏的 `TableOfContents` 组件实现目录锚点跳转
-- H2 标题上方有一条 3px 高、24px 宽的短横线装饰
-- 外部链接会自动添加右上角的小箭头图标，并在新标签页打开
-- 有序列表使用 CSS `counter` 自定义序号样式
-- 加粗文字带虚线下划线
-- 代码高亮使用 [sugar-high](https://github.com/huozhi/sugar-high)，一个非常轻量的高亮库
-
-代码高亮的选择也是一个取舍。`sugar-high` 不到 1KB，没有外部依赖，直接输出 HTML。它不如 Shiki 或 Prism 那么精细，但对于一个以散文为主的博客来说，够用了。轻量、简单、不引入额外复杂性。
-
-## 页脚的两句话
-
-页脚有一个文字循环组件 `TextLoop`，每 6 秒切换一次：
-
-> © 2026 Oriensx.
-
-> Be quiet.
-
-"Be quiet" 是对整个网站气质的一句概括。它用 `AnimatePresence` 做了一个很轻的进出动画——新文本从下方 20px 滑入，旧文本向上 20px 滑出，同时透明度渐变。`popLayout` 模式让退出的元素脱离布局流，不影响进入元素的位置。
-
-## 静态导出
-
-整个网站用 `output: "export"` 做静态导出，部署在 GitHub Pages 上。这意味着没有服务端渲染，没有 API 路由，没有图片优化。
-
-这是一个限制，但也是一种简化。不需要维护服务器，不需要担心运行时环境。构建完成后就是一堆 HTML、CSS、JS 文件，放到任何静态托管上都能跑。
-
-对于一个个人网站来说，这足够了。
+- 标题自动生成 `id`，配合侧边栏的目录组件实现锚点跳转
+- H2 标题上方有一条短横线装饰
+- 外部链接自动添加右上角的小箭头图标
+- 有序列表使用 CSS `counter` 自定义序号
+- 代码高亮使用 [sugar-high](https://github.com/huozhi/sugar-high)，不到 1KB，没有外部依赖
 
 ## 最后
 
