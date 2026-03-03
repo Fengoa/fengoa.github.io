@@ -1,16 +1,12 @@
-# 表达的欲望：这个网站是怎么搭建的
+# 搭建这个网站
 
-铺天盖地的信息流渐渐地涨满了注意力的池子，算法又不是什么新鲜事，早喂得我脑满肠肥，欲罢不能。我又一次想要掌控习惯。
-
-## 设定边界，现实降噪
-
-我性格安静，却并不匮乏表达的欲望。只是在算法和噪音构筑的广场上，表达往往会被稀释成廉价的情绪。于是我决定亲手建立这块自留地。
+再安静性格的人，也有表达的欲望和需求。只是在算法和噪音构筑的广场上，表达往往会被稀释成廉价的情绪。于是我决定亲手建立这块自留地。
 
 对我而言，搭建这个网站的过程是一场关于秩序的实验，我努力追求一种克制的、美丽优雅的呈现。这种美不为悦人，而为自洽。
 
 我的克制在于对内容的挑剔，而我的野心也昭然若现，试图在这里构建一个半衰期极长的思维宫殿。它不仅仅是文字的堆砌，而是我作为一个开发者和思考者，对我自己世界进行拆解和重构的证明。
 
----
+## 现实降噪
 
 我希望这里像一处修剪整齐、美丽优雅的庭院。这里没有急促的实时反馈，只有植物生长的耐心。
 
@@ -27,7 +23,7 @@
 
 5. [wxad.design/abc](https://wxad.design/abc) 的交互很有分寸，让我受益匪浅。
 
-## 秩序的介入，网格系统
+---
 
 我做的第一件事是画格子。
 
@@ -72,6 +68,8 @@
 </div>
 ```
 
+## 网格系统
+
 `Grid.System` 是页面根容器，用 CSS 变量 `--guide-width` 控制线宽。
 
 相邻 Grid 接壤时边线会叠成双倍粗，用负 margin 抵消：`[&>.grid+.grid]:mt-[calc(var(--guide-width)*-1)]`。
@@ -103,6 +101,8 @@
     </Grid>
   </Grid.System>
 </DemoWithCode>
+
+**合并单元格**
 
 合并单元格时，跨多格的区域内部不该出现参考线。
 
@@ -166,6 +166,8 @@
   </Grid>
 </DemoWithCode>
 
+**十字标注**
+
 `Grid.Cross` 在指定行列的交叉点画 20×20 的 SVG 十字，`strokeWidth` 0.6，给网格加点建筑图纸的标注感。
 
 <DemoWithCode
@@ -188,20 +190,84 @@
   </Grid>
 </DemoWithCode>
 
+**响应式**
+
 响应式比较麻烦。桌面 12 列、移动端 1～2 列，列数一变参考线就得重算。桌面和移动各生成一套，用 `max-md:hidden` / `md:hidden` 切换。
 
-`grid-template-columns` 是运行时动态的，Tailwind 的响应式类覆盖不了，只好用 `<style>` 注入媒体查询。不优雅，但管用。
+`grid-template-columns` 是运行时动态的，Tailwind 的响应式类覆盖不了，只好用 `<style>` 注入媒体查询。不是很优雅，但管用，先用着。
 
-## 进入流动状态，捕捉动态灵感
+## 捕捉动态灵感
 
-## 打捞与固化，行动的意义
+**边框光束：80 秒的呼吸**
+
+网格让页面有了秩序，但秩序太强会显得冷。我想要一点点不那么安分的东西，给这个克制的页面增加一点灵动的感觉。一个安静的房间里，时钟的秒针在走，你不会觉得它吵，但它让安静变得可感知，边框光束就是这个网站的秒针。
+
+<div className="my-8 overflow-hidden rounded relative h-40 bg-card flex items-center justify-center">
+  <BorderBeam duration={80} size={50} />
+  <div className="text-muted-foreground/20 text-4xl">致 敬 浪 漫</div>
+</div>
+
+从 [Magic UI](https://magicui.design/docs/components/border-beam) 找来了 `BorderBeam`，一小截带渐变的光束，沿着视口边缘缓缓地走，80 秒绕一圈。80 秒大概是一个你不会主动去注意、但去掉之后会觉得页面少了点什么的节奏。嗯，是我想要的感觉了。
+
+**导航和链接的悬停**
+
+我做导航的时候一直在想一个问题：悬停反馈应该多快？
+
+大部分网站的做法是鼠标移上去立刻变色或者出现下划线。但我觉得"立刻"有点急。
+
+我想要一种感觉：你把鼠标放上去，什么都不发生，好像这个按钮不太在意你来没来。等一秒，图标慢慢动了一下；再等半秒，文字上有一道光扫过去，像是在提醒你怎么还不点击。然后安静两秒，再循环。
+
+写了个 `useHoverSequence` 来编排这件事。核心就是嵌套的 `setTimeout`，每一步结束时通过 `hoveredRef` 检查鼠标是否还在，不在就停下来：
+
+```ts
+const playSequence = useCallback(() => {
+  iconRef.current?.startAnimation();
+  addTimer(() => {
+    if (!hoveredRef.current) return;
+    setIsShimmering(true);
+    addTimer(() => {
+      setIsShimmering(false);
+      addTimer(() => {
+        if (!hoveredRef.current) return;
+        playSequence();
+      }, loopDelay);
+    }, shimmerDuration);
+  }, shimmerDelay);
+}, [addTimer, shimmerDelay, shimmerDuration, loopDelay]);
+```
+
+鼠标离开的瞬间，`handleLeave` 会一次性清掉所有定时器、停掉图标动画、关掉文字闪光。不等当前动画播完，直接切断。这样即使你快速在几个导航之间划过，也不会残留上一个的动画状态。
+
+文字闪光那个效果叫 `TextShimmer`，可以从 [Motion Primitives](https://motion-primitives.com/docs/text-shimmer) 找到。
+
+原理是用了双层 `background-image` 配合 `background-clip: text`：底层一个纯色 `linear-gradient` 做基色，上层一条窄窄的高亮渐变带，通过 `backgroundPosition` 从右扫到左。
+
+<DemoWithCode
+  code={`const seq = useHoverSequence();
+// → { iconRef, isShimmering, handleEnter, handleLeave }
+
+// 绑定到按钮
+onMouseEnter={seq.handleEnter}
+onMouseLeave={seq.handleLeave}
+
+// 图标通过 ref 受控
+<BrainIcon ref={seq.iconRef} isAnimated={false} />
+
+// 根据 isShimmering 切换文字渲染
+{seq.isShimmering
+  ? <TextShimmer>博客</TextShimmer>
+  : <span>博客</span>}`}
+  demoClassName="min-h-[80px]"
+>
+  <NavHoverDemo />
+</DemoWithCode>
+
+再之后我把这个效果用在了链接上。
 
 ## 最后，Be quiet
 
 这个网站没什么宏大的目的，想着有一个自己的地方，把做过的东西放在一起，坚持写点什么。
 
 大部分时间心思花在了用户可能根本注意不到的地方。80s 绕一圈的光束，1s 后才响应动画的导航及链接，精心处理过的网格，不留边界的导航模糊等这些，单独拿出来都不值一提，加在一起页面就有了一种说不出的“舒服”的感觉。
-
-可能是过度设计了。做自己的网站嘛，就该允许自己的小心思。
 
 最后，页脚的 “Be quiet.” 差不多概括了我此时的心境。

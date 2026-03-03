@@ -6,7 +6,7 @@ import type { PostData } from "@/components/blog/post-card";
 const posts: PostData[] = [
   {
     slug: "craft-oriensx",
-    title: "表达的欲望：这个网站是怎么搭建的",
+    title: "搭建这个网站",
     date: "2026-03-02",
     summary:
       "搭建这个网站的过程是一场关于秩序的实验，我努力追求一种克制的、美丽优雅的呈现。这种美不为悦人，而为自洽。",
