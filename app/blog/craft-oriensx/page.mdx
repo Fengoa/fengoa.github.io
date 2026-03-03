@@ -10,23 +10,22 @@
 
 我的克制在于对内容的挑剔，而我的野心也昭然若现，试图在这里构建一个半衰期极长的思维宫殿。它不仅仅是文字的堆砌，而是我作为一个开发者和思考者，对我自己世界进行拆解和重构的证明。
 
+---
+
 我希望这里像一处修剪整齐、美丽优雅的庭院。这里没有急促的实时反馈，只有植物生长的耐心。
 
 这种表达的欲望，不再是向外的宣泄，更多的是向内的挖掘。我在这片自留地里耕作，将那些狂野的、野心勃勃的想法，驯化成逻辑严密的篇章。
 
-## 进入流动状态，捕捉动态灵感
-
 动手之前先看了一圈别人的网站。
 
-[Rauno](https://rauno.me) 的交互和动效很惊艳，我希望是有一个安静的带点闷骚的体验，可以来着这里参考对运动的感觉。
+1. [Rauno](https://rauno.me) 的交互和动效很惊艳，我希望是有一个安静的带点闷骚的体验，可以来着这里参考对运动的感觉。
 
-[Paco](https://paco.me) 的留白用得很舒服，结构和配图都恰到好处，可以来这里参考对空间的掌控。
+2. [Paco](https://paco.me) 的留白用得很舒服，结构和配图都恰到好处，可以来这里参考对空间的掌控。
+3. [Lee Robinson](https://leerob.com) 结构清楚，跳转明确，是对控制的好的表达方式。
 
-[Lee Robinson](https://leerob.com) 结构清楚，跳转明确，是对控制的好的表达方式。
+4. [Vercel](https://vercel.com) 的网格感让页面看着很稳，是对秩序最好的表达。
 
-[Vercel](https://vercel.com) 的网格感让页面看着很稳，是对秩序最好的表达。
-
-[wxad.design/abc](https://wxad.design/abc) 的交互很有分寸，让我受益匪浅。
+5. [wxad.design/abc](https://wxad.design/abc) 的交互很有分寸，让我受益匪浅。
 
 ## 秩序的介入，网格系统
 
@@ -42,19 +41,20 @@
 
 而我们想要的是：只声明行列数，只放需要放内容的格子，参考线自动出现。稀疏布局、跨行跨列的单元格，都要能正常工作。
 
-关键在 `display: contents`。这个属性让元素的子节点「穿透」到父级，在布局上仿佛父元素不存在。
+关键在 `display: contents`。这个属性**让元素的子节点「穿透」到父级**，在布局上仿佛父元素不存在。
 
 对网格来说：参考线层用一个 `display: contents` 的容器包住，里面渲染 `rows × columns` 个绝对定位的 div，每个用 `grid-column-start` / `grid-row-start` 占住对应格子，画右边框和下边框。
 
 容器本身不参与布局，这些 div 在视觉上铺满网格，又不影响真正的子元素排布。而且因为参考线是独立的一层，`Grid.Cell` 用 `row="auto"`、`column="auto"` 时也不会把网格搞乱——没有 `display: contents` 的话，这种写法会直接崩掉。
 
 ```tsx
-// 参考线层：contents 让子元素参与网格布局，父容器不占位
-<div className="contents">
-  {Array.from({ length: rows * columns }, (_, i) => {
-    const x = (i % columns) + 1;
-    const y = Math.floor(i / columns) + 1;
-    return (
+<div className="grid relative">
+  {/* 参考线层：contents 让子元素参与网格布局，父容器不占位 */}
+  <div className="contents">
+    {Array.from({ length: rows * columns }, (_, i) => {
+      const x = (i % columns) + 1;
+      const y = Math.floor(i / columns) + 1;
+      return (
       <div
         key={i}
         className="absolute inset-0 pointer-events-none"
@@ -65,25 +65,134 @@
           borderBottom: "var(--gw, 1px) solid var(--border)",
         }}
       />
-    );
-  })}
+      );
+    })}
+  </div>;
+  {children}
 </div>
-{children}
 ```
 
-`Grid.System` 是页面根容器，用 CSS 变量 `--guide-width` 控制线宽。相邻 Grid 接壤时边线会叠成双倍粗，用负 margin 抵消：`[&>.grid+.grid]:mt-[calc(var(--guide-width)*-1)]`。
+`Grid.System` 是页面根容器，用 CSS 变量 `--guide-width` 控制线宽。
+
+相邻 Grid 接壤时边线会叠成双倍粗，用负 margin 抵消：`[&>.grid+.grid]:mt-[calc(var(--guide-width)*-1)]`。
+
+<DemoWithCode
+  code={`<Grid.System className="items-center">
+    <Grid rows={1} columns={2}>
+      <Grid.Cell row={1} column={1} />
+      <Grid.Cell row={1} column={2} />
+    </Grid>
+    <Grid rows={1} columns={4}>
+      <Grid.Cell row={1} column={1} />
+      <Grid.Cell row={1} column={2} />
+      <Grid.Cell row={1} column={3} />
+      <Grid.Cell row={1} column={4} />
+    </Grid>
+</Grid.System>`}
+>
+  <Grid.System className="items-center">
+    <Grid rows={1} columns={2} className="w-25">
+      <Grid.Cell row={1} column={1} className="aspect-square" />
+      <Grid.Cell row={1} column={2} className="aspect-square" />
+    </Grid>
+    <Grid rows={1} columns={4} className="w-50">
+      <Grid.Cell row={1} column={1} className="aspect-square" />
+      <Grid.Cell row={1} column={2} className="aspect-square" />
+      <Grid.Cell row={1} column={3} className="aspect-square" />
+      <Grid.Cell row={1} column={4} className="aspect-square" />
+    </Grid>
+  </Grid.System>
+</DemoWithCode>
 
 合并单元格时，跨多格的区域内部不该出现参考线。
 
 `getHiddenBorders` 遍历合并区域，判断当前格是否在区域内部，是的话把对应右边框或下边框设为 `none`。做法朴素，但能正确处理 Hero 那种「第二行中间 10 格合并放标题」的情况。
 
+<DemoWithCode
+  code={`<Grid
+    rows={4}
+    columns={4}
+    mergedAreas={[{ row: 2, column: 2, rowSpan: 2, colSpan: 2 }]}
+  >
+  {[
+    <Grid.Cell key="2-1" row={2} column={1} />,
+    <Grid.Cell key="2-4" row={2} column={4} />,
+    <Grid.Cell row={2} column={2} rowSpan={2} colSpan={2}>
+    合并
+    </Grid.Cell>
+    <Grid.Cell key="3-1" row={3} column={1} />,
+    <Grid.Cell key="3-4" row={3} column={4} />,
+  ]}
+ 
+</Grid>`}
+>
+  <Grid
+    rows={4}
+    columns={4}
+    mergedAreas={[{ row: 2, column: 2, rowSpan: 2, colSpan: 2 }]}
+    className="w-50"
+  >
+    {[
+      ...[1, 2, 3, 4].map((c) => (
+        <Grid.Cell
+          key={`1-${c}`}
+          row={1}
+          column={c}
+          className="aspect-square"
+        />
+      )),
+      <Grid.Cell key="2-1" row={2} column={1} className="aspect-square" />,
+      <Grid.Cell key="2-4" row={2} column={4} className="aspect-square" />,
+      <Grid.Cell key="3-1" row={3} column={1} className="aspect-square" />,
+      <Grid.Cell key="3-4" row={3} column={4} className="aspect-square" />,
+      ...[1, 2, 3, 4].map((c) => (
+        <Grid.Cell
+          key={`4-${c}`}
+          row={4}
+          column={c}
+          className="aspect-square"
+        />
+      )),
+    ]}
+    <Grid.Cell
+      row={2}
+      column={2}
+      rowSpan={2}
+      colSpan={2}
+      className="aspect-square flex items-center justify-center bg-muted/50 text-xs"
+    >
+      合并
+    </Grid.Cell>
+  </Grid>
+</DemoWithCode>
+
 `Grid.Cross` 在指定行列的交叉点画 20×20 的 SVG 十字，`strokeWidth` 0.6，给网格加点建筑图纸的标注感。
+
+<DemoWithCode
+  code={`<Grid rows={4} columns={4}>
+    <Grid.Cross column={1} row={1} />
+    <Grid.Cross column={2} row={5} />
+</Grid>`}
+>
+  <Grid rows={2} columns={4} className="w-50">
+    {Array.from({ length: 8 }, (_, i) => (
+      <Grid.Cell
+        key={i}
+        row={Math.floor(i / 4) + 1}
+        column={(i % 2) + 1}
+        className="aspect-square"
+      />
+    ))}
+    <Grid.Cross column={1} row={1} />
+    <Grid.Cross column={5} row={3} />
+  </Grid>
+</DemoWithCode>
 
 响应式比较麻烦。桌面 12 列、移动端 1～2 列，列数一变参考线就得重算。桌面和移动各生成一套，用 `max-md:hidden` / `md:hidden` 切换。
 
 `grid-template-columns` 是运行时动态的，Tailwind 的响应式类覆盖不了，只好用 `<style>` 注入媒体查询。不优雅，但管用。
 
-最终参考线极浅，不看不会注意到，但页面上所有东西都在格线上。
+## 进入流动状态，捕捉动态灵感
 
 ## 打捞与固化，行动的意义
 

@@ -15,7 +15,7 @@ export const H2 = ({ children, ...props }: ComponentPropsWithoutRef<"h2">) => {
   return (
     <h2
       id={id}
-      className="relative mb-8 mt-24 text-xl md:text-2xl font-medium"
+      className="relative mb-8 mt-16 text-xl md:text-2xl font-medium"
       {...props}
     >
       {children}
@@ -37,7 +37,10 @@ export const H3 = ({ children, ...props }: ComponentPropsWithoutRef<"h3">) => {
 };
 
 export const P = (props: ComponentPropsWithoutRef<"p">) => (
-  <p className="mb-4 last:mb-0 leading-relaxed text-foreground/80" {...props} />
+  <p
+    className="mb-4 last:mb-0 leading-relaxed text-secondary-foreground"
+    {...props}
+  />
 );
 
 export const A = ({
@@ -47,7 +50,7 @@ export const A = ({
 }: ComponentPropsWithoutRef<"a">) => {
   const isInternal = href?.startsWith("/");
   const className =
-    "text-blue-500 hover:underline hover:decoration-dotted hover:decoration-current hover:underline-offset-4 transition-all";
+    "text-blue-600 hover:underline hover:decoration-dotted hover:decoration-current hover:underline-offset-4 transition-all";
 
   if (isInternal) {
     return (
@@ -58,7 +61,7 @@ export const A = ({
   }
 
   return (
-    <ExternalLink href={href || "#"}>
+    <ExternalLink href={href || "#"} className="text-blue-600 align-text-top">
       {children}
     </ExternalLink>
   );
@@ -74,10 +77,10 @@ export const Ol = ({ children, ...props }: ComponentPropsWithoutRef<"ol">) => (
       child?.type === "li" ? (
         <li
           key={index}
-          className="flex mb-2 before:content-[counter(counts)_'._'] before:pr-4 before:font-mono before:font-medium before:text-gray-500"
+          className="flex mb-2 before:content-[counter(counts)_'._'] before:pr-4 before:font-mono before:font-medium before:text-muted-foreground"
           style={{ counterIncrement: "counts 1" }}
         >
-          <div className="flex-1 text-foreground/80">
+          <div className="flex-1 text-secondary-foreground">
             {child.props.children}
           </div>
         </li>
@@ -89,28 +92,31 @@ export const Ol = ({ children, ...props }: ComponentPropsWithoutRef<"ol">) => (
 );
 
 export const Ul = ({ children, ...props }: ComponentPropsWithoutRef<"ul">) => (
-  <ul className="mb-4 list-disc list-inside text-foreground/80" {...props}>
+  <ul
+    className="mb-4 list-disc list-inside text-secondary-foreground"
+    {...props}
+  >
     {children}
   </ul>
 );
 
 export const Strong = (props: ComponentPropsWithoutRef<"strong">) => (
   <strong
-    className="font-bold underline decoration-dotted decoration-current underline-offset-4"
+    className="font-semibold text-secondary-foreground underline decoration-dotted decoration-current underline-offset-4"
     {...props}
   />
 );
 
 export const Blockquote = (props: ComponentPropsWithoutRef<"blockquote">) => (
   <blockquote
-    className="mb-4 pl-4 border-l-2 border-gray-500 text-foreground/70 italic"
+    className="mb-4 pl-4 border-l-2 border-secondary-foreground text-secondary-foreground"
     {...props}
   />
 );
 
 export const Pre = (props: ComponentPropsWithoutRef<"pre">) => (
   <pre
-    className="mb-8 py-4 px-4 border border-neutral-200 dark:border-neutral-800 rounded-md overflow-auto bg-transparent font-mono text-sm leading-relaxed"
+    className="mb-8 py-4 px-4 border bg-card rounded overflow-auto font-mono text-sm leading-relaxed"
     {...props}
   />
 );
@@ -124,7 +130,7 @@ export const Code = ({
   if (isInline) {
     return (
       <code
-        className="bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-md text-[0.9em] font-mono text-foreground/90 border border-neutral-200/50 dark:border-neutral-700/50"
+        className="bg-accent px-1.5 py-0.5 rounded text-[0.9em] font-mono text-foreground border"
         {...props}
       >
         {children}

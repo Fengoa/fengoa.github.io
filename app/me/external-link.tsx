@@ -6,12 +6,14 @@ import {
   ExternalLinkIcon,
   type ExternalLinkIconHandle,
 } from "@/components/ui/external-link-icon";
+import { cn } from "@/lib/utils";
 
 interface ExternalLinkProps {
   href: string;
   children: ReactNode;
   icon?: ReactNode;
   showArrow?: boolean;
+  className?: string;
 }
 
 export function ExternalLink({
@@ -19,6 +21,7 @@ export function ExternalLink({
   children,
   icon,
   showArrow = true,
+  className,
 }: ExternalLinkProps) {
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const hoveredRef = useRef(false);
@@ -74,7 +77,10 @@ export function ExternalLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center text-muted-foreground gap-0.5 hover:text-blue-600 transition-colors"
+      className={cn(
+        "inline-flex items-center text-muted-foreground gap-0.5 hover:text-blue-600 transition-colors",
+        className
+      )}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >

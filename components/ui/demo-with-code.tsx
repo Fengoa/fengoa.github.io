@@ -33,7 +33,7 @@ export function DemoWithCode({
   return (
     <div
       className={cn(
-        "my-8 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800",
+        "my-8 overflow-hidden rounded border",
         className
       )}
     >
@@ -48,7 +48,7 @@ export function DemoWithCode({
       </div>
 
       {/* 代码区域 */}
-      <div className="relative border-t border-neutral-200 dark:border-neutral-800 bg-transparent">
+      <div className="relative border-t bg-card">
         <pre className="overflow-auto p-4 font-mono text-sm leading-relaxed">
           <code
             className={cn("grid min-w-full", `language-${language}`)}
