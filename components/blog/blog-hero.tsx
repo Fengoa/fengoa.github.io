@@ -26,9 +26,7 @@ export function BlogHero() {
         <Grid.Cell row={1} column={2} colSpan={10}>
           <div className="flex flex-col items-center justify-center py-8">
             <h1 className="text-4xl md:text-5xl font-bold leading-tight text-foreground text-center">
-              从想法到产品
-              <br />
-              持续探索和思考
+              好的故事
             </h1>
             <p className="text-secondary-foreground text-center max-w-md mt-4">
               沙漠中融化的雪，加快了春暖花开。

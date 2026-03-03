@@ -1,139 +1,98 @@
-# 安静但不是什么都没有
+# 表达的欲望：这个网站是怎么搭建的
 
-做这个网站的时候，我一直在想一个问题：一个安静的页面，怎样才不会显得空洞？
+铺天盖地的信息流渐渐地涨满了注意力的池子，算法又不是什么新鲜事，早喂得我脑满肠肥，欲罢不能。我又一次想要掌控习惯。
 
-答案藏在那些大多数人注意不到的地方——一条沿着边框缓慢移动的光束，极浅的网格参考线，鼠标悬停一秒后才开始的动画序列。它们都很小，但去掉任何一个，页面就会少点什么。
+## 设定边界，现实降噪
 
-这篇文章记录搭建这个网站时的一些思考和实现。
+我性格安静，却并不匮乏表达的欲望。只是在算法和噪音构筑的广场上，表达往往会被稀释成廉价的情绪。于是我决定亲手建立这块自留地。
 
-{/* TODO: 插入网站整体截图 */}
-{/* ![网站整体预览](/images/blog/craft-oriensx/overview.png) */}
+对我而言，搭建这个网站的过程是一场关于秩序的实验，我努力追求一种克制的、美丽优雅的呈现。这种美不为悦人，而为自洽。
 
----
+我的克制在于对内容的挑剔，而我的野心也昭然若现，试图在这里构建一个半衰期极长的思维宫殿。它不仅仅是文字的堆砌，而是我作为一个开发者和思考者，对我自己世界进行拆解和重构的证明。
 
-## 设计垂点
+我希望这里像一处修剪整齐、美丽优雅的庭院。这里没有急促的实时反馈，只有植物生长的耐心。
 
-动手之前我花了不少时间看别人的网站。[Rauno](https://rauno.me) 的站一直是我喜欢的，还有 [Paco](https://paco.me)、[Lee Robinson](https://leerob.com)。整体的视觉语言很大程度上参考了 [Vercel](https://vercel.com) 的设计——网格、留白、克制的动效，这些东西在 Vercel 的产品里已经被打磨得很成熟了，我没有理由不从中学习。
+这种表达的欲望，不再是向外的宣泄，更多的是向内的挖掘。我在这片自留地里耕作，将那些狂野的、野心勃勃的想法，驯化成逻辑严密的篇章。
 
-另一个对我影响很大的是 [wxad.design/abc](https://wxad.design/abc)。这个站让我意识到，一个个人站点可以同时是作品集、是设计表达、也是技术实验场。它对细节的处理方式——交互的节奏、动画的分寸感——给了我很多灵感。
+## 进入流动状态，捕捉动态灵感
 
-它们有一个共同点：安静，但不无聊。
+动手之前先看了一圈别人的网站。
 
-"安静"如果处理不好就会变成"空洞"。我需要找到一个垂点——一个细微的、持续的动态元素，让页面在安静中透出一点生命力。这个垂点最终是页面边缘的那条光束。
+[Rauno](https://rauno.me) 的交互和动效很惊艳，我希望是有一个安静的带点闷骚的体验，可以来着这里参考对运动的感觉。
 
-## 边框光束
+[Paco](https://paco.me) 的留白用得很舒服，结构和配图都恰到好处，可以来这里参考对空间的掌控。
 
-`BorderBeam` 是我从 [Magic UI](https://magicui.design) 借鉴的组件。一个小方块沿着页面的矩形边框缓慢移动，80 秒绕一圈。
+[Lee Robinson](https://leerob.com) 结构清楚，跳转明确，是对控制的好的表达方式。
 
-{/* TODO: 插入边框光束的录屏/动图 */}
-{/* ![边框光束效果](/images/blog/craft-oriensx/border-beam.gif) */}
+[Vercel](https://vercel.com) 的网格感让页面看着很稳，是对秩序最好的表达。
 
-技术上，它用了 CSS 的 [offset-path](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-path)，让元素沿着 `rect(...)` 路径运动。光束本身是一个带渐变的正方形——从金色到紫色再到透明，模拟彗星拖尾的效果。
+[wxad.design/abc](https://wxad.design/abc) 的交互很有分寸，让我受益匪浅。
 
-比较巧妙的是遮罩处理。外层容器用了两层 CSS mask，取交集后只保留边框区域可见：
+## 秩序的介入，网格系统
 
-```css
-mask: linear-gradient(transparent, transparent),
-      linear-gradient(#000, #000);
-mask-clip: padding-box, border-box;
-mask-composite: intersect;
-```
+我做的第一件事是画格子。
 
-然后交给 Framer Motion 做 `offsetDistance` 从 0% 到 100% 的无限循环。匀速、安静、持续。这就是我要的那个"垂点"。
+我想要的更接近建筑图纸上的参考线。我们写字的时候不会去看格线，但格线让字不会歪到一边去，网页上也是同理。
 
-## 网格系统
+搭了一套 `Grid` 复合组件，技术实现的基本思路来自 Vercel 设计师的[What will you ship?](https://rauno.me/craft/vercel#grid-system)。
 
-网格是这个网站的骨架。不只是布局意义上的，更是视觉语言上的。
+画参考线这件事，乍看简单，其实有个根本矛盾。
 
-{/* TODO: 插入网格参考线的截图，展示参考线和十字交叉点 */}
-{/* ![网格参考线](/images/blog/craft-oriensx/grid-system.png) */}
+最常见的做法是：给每个格子画右边框和下边框，再给容器补上上边框和左边框，拼起来就是完整网格。但这种方式要求**每个格子都必须有对应的 DOM 节点**——你得老老实实写满 `rows × columns` 个空 div。
 
-我搭建了一套 `Grid` 复合组件：`Grid.System`、`Grid.Cell`、`Grid.Cross`。它做的事情本质上很简单——生成 CSS Grid 容器和参考线，但细节不少。
+而我们想要的是：只声明行列数，只放需要放内容的格子，参考线自动出现。稀疏布局、跨行跨列的单元格，都要能正常工作。
 
-每个网格容器会根据行列数自动生成参考线。每个格子用绝对定位的 `div` 画右边框和下边框，相邻网格之间通过负 margin 让边框重叠，避免双倍粗线：
+关键在 `display: contents`。这个属性让元素的子节点「穿透」到父级，在布局上仿佛父元素不存在。
+
+对网格来说：参考线层用一个 `display: contents` 的容器包住，里面渲染 `rows × columns` 个绝对定位的 div，每个用 `grid-column-start` / `grid-row-start` 占住对应格子，画右边框和下边框。
+
+容器本身不参与布局，这些 div 在视觉上铺满网格，又不影响真正的子元素排布。而且因为参考线是独立的一层，`Grid.Cell` 用 `row="auto"`、`column="auto"` 时也不会把网格搞乱——没有 `display: contents` 的话，这种写法会直接崩掉。
 
 ```tsx
-<div
-  className="flex flex-col [&>.grid+.grid]:mt-[calc(var(--guide-width)*-1)]"
-  style={{ "--guide-width": `${guideWidth}px` }}
->
-  {children}
+// 参考线层：contents 让子元素参与网格布局，父容器不占位
+<div className="contents">
+  {Array.from({ length: rows * columns }, (_, i) => {
+    const x = (i % columns) + 1;
+    const y = Math.floor(i / columns) + 1;
+    return (
+      <div
+        key={i}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          gridColumnStart: x,
+          gridRowStart: y,
+          borderRight: "var(--gw, 1px) solid var(--border)",
+          borderBottom: "var(--gw, 1px) solid var(--border)",
+        }}
+      />
+    );
+  })}
 </div>
+{children}
 ```
 
-当某些格子需要合并时（比如 Hero 区域横跨 10 列），内部多余的参考线要自动隐藏。`getHiddenBorders` 会遍历所有合并区域，判断当前格子是否在内部，如果是就把对应的边框去掉。
+`Grid.System` 是页面根容器，用 CSS 变量 `--guide-width` 控制线宽。相邻 Grid 接壤时边线会叠成双倍粗，用负 margin 抵消：`[&>.grid+.grid]:mt-[calc(var(--guide-width)*-1)]`。
 
-`Grid.Cross` 在网格线的交叉点绘制一个小小的 SVG 十字。这是一个纯装饰元素，但它让网格系统从"布局工具"变成了"视觉语言"。
+合并单元格时，跨多格的区域内部不该出现参考线。
 
-这些参考线在最终呈现时是极浅的，大多数人可能注意不到。但它们让整个页面有了一种对齐的安心感——像稿纸上的格线一样。
+`getHiddenBorders` 遍历合并区域，判断当前格是否在区域内部，是的话把对应右边框或下边框设为 `none`。做法朴素，但能正确处理 Hero 那种「第二行中间 10 格合并放标题」的情况。
 
-## 导航的悬停序列
+`Grid.Cross` 在指定行列的交叉点画 20×20 的 SVG 十字，`strokeWidth` 0.6，给网格加点建筑图纸的标注感。
 
-导航栏只有四个入口：博客、品味、产品、我的。每个搭配一个小图标。
+响应式比较麻烦。桌面 12 列、移动端 1～2 列，列数一变参考线就得重算。桌面和移动各生成一套，用 `max-md:hidden` / `md:hidden` 切换。
 
-{/* TODO: 插入导航悬停动画的录屏/动图 */}
-{/* ![导航悬停序列](/images/blog/craft-oriensx/nav-hover.gif) */}
+`grid-template-columns` 是运行时动态的，Tailwind 的响应式类覆盖不了，只好用 `<style>` 注入媒体查询。不优雅，但管用。
 
-我给它们做了一个悬停时的序列动画。不是简单的颜色变化或缩放，而是一个有节奏的多步骤过程：
+最终参考线极浅，不看不会注意到，但页面上所有东西都在格线上。
 
-1. 鼠标悬停，等待 1 秒
-2. 图标播放自己的动画
-3. 等待 500 毫秒
-4. 文字出现闪光扫过
-5. 闪光持续 800 毫秒后消失
-6. 等待 2 秒，循环
+## 打捞与固化，行动的意义
 
-这些全部由一个自定义 hook `useHoverSequence` 编排。核心是嵌套的 `setTimeout`，在每一步结束时检查鼠标是否还在，离开就立刻停止并清掉所有定时器：
+## 最后，Be quiet
 
-```ts
-const playSequence = useCallback(() => {
-  iconRef.current?.startAnimation();
-  addTimer(() => {
-    if (!hoveredRef.current) return;
-    setIsShimmering(true);
-    addTimer(() => {
-      setIsShimmering(false);
-      addTimer(() => {
-        if (!hoveredRef.current) return;
-        playSequence();
-      }, loopDelay);
-    }, shimmerDuration);
-  }, shimmerDelay);
-}, [addTimer, shimmerDelay, shimmerDuration, loopDelay]);
-```
+这个网站没什么宏大的目的，想着有一个自己的地方，把做过的东西放在一起，坚持写点什么。
 
-文字闪光（`TextShimmer`）用了双层 `background-image` 配合 `background-clip: text`：底层是纯色作为文字基色，上层是一条移动的高亮渐变带，通过 `backgroundPosition` 动画扫过产生闪光。
+大部分时间心思花在了用户可能根本注意不到的地方。80s 绕一圈的光束，1s 后才响应动画的导航及链接，精心处理过的网格，不留边界的导航模糊等这些，单独拿出来都不值一提，加在一起页面就有了一种说不出的“舒服”的感觉。
 
-整个序列的目的只是让鼠标悬停时，那个小区域有一点"活起来"的感觉。不急不缓。
+可能是过度设计了。做自己的网站嘛，就该允许自己的小心思。
 
-## 主题切换
-
-主题切换器放在页脚，三个小图标：系统、亮色、暗色。
-
-{/* TODO: 插入主题切换的录屏/动图 */}
-{/* ![主题切换](/images/blog/craft-oriensx/theme-switcher.gif) */}
-
-它用了 `AnimatedBackground` 组件——基于 Framer Motion 的 `layoutId` 共享布局动画。所有按钮背后共享同一个 `layoutId` 的半透明背景 div，点击时背景平滑地"滑"到被选中的按钮上。
-
-一个很小的交互，但用对了动画之后，三个按钮之间的切换变得非常自然。
-
-## 博客与 MDX
-
-博客用的是 MDX，在 `mdx-components.tsx` 中定义了所有基础元素的样式映射：
-
-{/* TODO: 插入文章排版效果的截图，展示标题装饰线、外链箭头、代码高亮等 */}
-{/* ![MDX 排版细节](/images/blog/craft-oriensx/mdx-typography.png) */}
-
-- 标题自动生成 `id`，配合侧边栏的目录组件实现锚点跳转
-- H2 标题上方有一条短横线装饰
-- 外部链接自动添加右上角的小箭头图标
-- 有序列表使用 CSS `counter` 自定义序号
-- 代码高亮使用 [sugar-high](https://github.com/huozhi/sugar-high)，不到 1KB，没有外部依赖
-
-## 最后
-
-回头看这个网站，它的每一个部分都不复杂。边框光束、网格参考线、导航悬停动画、主题切换——单独拿出来都是很小的事情。但把它们放在一起、调到合适的节奏，整体就有了一种气质。
-
-这种气质来自于那些"几乎注意不到"的细节。参考线让页面有了结构的暗示，光束让边缘有了呼吸，悬停序列让导航有了不急不缓的节奏。它们都不显眼，但如果去掉，页面就只是一个页面了。
-
-页脚写着 "Be quiet"，这大概是对整个网站最准确的概括。安静，但不是什么都没有。
+最后，页脚的 “Be quiet.” 差不多概括了我此时的心境。

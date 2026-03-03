@@ -6,10 +6,10 @@ import type { PostData } from "@/components/blog/post-card";
 const posts: PostData[] = [
   {
     slug: "craft-oriensx",
-    title: "安静但不是什么都没有",
-    date: "2026-02-26",
+    title: "表达的欲望：这个网站是怎么搭建的",
+    date: "2026-03-02",
     summary:
-      "一个安静的页面，怎样才不会显得空洞？答案藏在那些大多数人注意不到的地方。",
+      "",
   },
 ];
 

@@ -1,0 +1,221 @@
+# 趁碎影还在
+
+信息流涨满了屏幕，通知的繁响在四近，短视频的残影在眼前。是昏沉的夜。
+
+我关了所有 App，向后一仰，靠在椅背上。捏着一个还没写完的想法搁在脑子里。
+
+我在蒙胧中，看见一个安静的页面。
+
+{/* TODO: 插入网站整体截图 */}
+{/* ![网站整体预览](/images/blog/craft-oriensx/overview.png) */}
+
+---
+
+## 收藏夹里的碎影
+
+我逛过很多安静的网站。[Rauno](https://rauno.me) 的留白，[Paco](https://paco.me) 的节制，[Lee Robinson](https://leerob.com) 的清晰，[Vercel](https://vercel.com) 的网格，[wxad.design/abc](https://wxad.design/abc) 的交互分寸感。还有叫不出名字的个人站点，倒映在收藏夹里，随着每一次翻阅，各各夹带了闪烁的灵感，和脑子里的产品逻辑、代码架构，一同荡漾。
+
+诸影诸物，无不解散，而且摇动，扩大，互相融和；刚一融和，却又退缩，复近于原形。边缘都参差如夏云头，镶着屏幕光，发出水银色焰。
+
+一个产品逻辑在脑海里浮动，忽而碎散，拉长了，如缕缕的代码片段，然而没有落地。一种交互美学的直觉也在浮动。产品逻辑一条条全被拉长了，思绪织入交互中，交互织入代码中，代码织入审美中……。在一瞬间，它们又将退缩了。
+
+它们很美。但没有载体的灵感，终究只是水中倒影。
+
+所以我打开了编辑器。
+
+---
+
+## 网格：稿纸上的格线
+
+我想做的第一件事是画格子。
+
+我收藏夹里那些喜欢的网站，大部分有一种共同的气质：内容看上去是被"放"在某个精确的位置上的，而不是随便排的。我想要这种感觉。不是那种 12 列栅格、Bootstrap 式的工程味，而是更接近建筑制图，或者信纸——你写字的时候不会去看格线，但格线让你的字不会歪。
+
+{/* TODO: 插入网格参考线的截图，展示参考线和十字交叉点 */}
+{/* ![网格参考线](/images/blog/craft-oriensx/grid-system.png) */}
+
+我搭了一套 `Grid` 复合组件。`Grid.System` 是页面级容器，通过一个 CSS 变量 `--guide-width` 控制全局的参考线宽度。`Grid` 接收行列数，自动生成一层透明的边框参考线——每个格子用绝对定位的 `div` 画右边框和下边框，容器本身画上边框和左边框，这样所有格子拼在一起刚好形成完整的网格线。参考线层设了 `pointer-events-none`，和内容层完全分离，互不干扰。
+
+相邻的 Grid 之间通过负 margin 合并边框，不然两个 Grid 接壤的地方边线会叠成双倍粗：
+
+```tsx
+<div
+  className="flex flex-col [&>.grid+.grid]:mt-[calc(var(--guide-width)*-1)]"
+  style={{ "--guide-width": `${guideWidth}px` }}
+>
+  {children}
+</div>
+```
+
+比较费心思的是合并单元格。比如每个页面的 Hero 区域都是一个 12 列 3 行的网格：第一行 12 个空的正方形方格，第二行中间 10 格合并放标题文字，左右各空一格，第三行又是 12 个空方格。当中间 10 格合并的时候，内部那 9 条竖参考线不应该出现。`getHiddenBorders` 的做法很朴素：遍历所有合并区域，判断当前格子是否落在某个区域内部，是的话就把它的右边框或下边框设成 `none`。
+
+还有一个纯粹的装饰：`Grid.Cross`。它在网格交叉点画一个 20x20 的 SVG 十字，`strokeWidth` 只有 0.6，用 `currentColor` 取色。四种锚点位置可选——左上、右上、左下、右下——通过 `translate` 精确定位到交叉点中心。我在每个 Hero 的左上角和右下角各放了一个。大多数人不会注意到它们。但我觉得这个十字让网格从一个布局工具变成了一种视觉语言，像建筑图纸上的标注符号。
+
+响应式也处理了。桌面端 12 列，移动端可能只有 1 列或 2 列，列数不同意味着参考线要完全重新生成。我的做法是桌面端和移动端分别生成两套参考线，用 `max-md:hidden` 和 `md:hidden` 切换。`Grid.Cell` 也支持 `smRow` / `smColumn` 这些 props 来覆盖移动端位置。因为列数是动态的，没办法用 Tailwind 的响应式类，所以运行时往 DOM 里注入了 `<style>` 标签配合 `@media (max-width: 767px)` 来覆盖 `grid-template-columns`。不是很优雅，但管用。
+
+这些参考线在最终呈现时极浅。你不看它，却始终在它的秩序里。
+
+---
+
+## 边框光束：80 秒的呼吸
+
+从 [Magic UI](https://magicui.design) 看到了 `BorderBeam`，我拿来改了改。
+
+{/* TODO: 插入边框光束的录屏/动图 */}
+{/* ![边框光束效果](/images/blog/craft-oriensx/border-beam.gif) */}
+
+一个带渐变的小方块，从金色 `#ffaa40` 到紫色 `#9c40ff` 再到透明，沿着整个浏览器视口的矩形边缘走。在根布局里用 `fixed inset-px` 固定定位，让它贴着视口最外缘。用 CSS 的 [offset-path](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-path) 定义一条 `rect(...)` 矩形路径，然后交给 Framer Motion 做 `offsetDistance` 从 0% 到 100% 的无限循环。
+
+关键是让光束只在边框区域可见，不能溢出到内容区。外层容器用了两层 CSS mask 取交集：
+
+```css
+mask: linear-gradient(transparent, transparent),
+      linear-gradient(#000, #000);
+mask-clip: padding-box, border-box;
+mask-composite: intersect;
+```
+
+第一层覆盖 padding-box（透明的，什么都遮住），第二层覆盖 border-box（全部可见）。取交集之后，只剩 border 和 padding 之间的那条缝是可见的——刚好就是边框区域。
+
+80 秒绕一圈。我试过 20 秒，太快了，眼睛会追着它跑，变成干扰。试过 120 秒，太慢了，感觉不到在动，等于没有。80 秒大概是一个你不会主动去注意、但去掉之后会觉得页面少了点什么的速度。
+
+像一小截胭脂水沿着画框缓缓洇开。
+
+---
+
+## 导航：等一等再动
+
+我做导航的时候一直在想一个问题：悬停反馈应该多快？
+
+大部分网站的做法是鼠标移上去立刻变色或者出现下划线。但我觉得"立刻"有点急。我想要一种感觉：你把鼠标放上去，什么都不发生，好像这个按钮不太在意你来没来。等一秒，图标慢慢动了一下。再等半秒，文字上有一道光扫过去。然后安静两秒，再循环。
+
+{/* TODO: 插入导航悬停动画的录屏/动图 */}
+{/* ![导航悬停序列](/images/blog/craft-oriensx/nav-hover.gif) */}
+
+写了个 `useHoverSequence` 来编排这件事。核心就是嵌套的 `setTimeout`，每一步结束时通过 `hoveredRef` 检查鼠标是否还在，不在就停：
+
+```ts
+const playSequence = useCallback(() => {
+  iconRef.current?.startAnimation();
+  addTimer(() => {
+    if (!hoveredRef.current) return;
+    setIsShimmering(true);
+    addTimer(() => {
+      setIsShimmering(false);
+      addTimer(() => {
+        if (!hoveredRef.current) return;
+        playSequence();
+      }, loopDelay);
+    }, shimmerDuration);
+  }, shimmerDelay);
+}, [addTimer, shimmerDelay, shimmerDuration, loopDelay]);
+```
+
+鼠标离开的瞬间，`handleLeave` 会一次性清掉所有定时器、停掉图标动画、关掉文字闪光。不等当前动画播完，直接切断。这样即使你快速在几个导航之间划过，也不会残留上一个的动画状态。
+
+文字闪光那个效果叫 `TextShimmer`。用了双层 `background-image` 配合 `background-clip: text`：底层一个纯色 `linear-gradient` 做基色，上层一条窄窄的高亮渐变带，通过 `backgroundPosition` 从右扫到左。`spread` 值根据文字长度动态计算——两个字的"博客"和两个字的"品味"光带宽度一致，看上去速度是匀的。
+
+---
+
+## 四个图标的性格
+
+我给四个导航项各画了一个 SVG 图标。博客是一颗脑子，品味是一颗心，产品是一个仪表盘，我的是头像。
+
+它们都用 `forwardRef` 暴露 `startAnimation` / `stopAnimation` 接口，让 `useHoverSequence` 可以通过 ref 控制。没被 ref 控制的时候，鼠标直接 hover 也会触发。检测到 `prefers-reduced-motion` 时所有动画跳过。
+
+脑子那个图标是最复杂的。四组独立的动画控制器，串在一起：先是整个大脑微微倾斜（`rotate: [0, -2.2, 1.2, 0]` 配合 `scale: [1, 1.015, 1]`），同时脊柱路径从零开始画一笔 `pathLength` 脉冲，然后左右两侧各闪一下突触火花——左边 delay 0.26 秒，右边 0.34 秒，差 0.08 秒形成交替。脑叶还有微弱的呼吸动画，左右两半的 scale 在 0.98 和 1.02 之间反相交替。
+
+心脏的动画是心跳：先放大 12%，再缩小到 98%，回弹到 100%，同时左右两半心型路径依次描绘，右半比左半晚 0.12 个周期。
+
+仪表盘是四个矩形瓦片交错弹起。每块瓦片先下沉 3px，然后弹起到 -2px，再归位。通过 `custom` prop 传入索引，每块之间间隔 0.08 秒，形成从左上到右下的瀑布流。整体还有 1.5° 的微摇晃。
+
+头像最简单，一个缩放回弹。但它有个小细节：非活跃状态下是灰度加半透明（`grayscale opacity-60`），活跃或 hover 时还原彩色。用的是 favicon 做头像图片。
+
+图标的动画和文字的 shimmer 是串行编排的。先图标动完，再文字闪。有先后才有节奏。
+
+---
+
+## 主题切换：一个滑过去的背景
+
+{/* TODO: 插入主题切换的录屏/动图 */}
+{/* ![主题切换](/images/blog/craft-oriensx/theme-switcher.gif) */}
+
+页脚右下角三个小图标：系统、亮色、暗色。点一个，后面的背景块带弹簧动画滑过去。
+
+用的是 Framer Motion 的 `layoutId`。`AnimatedBackground` 组件里，三个按钮背后共享同一个半透明 div，用 `data-id` 标记当前选中项。当选中项变化时，这个 div 会在新位置重新渲染，Motion 根据 `layoutId` 自动算出从哪个位置滑到哪个位置，补间动画。参数是 `type: "spring", bounce: 0.2, duration: 0.3`，有一点回弹但不夸张。
+
+这个交互很小。但切换主题的时候，那个背景块滑过去的 0.3 秒，让整件事情从"点击生效"变成了"物理地移动过去"。
+
+主题本身用 `next-themes` 管理。亮色模式下背景是 `hsl(0, 0%, 98%)` 的近白色，暗色下是 `oklch(0.145 0 0)` 的近黑色。边框在暗色模式下用了半透明白：`oklch(1 0 0 / 6%)`，6% 的不透明度，比实线淡得多。
+
+选中文字时前景和背景反转——亮色下变成黑底白字，暗色下变成白底黑字。一行 CSS：
+
+```css
+::selection {
+  background: var(--foreground);
+  color: var(--background);
+}
+```
+
+---
+
+## 导航栏：消失的边界
+
+导航栏固定在顶部。背后有一层毛玻璃效果，但我不想让它有一条硬切的下边界。
+
+做法是在导航栏后面放一个绝对定位的 div，给它 `backdrop-blur-3xl`（超大模糊半径），再叠一层从 `background` 到 `transparent` 的渐变底色。关键是第三层：一个 CSS mask 渐变，从上往下是 `black 30%`（完全不透明）→ `rgba(0,0,0,0.8) 70%`（微微透明）→ `transparent 100%`（完全透明）。这样毛玻璃效果从实到虚，底部自然淡出，内容在导航下方滚动时不会撞到一条突兀的线。
+
+---
+
+## 排版：一些小的坚持
+
+{/* TODO: 插入文章排版效果的截图，展示标题装饰线、外链箭头、代码高亮等 */}
+{/* ![MDX 排版细节](/images/blog/craft-oriensx/mdx-typography.png) */}
+
+博客用 MDX 写。在 `mdx-components.tsx` 里把所有基础 HTML 元素映射到自定义样式。
+
+H2 标题上方有一条短横线，`before:h-[3px] before:w-6`，用伪元素画的。3 像素高，24 像素宽，取 `currentColor`，所以会跟着标题颜色走。纯装饰。但让标题不再是光秃秃的一行字，有了一个视觉上的"起笔点"。
+
+外链自动带右上角小箭头，用的是简历页里那个 `ExternalLink` 组件。它内部也有 `useHoverSequence` 的逻辑——悬停 0.6 秒后文字闪光，再 0.3 秒后箭头图标播放动画。内部链接用 Next.js 的 `Link`，不加箭头。判断逻辑是看 `href` 是不是 `/` 或 `#` 开头。
+
+有序列表不用默认的 `list-style`，用 CSS `counter` 配合 `before` 伪元素画序号。这样能控制序号的颜色（用了 `text-muted-foreground`，比正文淡一档）和间距。`<strong>` 标签除了加粗还有一条 `decoration-dotted` 虚线下划线。图片用 `<figure>` 包裹，alt 文字自动变成 `<figcaption>` 图注。分割线是虚线。
+
+代码高亮用 [sugar-high](https://github.com/huozhi/sugar-high)。选它的原因很实际：不到 1KB，零依赖。亮暗两套配色在 CSS 变量里定义（`--sh-class`, `--sh-string`, `--sh-keyword` 等 9 个 token），切换主题时自动跟着走。代码块的背景设成了 `transparent`，只有一条细边框，这样代码块和周围的正文在视觉上是一体的，不会突然跳出一个大色块。
+
+标题自动生成 `id` 供目录锚点跳转。`getId` 函数把标题文字转成 URL-safe 的 slug：小写，空格变连字符，去标点，用 Unicode 属性 `\p{L}\p{N}` 匹配，所以中文标题也能正确处理。
+
+左侧有文章目录。`IntersectionObserver` 配合 `rootMargin: "0% 0% -80% 0%"` 做滚动监听——标题进入视口上方 20% 的区域时高亮对应目录项。用 `MutationObserver` 监听 `<main>` 的 DOM 变动，MDX 内容加载后自动更新标题列表。h3 有 `pl-3` 缩进，和 h2 形成层级。
+
+都是小事。但它们加在一起，文章就有了一种排版上的秩序感。
+
+---
+
+## 还有一些别的
+
+首页标题叫"好的故事"。副标题是"沙漠中融化的雪，加快了春暖花开。"
+
+产品页的标题叫"打造过的一些东西"。我做过交易分析产品、聊天转视频工具、音频处理工具、一个 Figma 插件、一个抽奖 JS 库、一个人脸相似度小程序。它们被装在同样的网格里，每张卡片 hover 时右上角小箭头微微位移。
+
+品味页收集了我平时看的东西。Vercel 的 Geist 设计系统、Radix UI、Shadcn UI、Motion Primitives、Raycast、Linear、Syntax.fm 播客。标题叫"提升自己的品味"。带分类筛选，圆角胶囊按钮，选中状态前景背景反色。
+
+个人页是一份嵌在网页里的简历。容器设了 `max-w-200 md:aspect-210/297`——A4 纸的纵横比。照片加了一层 `sepia-[.15] saturate-[1.1]` 滤镜，微微泛黄。右上角有下载按钮，点击后用 `html2canvas-pro` 把简历 DOM 克隆到屏幕外，强制注入亮色变量渲染一遍，再用 `jsPDF` 生成 A4 尺寸的 PDF。
+
+博客文章卡片的封面是圆形裁剪的，`rounded-full`。奇偶交替左右排列，偶数项图在右文在左，奇数项反过来。点击整个卡片跳转文章，但有个小防护：用 `mouseDownPos` 记录按下位置，如果松开时移动超过 5px（说明在拖选文字），就不跳转。
+
+Footer 每 6 秒在版权信息和"Be quiet."之间切换。用 `TextLoop` 做的，文字从下方滑入、向上方滑出。
+
+整站静态导出，部署在 GitHub Pages。Next.js 16，React 19，Tailwind 4，Framer Motion 12。字体是 Geist Sans 和 Geist Mono。
+
+---
+
+## 为什么做这个网站
+
+我正要凝视那些碎影时，骤然一惊，睁开眼，页面也已皱蹙，凌乱，仿佛有谁往平静的屏幕上掷了一条推送通知，思绪陡然起立，将整篇的构想撕成片片了。我无意识地赶忙捏住几乎熄屏的手机，眼前还剩着几点光标闪烁的碎影。
+
+我真爱这一个安静的页面，趁碎影还在，我要追回它，完成它，留下它。我关掉通知，欠身伸手去敲键盘——何尝有一丝碎影，只见昏暗的屏幕光，我不在那个安静的页面里了。
+
+但我总记得见过这一篇好的页面，在昏沉的夜。
+
+这个网站就是我"取笔"的动作。把脑海中那个好的故事，趁它还没有彻底碎散，沉淀下来。
+
+页脚写着 "Be quiet"。

@@ -42,7 +42,7 @@ export function TableOfContents() {
           }
         });
       },
-      { rootMargin: "0% 0% -80% 0%" }
+      { rootMargin: "0% 0% -80% 0%" },
     );
 
     const headingElements = document.querySelectorAll("h2, h3");
@@ -61,7 +61,7 @@ export function TableOfContents() {
       {/* 返回按钮 */}
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 text-[13px] text-neutral-400 hover:text-foreground transition-colors w-fit"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
       >
         <svg
           className="size-3.5"
@@ -86,11 +86,13 @@ export function TableOfContents() {
               key={heading.id}
               href={`#${heading.id}`}
               className={cn(
-                "text-[11px] transition-all hover:text-foreground line-clamp-2",
-                heading.level === 3 ? "pl-3 text-neutral-400" : "font-medium",
+                "text-xs transition-all hover:text-foreground line-clamp-2",
+                heading.level === 3
+                  ? "pl-3 text-muted-foreground"
+                  : "font-medium",
                 activeId === heading.id
                   ? "text-foreground"
-                  : "text-neutral-400 hover:text-neutral-500 dark:hover:text-neutral-300"
+                  : "text-muted-foreground hover:text-foreground",
               )}
               onClick={(e) => {
                 e.preventDefault();

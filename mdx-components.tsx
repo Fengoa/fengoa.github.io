@@ -2,6 +2,9 @@ import React, { ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
 import { highlight } from "sugar-high";
 import { getId } from "@/lib/utils";
+import { ExternalLink } from "@/app/me/external-link";
+import { DemoWithCode } from "@/components/ui/demo-with-code";
+import { Grid } from "@/components/ui/grid";
 
 export const H1 = (props: ComponentPropsWithoutRef<"h1">) => (
   <h1 className="mb-8 font-semibold text-2xl md:text-4xl" {...props} />
@@ -12,7 +15,7 @@ export const H2 = ({ children, ...props }: ComponentPropsWithoutRef<"h2">) => {
   return (
     <h2
       id={id}
-      className="relative mb-8 mt-24 text-xl md:text-2xl font-medium before:absolute before:-top-4 before:left-0 before:h-[3px] before:w-6 before:bg-current"
+      className="relative mb-8 mt-24 text-xl md:text-2xl font-medium"
       {...props}
     >
       {children}
@@ -55,28 +58,9 @@ export const A = ({
   }
 
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={className}
-      {...props}
-    >
+    <ExternalLink href={href || "#"}>
       {children}
-      <svg
-        className="relative -top-px inline-block size-4 ml-0.5"
-        viewBox="0 0 24 24"
-      >
-        <path
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.75"
-          d="m6 18l2.5-2.5M18 6H9m9 0v9m0-9l-6.5 6.5"
-        />
-      </svg>
-    </a>
+    </ExternalLink>
   );
 };
 
@@ -174,7 +158,7 @@ export const Img = ({
       {...props}
     />
     {alt && (
-      <figcaption className="mt-2 text-xs text-center text-neutral-400 font-mono">
+      <figcaption className="mt-2 text-xs text-center text-muted-foreground font-mono">
         {alt}
       </figcaption>
     )}
@@ -186,6 +170,8 @@ export const Hr = () => (
 );
 
 export const components = {
+  DemoWithCode,
+  Grid,
   h1: H1,
   H1: H1,
   h2: H2,

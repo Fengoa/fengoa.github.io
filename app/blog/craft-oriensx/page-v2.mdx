@@ -1,0 +1,227 @@
+# 这个网站是怎么搭的
+
+我一直想有一个自己的网站。从头开始想清楚每一处该长什么样，而不只是挂个模板丢几篇 Markdown。拖了很久，这次算是真的动手了。
+
+这篇文章记录搭建过程中做的一些决定。有些是深思熟虑的，有些是试出来的，有些现在回头看也不确定对不对。
+
+---
+
+## 看了什么
+
+动手之前先看了一圈别人的网站。[Rauno](https://rauno.me) 的留白用得很舒服，[Paco](https://paco.me) 什么都不多放，[Lee Robinson](https://leerob.com) 结构清楚，[Vercel](https://vercel.com) 的网格感让页面看着很稳，[wxad.design/abc](https://wxad.design/abc) 的交互有分寸。
+
+这些网站有个共同点：内容看起来是被精确地"放"在了某个位置上。这种感觉我说不太好，但你看到就知道。
+
+---
+
+## 网格系统
+
+我做的第一件事是画格子。
+
+我想要的更接近建筑图纸上的参考线。你写字的时候不会去看格线，但格线让字不会歪。
+
+搭了一套 `Grid` 复合组件：
+
+<DemoWithCode
+  code={`<Grid rows={4} columns={4}>
+  <Grid.Cross column={2} row={1} />
+  <Grid.Cross column={1} row={2} />
+  <Grid.Cross column={2} row={2} />
+  <Grid.Cross column={3} row={2} />
+  <Grid.Cross column={1} row={3} />
+  <Grid.Cross column={2} row={3} />
+  <Grid.Cross column={3} row={3} />
+  <Grid.Cross column={4} row={3} />
+  <Grid.Cross column={2} row={4} />
+</Grid>`}
+>
+  <Grid rows={4} columns={4}>
+    <Grid.Cross column={2} row={1} />
+    <Grid.Cross column={1} row={2} />
+    <Grid.Cross column={2} row={2} />
+    <Grid.Cross column={3} row={2} />
+    <Grid.Cross column={1} row={3} />
+    <Grid.Cross column={2} row={3} />
+    <Grid.Cross column={3} row={3} />
+    <Grid.Cross column={4} row={3} />
+    <Grid.Cross column={2} row={4} />
+  </Grid>
+</DemoWithCode>
+
+- `Grid.System` 是页面级容器，用 CSS 变量 `--guide-width` 控制全局的参考线宽度
+- `Grid` 接收行列数，自动生成一层透明的边框参考线
+- 每个格子用绝对定位的 `div` 画右边框和下边框，容器画上边框和左边框，拼在一起就是完整网格
+- 参考线层设了 `pointer-events-none`，和内容完全分离
+
+相邻 Grid 接壤的地方边线会叠成双倍粗，用负 margin 合并掉了：
+
+```tsx
+<div
+  className="flex flex-col [&>.grid+.grid]:mt-[calc(var(--guide-width)*-1)]"
+  style={{ "--guide-width": `${guideWidth}px` }}
+>
+  {children}
+</div>
+```
+
+合并单元格比较费心思。拿 Hero 区域举例：12 列 3 行，第一行 12 个空方格，第二行中间 10 格合并放标题，第三行又是空方格。中间 10 格合并的时候，内部 9 条竖参考线不该出现。写了个 `getHiddenBorders` 来处理：遍历所有合并区域，判断当前格子是否在区域内部，是就把对应边框设成 `none`。做法很朴素，没什么花招。
+
+还做了个装饰元素 `Grid.Cross`，在网格交叉点画一个 20×20 的 SVG 十字，`strokeWidth` 只有 0.6。每个 Hero 的左上角和右下角各放了一个。大多数人不会注意到，但加上之后网格多了一点建筑图纸标注的味道。
+
+响应式没法偷懒。桌面端 12 列到移动端 1、2 列，列数一变参考线就得完全重新生成。桌面端和移动端各生成一套参考线，用 `max-md:hidden` / `md:hidden` 切换。列数是运行时动态的，Tailwind 的响应式类搞不定，最终往 DOM 里注入了 `<style>` 标签配合媒体查询来覆盖 `grid-template-columns`。说实话不太优雅，但管用。
+
+最终参考线极浅，不看不会注意到，但页面上所有东西都在格线上。
+
+---
+
+## 边框光束
+
+从 [Magic UI](https://magicui.design) 借鉴了 `BorderBeam` 的思路，自己改了改。
+
+一个带渐变的小方块，金色 `#ffaa40` 过渡到紫色 `#9c40ff` 再到透明，沿着浏览器视口边缘绕圈。CSS `offset-path` 定义 `rect(...)` 矩形路径，Framer Motion 驱动 `offsetDistance` 从 0% 到 100% 无限循环。根布局里 `fixed inset-px` 贴着视口最外缘。
+
+光束只该在边框那条缝里出现。用两层 CSS mask 取交集解决的：
+
+```css
+mask: linear-gradient(transparent, transparent),
+      linear-gradient(#000, #000);
+mask-clip: padding-box, border-box;
+mask-composite: intersect;
+```
+
+第一层覆盖 padding-box，透明的，什么都遮住；第二层覆盖 border-box，全部可见。取交集后只有 border 和 padding 之间那条缝透出来。
+
+绕一圈 80 秒，这个数字是试出来的。20 秒眼睛会追着跑，120 秒又感觉不到在动。80 秒大概是你不会主动注意到、但去掉之后觉得页面少了点什么的速度。
+
+---
+
+## 导航的悬停节奏
+
+导航的交互我想了比较久。
+
+大部分网站鼠标移上去立刻变色或出下划线，我觉得太急了。我想要的节奏是：鼠标放上去，先什么都不发生。等一秒，图标动一下。再等半秒，文字上扫过一道光。安静两秒，再循环。
+
+写了个 `useHoverSequence` hook 来编排这件事。核心就是嵌套 `setTimeout`，每一步结束时检查鼠标是否还在：
+
+```ts
+const playSequence = useCallback(() => {
+  iconRef.current?.startAnimation();
+  addTimer(() => {
+    if (!hoveredRef.current) return;
+    setIsShimmering(true);
+    addTimer(() => {
+      setIsShimmering(false);
+      addTimer(() => {
+        if (!hoveredRef.current) return;
+        playSequence();
+      }, loopDelay);
+    }, shimmerDuration);
+  }, shimmerDelay);
+}, [addTimer, shimmerDelay, shimmerDuration, loopDelay]);
+```
+
+鼠标离开的瞬间，`handleLeave` 一次性清掉所有定时器、停图标动画、关文字闪光。不等当前动画播完，直接切断。这样即使快速划过几个导航项，也不会残留上一个的状态。
+
+文字闪光效果叫 `TextShimmer`，双层 `background-image` 配合 `background-clip: text`：底层纯色做基色，上层一条窄的高亮渐变带，`backgroundPosition` 从右扫到左。`spread` 值根据文字长度动态算，不管几个字，光带扫过的速度都是匀的。
+
+图标动画和文字 shimmer 是串行编排的。先图标动完，再文字闪。有先后才有节奏。
+
+---
+
+## 四个图标
+
+四个导航项各有一个 SVG 图标：博客是脑子，品味是心脏，产品是仪表盘，个人是头像。
+
+它们都通过 `forwardRef` 暴露 `startAnimation` / `stopAnimation` 接口，让 `useHoverSequence` 通过 ref 控制。检测到 `prefers-reduced-motion` 时所有动画跳过。
+
+脑子那个最复杂。四组动画控制器串在一起：整体先微微倾斜（`rotate: [0, -2.2, 1.2, 0]`），同时脊柱路径做一笔 `pathLength` 脉冲，然后左右两侧突触交替闪烁——左边 delay 0.26 秒，右边 0.34 秒，差 0.08 秒形成交替感。
+
+心脏是心跳节奏：放大 12%，缩到 98%，回弹到 100%。左右两半心型路径有 0.12 个周期的相位差，不是同时描绘的。
+
+仪表盘是四块瓦片交错弹起。每块先下沉 3px，弹到 -2px，归位。间隔 0.08 秒，从左上到右下像瀑布一样展开。
+
+头像最简单，就一个缩放回弹。但有个小细节：非活跃状态下是 `grayscale opacity-60`，活跃时还原彩色。
+
+每个图标的动画时长和幅度都不一样。我不想让它们整齐划一，感觉各自有各自的脾气比较好。
+
+---
+
+## 主题切换
+
+页脚右下角三个小图标：系统、亮色、暗色。
+
+Framer Motion 的 `layoutId` 做了个背景滑块。三个按钮共享一个半透明 div，点击切换时这个 div 自动在新旧位置之间做弹簧过渡，`type: "spring", bounce: 0.2, duration: 0.3`，有回弹但不过分。
+
+就 0.3 秒的事，但让切换有了物理移动的体感。
+
+主题管理用 `next-themes`。颜色系统用了 oklch，暗色模式下边框是 `oklch(1 0 0 / 6%)` 的半透明白，比实线淡很多。选中文字时前景背景反转，一行 CSS：
+
+```css
+::selection {
+  background: var(--foreground);
+  color: var(--background);
+}
+```
+
+导航栏固定在顶部，背后有毛玻璃效果，但下边界需要消掉。导航后面放一个绝对定位的 div，`backdrop-blur-3xl`，叠一层从 `background` 到 `transparent` 的渐变，再加一个 CSS mask 从上到下渐变：顶部 30% 完全不透明，往下慢慢变透，底部全透明。毛玻璃从实到虚自然淡出，内容滚过去的时候不会撞到一条切割线。
+
+---
+
+## 排版细节
+
+博客用 MDX 写。`mdx-components.tsx` 里把所有基础 HTML 元素映射到自定义样式，这里挑几个说。
+
+H2 标题上方画了一条短横线，伪元素做的，3px 高、24px 宽，取 `currentColor` 跟着标题颜色走。纯装饰，给标题加了一个视觉上的起笔点。
+
+外链自动带右上角小箭头，`href` 以 `/` 或 `#` 开头的当内链处理，不加。外链组件内部也有 hover 序列——悬停 0.6 秒后文字闪光，再 0.3 秒后箭头播动画。
+
+有序列表用 CSS `counter` 画序号代替默认 `list-style`，能单独控制序号颜色和间距。`<strong>` 加粗的同时带了一条虚线下划线。图片用 `<figure>` 包，alt 文字自动变 `<figcaption>`。分割线用虚线。
+
+代码高亮选了 [sugar-high](https://github.com/huozhi/sugar-high)，不到 1KB，零依赖。亮暗两套配色用 CSS 变量定义（`--sh-class`、`--sh-string`、`--sh-keyword` 等 9 个 token），切主题自动跟。代码块背景 `transparent` 加一条细边框，和正文融在一起，不会突然冒出一个大色块。
+
+左侧有文章目录。`IntersectionObserver` 配合 `rootMargin: "0% 0% -80% 0%"` 做滚动高亮，`MutationObserver` 监听 DOM 变动让 MDX 加载后自动更新标题列表。标题生成 `id` 时用了 Unicode 属性 `\p{L}\p{N}` 匹配，中文标题也能正确变成锚点。
+
+一堆小事，加在一起阅读感就不一样了。
+
+---
+
+## 其他页面
+
+简单说说四个页面。
+
+**博客**（首页）标题叫"好的故事"。文章卡片封面是圆形裁剪的，奇偶交替左右排列。点击卡片跳转文章，有个小防护：记录 `mousedown` 位置，松手时如果移了超过 5px 就认为是在拖选文字，不跳转。
+
+**产品**页列了做过的东西——交易分析产品、聊天转视频工具、音频处理工具、Figma 插件、抽奖 JS 库、人脸相似度小程序。卡片 hover 时图标从 60% 透明度升到 100%。
+
+**品味**页收集平时看的东西。Geist 设计系统、Radix UI、Shadcn UI、Motion Primitives、Raycast、Linear、Syntax.fm。带分类筛选，选中态前景背景反色。
+
+**个人**页是嵌在网页里的简历，容器用了 A4 纸的纵横比 `aspect-210/297`。右上角下载按钮点击后用 `html2canvas-pro` 把 DOM 克隆到屏幕外，强制注入亮色变量渲染一遍，再用 `jsPDF` 出 PDF。克隆渲染这步是为了保证输出的 PDF 始终是亮色的，跟当前主题无关。
+
+Footer 每 6 秒在版权信息和"Be quiet."之间切换。
+
+---
+
+## 技术栈
+
+整站静态导出，GitHub Pages 部署。
+
+- Next.js 16 + React 19
+- Tailwind CSS 4
+- Framer Motion 12
+- MDX（@mdx-js/loader + @next/mdx）
+- sugar-high（代码高亮）
+- next-themes（主题管理）
+- html2canvas-pro + jsPDF（简历导出）
+- 字体：Geist Sans / Geist Mono
+
+---
+
+## 最后
+
+这个网站没什么宏大的目的。想有一个自己的地方，把做过的东西放在一起，偶尔写点什么。
+
+做的过程中发现大部分时间花在了用户可能根本注意不到的地方。80 秒绕一圈的光束，1 秒后才响应的导航，3 像素高的标题装饰线，5 像素的拖选容差。单独拿出来都不值一提，加在一起页面就有了一种说不出的"对"的感觉。
+
+可能是过度设计。做自己的网站嘛，就该允许自己在这些小地方花时间。
+
+页脚写着 "Be quiet"。差不多就是我想说的。

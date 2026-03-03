@@ -10,7 +10,7 @@ import { useHoverSequence } from "@/hooks/use-hover-sequence";
 
 const tabs = [
   { id: "blog", label: "博客", href: "/" },
-  { id: "taste", label: "品味", href: "/taste" },
+  // { id: "taste", label: "品味", href: "/taste" },
   { id: "product", label: "产品", href: "/product" },
   { id: "me", label: "我的", href: "/me" },
 ];
