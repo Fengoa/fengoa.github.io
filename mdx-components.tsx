@@ -38,8 +38,8 @@ export const H3 = ({ children, ...props }: ComponentPropsWithoutRef<"h3">) => {
   );
 };
 
-export const P = (props: ComponentPropsWithoutRef<"p">) => (
-  <p
+export const P = (props: ComponentPropsWithoutRef<"div">) => (
+  <div
     className="mb-4 last:mb-0 leading-relaxed text-secondary-foreground"
     {...props}
   />

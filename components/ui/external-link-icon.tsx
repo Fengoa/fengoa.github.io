@@ -10,7 +10,7 @@ export interface ExternalLinkIconHandle {
  stopAnimation: () => void;
 }
 
-interface ExternalLinkIconProps extends HTMLMotionProps<"div"> {
+interface ExternalLinkIconProps extends HTMLMotionProps<"span"> {
  size?: number;
  duration?: number;
  isAnimated?: boolean;
@@ -97,7 +97,7 @@ const ExternalLinkIcon = forwardRef<
   };
 
   return (
-   <motion.div
+   <motion.span
     className={cn("inline-flex items-center justify-center", className)}
     onMouseEnter={handleEnter}
     onMouseLeave={handleLeave}
@@ -133,7 +133,7 @@ const ExternalLinkIcon = forwardRef<
       animate={boxControls}
      />
     </svg>
-   </motion.div>
+   </motion.span>
   );
  },
 );
