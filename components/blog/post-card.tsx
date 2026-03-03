@@ -59,7 +59,7 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
             isEven ? "md:order-2 md:justify-end" : "md:order-1 md:justify-start"
           )}
         >
-          <div className="aspect-square rounded-full overflow-hidden w-[80%] flex-none md:size-90 border hover:scale-[1.01] transition-all duration-200">
+          <div className="aspect-square rounded-full overflow-hidden w-[80%] flex-none md:size-80 border hover:scale-[1.01] transition-all duration-200">
             {post.cover && (
               <Image
                 src={post.cover}
