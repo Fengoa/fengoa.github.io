@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 
 export type PostData = {
   slug: string;
@@ -13,7 +13,8 @@ export type PostData = {
   date: string;
   author?: string;
   summary: string;
-  cover?: string;
+  /** 图片路径 或自定义 React 组件 */
+  cover?: string | ReactNode;
 };
 
 function formatDate(dateStr: string) {
@@ -59,14 +60,17 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
             isEven ? "md:order-2 md:justify-end" : "md:order-1 md:justify-start"
           )}
         >
-          <div className="aspect-square rounded-full overflow-hidden w-[80%] flex-none md:size-80 border hover:scale-[1.01] transition-all duration-200">
-            {post.cover && (
-              <Image
-                src={post.cover}
-                alt={post.title}
-                className="size-full object-cover"
-              />
-            )}
+          <div className="aspect-square rounded-full overflow-hidden w-[80%] flex-none md:size-80 border">
+            {post.cover &&
+              (typeof post.cover === "string" ? (
+                <Image
+                  src={post.cover}
+                  alt={post.title}
+                  className="size-full object-cover"
+                />
+              ) : (
+                post.cover
+              ))}
           </div>
         </div>
 
