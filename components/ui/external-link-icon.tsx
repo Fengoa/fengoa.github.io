@@ -57,24 +57,24 @@ const ExternalLinkIcon = forwardRef<
   });
 
   const handleEnter = useCallback(
-   (e?: React.MouseEvent<HTMLDivElement>) => {
+   (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
     if (!isAnimated || reduced) return;
     if (!isControlled.current) {
      boxControls.start("animate");
      arrowControls.start("animate");
-    } else onMouseEnter?.(e as any);
+    } else onMouseEnter?.(e);
    },
-   [boxControls, arrowControls],
+   [boxControls, arrowControls, isAnimated, reduced, onMouseEnter],
   );
 
   const handleLeave = useCallback(
-   (e?: React.MouseEvent<HTMLDivElement>) => {
+   (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
     if (!isControlled.current) {
      boxControls.start("normal");
      arrowControls.start("normal");
-    } else onMouseLeave?.(e as any);
+    } else onMouseLeave?.(e);
    },
-   [boxControls, arrowControls],
+   [boxControls, arrowControls, onMouseLeave],
   );
 
   const boxVariants: Variants = {
