@@ -18,7 +18,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Oriensx",
+  title: {
+    default: "Oriensx",
+    template: "%s - Oriensx",
+  },
   description: "Oriensx's personal website",
 };
 
