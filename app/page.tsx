@@ -7,14 +7,23 @@ import type { PostData } from "@/components/blog/post-card";
 import { CraftCover } from "@/app/blog/craft-oriensx/cover";
 import { AstralResourcesCover } from "@/app/blog/polar-starry-resources/cover";
 import { RecommenderCover } from "@/app/blog/minimal-recommender/cover";
+import { VectorRecallCover } from "@/app/blog/vector-recall/cover";
 
 const posts: PostData[] = [
+  {
+    slug: "vector-recall",
+    title: "给推荐系统加上向量召回",
+    date: "2026-05-20",
+    summary:
+      "用矩阵分解把电影压缩成 64 维向量，用 FAISS 做毫秒级检索，让推荐系统能发现「没有共现但语义相似」的电影。",
+    cover: <VectorRecallCover />,
+  },
   {
     slug: "minimal-recommender",
     title: "从零搭一个推荐系统",
     date: "2026-05-20",
     summary:
-      "推荐系统不是一个模型，是一条流水线。用 MovieLens + Python + FastAPI 搭一个最小但结构完整的推荐系统，理解召回、合并、精排的工程本质。",
+      "用 MovieLens + Python + FastAPI 搭一个最小但结构完整的推荐系统，理解召回、合并、精排的工程本质。",
     cover: <RecommenderCover />,
   },
   {
