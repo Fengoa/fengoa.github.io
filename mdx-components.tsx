@@ -191,6 +191,14 @@ export const Thead = ({ children, ...props }: ComponentPropsWithoutRef<"thead">)
   </thead>
 );
 
+export const Tbody = ({ children, ...props }: ComponentPropsWithoutRef<"tbody">) => (
+  <tbody {...props}>
+    {React.Children.toArray(children).filter(
+      (child) => !(typeof child === "string" && child.trim() === "")
+    )}
+  </tbody>
+);
+
 export const Tr = ({ children, ...props }: ComponentPropsWithoutRef<"tr">) => (
   <tr className="border-b last:border-b-0" {...props}>
     {React.Children.toArray(children).filter(
@@ -252,6 +260,8 @@ export const components = {
   Table: Table,
   thead: Thead,
   Thead: Thead,
+  tbody: Tbody,
+  Tbody: Tbody,
   tr: Tr,
   Tr: Tr,
   th: Th,
