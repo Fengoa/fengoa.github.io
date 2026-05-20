@@ -173,6 +173,46 @@ export const Img = ({
   </figure>
 );
 
+export const Table = ({ children, ...props }: ComponentPropsWithoutRef<"table">) => (
+  <div className="mb-8 overflow-x-auto rounded border">
+    <table className="w-full text-sm border-collapse" {...props}>
+      {React.Children.toArray(children).filter(
+        (child) => !(typeof child === "string" && child.trim() === "")
+      )}
+    </table>
+  </div>
+);
+
+export const Thead = ({ children, ...props }: ComponentPropsWithoutRef<"thead">) => (
+  <thead className="bg-accent/50" {...props}>
+    {React.Children.toArray(children).filter(
+      (child) => !(typeof child === "string" && child.trim() === "")
+    )}
+  </thead>
+);
+
+export const Tr = ({ children, ...props }: ComponentPropsWithoutRef<"tr">) => (
+  <tr className="border-b last:border-b-0" {...props}>
+    {React.Children.toArray(children).filter(
+      (child) => !(typeof child === "string" && child.trim() === "")
+    )}
+  </tr>
+);
+
+export const Th = (props: ComponentPropsWithoutRef<"th">) => (
+  <th
+    className="px-4 py-2.5 text-left font-medium text-foreground whitespace-nowrap"
+    {...props}
+  />
+);
+
+export const Td = (props: ComponentPropsWithoutRef<"td">) => (
+  <td
+    className="px-4 py-2.5 text-secondary-foreground"
+    {...props}
+  />
+);
+
 export const Hr = () => (
   <hr className="my-12 border-t border-dashed border-neutral-300 dark:border-neutral-700" />
 );
@@ -208,6 +248,16 @@ export const components = {
   Img: Img,
   hr: Hr,
   Hr: Hr,
+  table: Table,
+  Table: Table,
+  thead: Thead,
+  Thead: Thead,
+  tr: Tr,
+  Tr: Tr,
+  th: Th,
+  Th: Th,
+  td: Td,
+  Td: Td,
 };
 
 export function useMDXComponents(currentComponents: any) {

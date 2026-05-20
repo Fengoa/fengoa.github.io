@@ -1,7 +1,6 @@
 "use client";
 
 import { BorderBeam } from "@/components/ui/border-beam";
-import { Grid } from "@/components/ui/grid";
 import {
   TelescopeIcon,
   type TelescopeIconHandle,
@@ -31,11 +30,34 @@ export function AstralResourcesCover({ className }: AstralResourcesCoverProps) {
         className
       )}
     >
-      {/* 网格 + Cross */}
-      <Grid rows={6} columns={6} className="absolute inset-0 size-full">
-        <Grid.Cross row={2} column={3} />
-        <Grid.Cross row={5} column={5} />
-      </Grid>
+      {/* 同心轨道环 */}
+      {[28, 44, 62].map((size) => (
+        <div
+          key={size}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-neutral-200 dark:border-neutral-800"
+          style={{ width: `${size}%`, height: `${size}%` }}
+        />
+      ))}
+
+      {/* 散落星点 */}
+      <div className="absolute inset-0">
+        {[
+          "left-[18%] top-[22%] size-1 opacity-60",
+          "left-[72%] top-[16%] size-0.5 opacity-40",
+          "left-[80%] top-[55%] size-1 opacity-50",
+          "left-[25%] top-[70%] size-0.5 opacity-40",
+          "left-[60%] top-[78%] size-1 opacity-60",
+          "left-[40%] top-[14%] size-0.5 opacity-30",
+        ].map((cls) => (
+          <span
+            key={cls}
+            className={cn(
+              "absolute rounded-full bg-neutral-400 dark:bg-neutral-500",
+              cls
+            )}
+          />
+        ))}
+      </div>
 
       {/* 光束 */}
       <BorderBeam

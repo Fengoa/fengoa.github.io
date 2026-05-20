@@ -25,9 +25,16 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  
+
   // Configure `pageExtensions` to include MDX files
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+
+  // Use Rust MDX compiler with GFM support (tables, strikethrough, etc.)
+  experimental: {
+    mdxRs: {
+      mdxType: "gfm",
+    },
+  },
 };
 
 const withMDX = createMDX({});
