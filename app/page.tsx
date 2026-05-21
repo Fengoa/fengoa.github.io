@@ -8,8 +8,17 @@ import { CraftCover } from "@/app/blog/craft-oriensx/cover";
 import { AstralResourcesCover } from "@/app/blog/polar-starry-resources/cover";
 import { RecommenderCover } from "@/app/blog/minimal-recommender/cover";
 import { VectorRecallCover } from "@/app/blog/vector-recall/cover";
+import { DeepFMCover } from "@/app/blog/deepfm-ranking/cover";
 
 const posts: PostData[] = [
+  {
+    slug: "deepfm-ranking",
+    title: "用模型替代手写公式做排序",
+    date: "2026-05-20",
+    summary:
+      "用 DeepFM 从 285 万条数据里学出什么用户配什么电影，让排序结果因人而异，替代拍脑袋定权重的手写公式。",
+    cover: <DeepFMCover />,
+  },
   {
     slug: "vector-recall",
     title: "给推荐系统加上向量召回",
