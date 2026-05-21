@@ -1,0 +1,152 @@
+export const metadata = {
+  title: "用双塔模型做向量召回",
+}
+
+# 用双塔模型做向量召回
+
+之前用 SVD 做向量召回有一个问题。它只看评分矩阵，用户的性别、年龄、职业不用，电影的类型、评分、年份也不用。新用户没有评分记录的话 SVD 直接没辙，矩阵里没这一行就算不出向量。
+
+双塔模型换了个做法，两个神经网络分别编码用户和电影，每个网络能吃进任意多的特征。只要知道用户性别和年龄，即使没评过分也能算出向量。
+
+---
+
+## 结构
+
+两个独立的神经网络，各自把输入编码成 64 维向量：
+
+```text
+User 塔                        Item 塔
+  │                              │
+  user_id                        movie_id
+  gender                         类型（18 维多热）
+  age                            平均评分
+  occupation                     评分人数
+  历史类型偏好（18 维）           上映年份
+  │                              │
+  Dense(128) → ReLU              Dense(128) → ReLU
+  │                              │
+  Dense(64)                      Dense(64)
+  │                              │
+  user_vector (64d)              item_vector (64d)
+```
+
+训练目标是让用户向量和他喜欢的电影向量靠近，和不喜欢的远离。
+
+---
+
+## 训练数据：三元组
+
+和 DeepFM 不一样。DeepFM 每条样本是二分类（喜不喜欢），双塔用三元组：
+
+```text
+(用户, 喜欢的电影, 不喜欢的电影)
+```
+
+意思是这个用户和"喜欢的电影"应该比和"不喜欢的电影"更近。从评分 ≥ 8 的当正例，随机抽没看过的当负例。一共 57.5 万个三元组。
+
+---
+
+## 损失函数：BPR Loss
+
+逻辑很直接：
+
+```text
+pos_score = user_vector 和 pos_movie_vector 的相似度
+neg_score = user_vector 和 neg_movie_vector 的相似度
+
+loss = -log(sigmoid(pos_score - neg_score))
+```
+
+pos_score 比 neg_score 高很多时 loss 很小。两者差不多时 loss 大，模型继续调参数把它们拉开。
+
+---
+
+## 训练过程
+
+```text
+Epoch  1 │ 正>负 89.8% ★  ← 第一轮就学到了大量信号
+Epoch  5 │ 正>负 92.2% ★
+Epoch  8 │ 正>负 92.5% ★  ← 最佳
+Epoch  9 │ 正>负 92.5%    （验证 loss 没降）
+Epoch 10 │ 正>负 92.7%    （验证 loss 没降）
+Epoch 11 │ 正>负 92.6%    （验证 loss 没降）→ 早停
+```
+
+"正>负 92.5%"的含义是随机拿一个三元组，模型有 92.5% 的概率正确判断哪个电影离用户更近。Epoch 8 之后验证集 loss 不再降，Epoch 11 触发早停，保存的是 Epoch 8 的参数。
+
+---
+
+## 导出向量 + FAISS 检索
+
+训练完之后分别把用户和电影过各自的塔：
+
+```text
+6040 个用户 → User 塔 → 6040 个 64 维向量
+3883 部电影 → Item 塔 → 3883 个 64 维向量 → 存进 FAISS 索引
+```
+
+在线推理时读出用户向量，在 FAISS 里搜最近的电影向量，返回候选。
+
+---
+
+## 双塔 vs SVD：最近邻对比
+
+```text
+【Star Wars IV】
+  SVD:  Empire (0.70), Return (0.53), Phantom Menace (0.51), E.T. (0.32)
+  双塔: Empire (0.97), Return (0.93), Raiders (0.93), Jurassic Park (0.91)
+
+【Shawshank Redemption】
+  SVD:  Good Will Hunting (0.51), Schindler's List (0.37)
+  双塔: Pulp Fiction (0.98), GoodFellas (0.95), Schindler's List (0.94)
+```
+
+双塔的相似度整体更高更紧凑，因为多了类型、评分等特征的信号。Star Wars 找到了 Jurassic Park（同为 90 年代动作冒险大片），Shawshank 找到了 GoodFellas（同为严肃犯罪剧情），这些是 SVD 没发现的。
+
+---
+
+## 接入流水线
+
+双塔作为 vector_recall 的升级版接入，系统自动检测有没有双塔模型，有就用双塔，没有就 fallback 到 SVD。
+
+```text
+popular_recall     ─┐
+genre_recall       ─┤
+itemcf_recall      ─┼→ 归一化合并 → DeepFM 精排 → Top K
+vector_recall      ─┘
+  └─ 优先: 双塔向量
+     fallback: SVD 向量
+```
+
+跑出来一看，用户 1 的推荐列表里出现了 GoodFellas，只被 vector（双塔）召回命中，之前 SVD 从来没推出过它。
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | 工业界 |
+|---|---|---|
+| User 塔输入 | 4 个稀疏特征 + 类型偏好 | + 最近行为序列 + 实时特征 + 设备/地域 |
+| Item 塔输入 | movie_id + 类型 + 评分 + 热度 + 年份 | + 文本 embedding + 图片特征 + 标签 |
+| 训练方式 | 全量离线 BPR | in-batch negative + hard negative + 流式训练 |
+| 检索 | FAISS FlatIP（暴力搜） | FAISS IVF / HNSW / ScaNN（近似搜，毫秒级扛亿级） |
+
+工业界的双塔 User 塔会加入最近几分钟的行为序列让向量反映实时兴趣，Item 塔会加入多模态特征，训练时用 in-batch negative 效率更高。
+
+---
+
+## 离线流程
+
+```bash
+# 构造三元组训练数据
+uv run python scripts/build_twotower_data.py
+
+# 训练双塔
+uv run python scripts/train_twotower.py
+
+# 导出电影向量 + 用户向量 + 建 FAISS 索引
+KMP_DUPLICATE_LIB_OK=TRUE uv run python scripts/export_twotower_embeddings.py
+
+# 启动 API（自动使用双塔向量）
+uv run python main.py
+```

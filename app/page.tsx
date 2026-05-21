@@ -9,8 +9,17 @@ import { AstralResourcesCover } from "@/app/blog/polar-starry-resources/cover";
 import { RecommenderCover } from "@/app/blog/minimal-recommender/cover";
 import { VectorRecallCover } from "@/app/blog/vector-recall/cover";
 import { DeepFMCover } from "@/app/blog/deepfm-ranking/cover";
+import { TwoTowerCover } from "@/app/blog/two-tower-recall/cover";
 
 const posts: PostData[] = [
+  {
+    slug: "two-tower-recall",
+    title: "用双塔模型做向量召回",
+    date: "2026-05-21",
+    summary:
+      "用两个神经网络分别编码用户和电影，训练时拉近正样本推远负样本，替代 SVD 做更强的向量召回。",
+    cover: <TwoTowerCover />,
+  },
   {
     slug: "deepfm-ranking",
     title: "用模型替代手写公式做排序",
