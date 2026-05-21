@@ -10,8 +10,26 @@ import { RecommenderCover } from "@/app/blog/minimal-recommender/cover";
 import { VectorRecallCover } from "@/app/blog/vector-recall/cover";
 import { DeepFMCover } from "@/app/blog/deepfm-ranking/cover";
 import { TwoTowerCover } from "@/app/blog/two-tower-recall/cover";
+import { HardNegativeCover } from "@/app/blog/hard-negative-eval/cover";
+import { DINSequenceCover } from "@/app/blog/din-sequence/cover";
 
 const posts: PostData[] = [
+  {
+    slug: "din-sequence",
+    title: "用 DIN 建模用户兴趣序列",
+    date: "2026-05-21",
+    summary:
+      "把用户最近看过的电影序列喂进模型，用 attention 动态提取和候选相关的兴趣。同一个用户看完科幻和看完动画之后拿到的推荐完全不同。",
+    cover: <DINSequenceCover />,
+  },
+  {
+    slug: "hard-negative-eval",
+    title: "负样本策略和离线评估",
+    date: "2026-05-21",
+    summary:
+      "建了一套离线评估 pipeline 量化推荐效果，把负样本从纯随机换成热门+同类型混合策略，让模型学更难的判断。",
+    cover: <HardNegativeCover />,
+  },
   {
     slug: "two-tower-recall",
     title: "用双塔模型做向量召回",

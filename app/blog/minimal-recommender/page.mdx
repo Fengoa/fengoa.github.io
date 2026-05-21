@@ -1,3 +1,5 @@
+import recommendationSystemPanorama from "./recommendation_system_panorama.svg";
+
 export const metadata = {
   title: "从零搭一个推荐系统",
 }
@@ -13,6 +15,17 @@ export const metadata = {
 一亿首不可能逐个算一遍你喜不喜欢，时间上来不及。所以要先粗筛再精排。粗筛求快，用简单规则大量过滤。精排求准，用更多信号精确打分。
 
 这篇记录的就是从零搭一套这样的流水线的过程。数据用的 MovieLens，技术用的 Python + FastAPI。
+
+<figure className="my-10 overflow-hidden rounded-xl border border-neutral-200 bg-white p-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+  <img
+    src={typeof recommendationSystemPanorama === "string" ? recommendationSystemPanorama : recommendationSystemPanorama.src}
+    alt="推荐系统全貌：从离线数据、召回、排序到在线服务"
+    className="block w-full"
+  />
+  <figcaption className="mt-3 text-center text-xs text-muted-foreground font-mono">
+    推荐系统全貌：离线准备数据，在线经过召回、合并、排序，最后返回 Top K。
+  </figcaption>
+</figure>
 
 ---
 

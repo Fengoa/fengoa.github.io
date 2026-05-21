@@ -1,0 +1,148 @@
+export const metadata = {
+  title: "用 DIN 建模用户兴趣序列",
+}
+
+# 用 DIN 建模用户兴趣序列
+
+DeepFM 把用户当成一张固定名片：性别、年龄、职业。不管你昨天刚看了三部恐怖片还是三部喜剧片，名片不变，排序也不变。
+
+但你打开抖音的感受不是这样的。你刚刷了十分钟猫猫视频，接下来推的全是猫。你切去看了几条做菜视频，推荐又跟着转了。系统在看你"最近"做了什么，而不只是你"是谁"。
+
+DIN（Deep Interest Network，阿里 2018）做的就是这件事。把用户最近看过的电影序列喂进模型，用 attention 机制让模型根据当前候选动态地从历史里提取相关兴趣。
+
+---
+
+## Attention 在做什么
+
+假设用户最近看了：《星际穿越》《盗梦空间》《泰坦尼克号》《玩具总动员》
+
+现在候选电影是《星球大战》。
+
+模型会算每部历史电影和候选的相关度：
+
+```text
+《星际穿越》 → 和《星球大战》相关度高 → 权重大
+《盗梦空间》 → 中等相关 → 权重中
+《泰坦尼克号》→ 不相关 → 权重小
+《玩具总动员》→ 不相关 → 权重小
+```
+
+加权求和之后得到一个"用户对这个候选的兴趣向量"，再过 DNN 打分。
+
+如果候选换成《冰雪奇缘》，权重分布会完全翻转，《玩具总动员》的权重会变大。所以同一个用户对不同候选电影，提取出来的兴趣表征是不一样的。
+
+---
+
+## 实际效果
+
+同一个用户（用户 1），同样 10 部候选电影，只改最近看过的历史：
+
+```text
+真实历史（Aladdin, Tarzan, Beauty and the Beast... 全是动画）:
+  1. Lion King (0.98)
+  2. Little Mermaid (0.96)
+  3. Shawshank (0.91)
+  ...
+  9. Star Wars V (0.19)
+ 10. Raiders (0.04)
+
+假装最近看的是科幻（Star Wars, Matrix, Terminator...）:
+  1. Matrix (0.97)
+  2. Star Wars V (0.94)
+  3. Raiders (0.92)
+  ...
+  9. Pulp Fiction (0.11)
+ 10. Lion King (0.04)
+
+假装最近看的是动画（Toy Story, Bug's Life, Aladdin...）:
+  1. Little Mermaid (1.00)
+  2. Lion King (0.99)
+  3. Forrest Gump (0.62)
+  ...
+  9. Raiders (0.06)
+ 10. Star Wars V (0.05)
+```
+
+Lion King 在动画历史下得分 0.99，在科幻历史下得分 0.04。同一个用户，同一部电影，只是最近行为不同，分数差了 25 倍。DeepFM 对这三种情况给出完全相同的排序。
+
+---
+
+## 模型结构
+
+```text
+输入:
+  用户静态特征: user_id, gender, age, occupation（同 DeepFM）
+  用户行为序列: 最近 10 部电影的 ID
+  候选电影: movie_id
+
+内部:
+  1. 所有电影 ID 过同一个 Embedding 表 → 得到向量
+  2. Attention: 候选向量和每个历史向量算相关分，加权求和
+  3. 拼接: 用户静态 Embedding + attention 兴趣向量 + 候选 Embedding
+  4. DNN: 256 → 128 → 64 → sigmoid → 预测概率
+```
+
+关键点：历史序列和候选共用同一个 Embedding 表。这样 attention 算的相关度才有意义，因为它们在同一个向量空间里。
+
+---
+
+## 训练数据
+
+和 DeepFM 的区别：每条样本多了一个"最近 10 部电影"字段。用滑动窗口从用户时间线上切出来：
+
+```text
+用户时间线: [A, B, C, D, E, F, G, H, I, J, K, L, ...]
+
+样本 1: history=[A,B,C,D,E,F,G,H,I,J], target=K, label=1/0
+样本 2: history=[B,C,D,E,F,G,H,I,J,K], target=L, label=1/0
+...
+```
+
+总共 269 万条样本，每条带 10 个历史 ID。
+
+---
+
+## 训练过程
+
+```text
+Epoch  1 │ AUC 0.82 ★
+Epoch  5 │ AUC 0.92 ★
+Epoch 10 │ AUC 0.95 ★
+Epoch 20 │ AUC 0.96 ★
+Epoch 28 │ AUC 0.9574 ★ ← 最佳
+Epoch 30 │ AUC 0.9572 （接近早停）
+
+测试集 AUC: 0.9564
+```
+
+对比 DeepFM（hard negative）的测试集 AUC 0.9176，DIN 涨了 3.88 个百分点。在推荐系统里这是很大的提升。
+
+模型参数 41.8 万（比 DeepFM 多 76%），但训练速度差不多（每轮 16 秒）。多出来的参数主要在电影 Embedding 表和 Attention 的 MLP 上。
+
+---
+
+## 代码
+
+```text
+recommender/model/din.py     # DIN 网络（Attention + DNN）
+scripts/build_din_data.py    # 构造序列训练数据
+scripts/train_din.py         # 训练
+```
+
+```bash
+uv run python scripts/build_din_data.py
+uv run python scripts/train_din.py
+```
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | 工业界 |
+|---|---|---|
+| 序列长度 | 最近 10 部 | 最近 50-200 个行为 |
+| Attention | 单层 MLP | 多头 attention / transformer |
+| 序列内容 | 只有 movie_id | + 行为类型（点击/观看/评分）+ 停留时长 |
+| 时间信号 | 没用 | 加入 time decay（越近的行为权重越大） |
+
+工业界的 DIN 后续演化出了 DIEN（加 GRU 建模兴趣演化）和 SIM（长序列检索），处理更长的行为序列和更复杂的兴趣变化模式。
