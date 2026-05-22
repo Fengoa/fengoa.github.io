@@ -12,8 +12,17 @@ import { DeepFMCover } from "@/app/blog/deepfm-ranking/cover";
 import { TwoTowerCover } from "@/app/blog/two-tower-recall/cover";
 import { HardNegativeCover } from "@/app/blog/hard-negative-eval/cover";
 import { DINSequenceCover } from "@/app/blog/din-sequence/cover";
+import { MMoECover } from "@/app/blog/mmoe-multitask/cover";
 
 const posts: PostData[] = [
+  {
+    slug: "mmoe-multitask",
+    title: "多目标排序：一个模型同时优化多件事",
+    date: "2026-05-21",
+    summary:
+      "用 MMoE 同时预测用户会不会看、会不会及格、会不会高分。训练一次，调权重就能适配不同业务策略。",
+    cover: <MMoECover />,
+  },
   {
     slug: "din-sequence",
     title: "用 DIN 建模用户兴趣序列",
