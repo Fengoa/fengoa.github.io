@@ -13,8 +13,17 @@ import { TwoTowerCover } from "@/app/blog/two-tower-recall/cover";
 import { HardNegativeCover } from "@/app/blog/hard-negative-eval/cover";
 import { DINSequenceCover } from "@/app/blog/din-sequence/cover";
 import { MMoECover } from "@/app/blog/mmoe-multitask/cover";
+import { RerankingCover } from "@/app/blog/reranking-diversity/cover";
 
 const posts: PostData[] = [
+  {
+    slug: "reranking-diversity",
+    title: "重排：让推荐列表不再千篇一律",
+    date: "2026-05-22",
+    summary:
+      "精排逐条打分看不见列表整体。重排站在列表层面做多样性：MMR 兼顾分数和差异，类型打散避免连续同类型，Coverage 提升 25%。",
+    cover: <RerankingCover />,
+  },
   {
     slug: "mmoe-multitask",
     title: "多目标排序：一个模型同时优化多件事",

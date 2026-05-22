@@ -1,0 +1,147 @@
+export const metadata = {
+  title: "重排：让推荐列表不再千篇一律",
+}
+
+# 重排：让推荐列表不再千篇一律
+
+精排给每部候选电影打了分。按分数从高到低排就完了？
+
+看一个实际案例。用户 5 的精排结果前 5 名：
+
+```text
+1. The Godfather          Action|Crime|Drama       1.00
+2. Schindler's List       Drama|War                0.71
+3. Star Wars IV           Action|Adventure|Fantasy 0.71
+4. Star Wars V            Action|Adventure|Drama   0.68
+5. Godfather Part II      Action|Crime|Drama       0.67
+```
+
+五部电影里四部带 Action，三部带 Drama，两部是同一个系列。单独看每部都没问题——确实是这个用户会喜欢的。但作为一个列表推给用户，体验就是"怎么全是一种东西"。
+
+精排是逐条打分的，它看不见列表整体长什么样。重排做的就是站在列表层面重新安排顺序。
+
+---
+
+## 三个策略
+
+### MMR：选下一部时考虑已选的
+
+MMR（Maximal Marginal Relevance）的思路很直觉：选第 2 部时不光看它分高不高，还看它和第 1 部是不是太像。选第 3 部时看它和前 2 部是不是太像。以此类推。
+
+```text
+MMR_score = λ × 分数 - (1-λ) × 和已选的最大相似度
+```
+
+λ 控制相关性和多样性的平衡。0.7 是个稳妥的默认值——大部分时候还是选高分的，但遇到太重复的会让步。
+
+相似度用 Jaccard 算：两部电影的类型交集除以并集。`Action|Crime|Drama` 和 `Action|Crime|Drama` 是 1.0（完全一样），和 `Comedy|Romance` 是 0.0（完全不同）。
+
+### 类型打散：硬规则兜底
+
+MMR 是软约束，极端情况下还是可能连续出现同类型。加一条硬规则：同类型最多连续出现 2 部。第 3 部如果还是同类型，跳过它从后面找一个不同的插进来。
+
+### 新鲜度 boost：别全推老经典
+
+精排模型是从历史评分里训练出来的，天然偏爱经典老片（评分高、数据多）。给近 5 年的电影加一个小的分数 boost，让列表里不全是 90 年代的片子。
+
+---
+
+## 实际效果
+
+同一个用户，重排前后对比：
+
+```text
+精排结果（重排前）:
+ 1. Godfather              Action|Crime|Drama
+ 2. Schindler's List       Drama|War
+ 3. Star Wars IV           Action|Adventure|Fantasy
+ 4. Star Wars V            Action|Adventure|Drama|Sci-Fi|War
+ 5. Godfather Part II      Action|Crime|Drama         ← 和第 1 部类型完全一样
+ 6. One Flew Over...       Drama
+ 7. Raiders                Action|Adventure
+ 8. Trainspotting          Drama
+ 9. Groundhog Day          Comedy|Romance             ← 被埋在第 9
+10. Casablanca             Drama|Romance|War
+
+重排结果:
+ 1. Godfather              Action|Crime|Drama
+ 2. Star Wars IV           Action|Adventure|Fantasy   ← 和第 1 部有差异，提前
+ 3. Schindler's List       Drama|War
+ 4. Star Wars V            Action|Adventure|Drama|Sci-Fi|War
+ 5. Groundhog Day          Comedy|Romance             ← 从第 9 提到第 5
+ 6. One Flew Over...       Drama
+ 7. Raiders                Action|Adventure
+ 8. Godfather Part II      Action|Crime|Drama         ← 推后，避免和第 1 太近
+ 9. Dr. Strangelove        Sci-Fi|War                 ← 新提上来的
+10. Stand by Me            Adventure|Comedy|Drama
+```
+
+15 个位置里有 10 个发生了变动。`Groundhog Day`（喜剧）从第 9 提到第 5——打散了前面连续的 Action/Drama 堆积。
+
+量化指标（50 个用户，Top 20）：
+
+```text
+指标                  重排前      重排后      变化
+────────────────────────────────────────────────
+Coverage             3.81%      4.79%     +25.7%
+平均类型多样性       12.2 种    13.2 种    +1.0 种
+最大连续同类型         3          2        -1
+```
+
+Coverage 衡量的是"50 个用户一共被推了多少不同的电影"。从 148 部涨到 186 部，说明重排让推荐结果不再扎堆在那几十部热门经典上。
+
+---
+
+## 还预留了什么
+
+一个"强插"接口：运营可以指定某部电影必须出现在第 N 个位置。新片上映、节日推荐、合规过滤，都靠这个口子。
+
+```python
+rerank(ranked, pinned={0: "3578"})  # 强制 movie_id=3578 出现在第 1 位
+```
+
+---
+
+## 代码
+
+```text
+recommender/reranker.py       # MMR + 打散 + 新鲜度 + 强插
+scripts/demo_rerank.py        # 对比脚本
+```
+
+```bash
+uv run python scripts/demo_rerank.py --user 5
+uv run python scripts/demo_rerank.py --user 5 --lambda 0.3   # 更强的多样性
+```
+
+---
+
+## 完整流水线
+
+到这里，推荐系统的完整链路是：
+
+```text
+/recommendations?user_id=5
+  ↓
+5 路召回（热门/类型/ItemCF/SVD向量/双塔向量）→ 50 个候选
+  ↓
+精排（DeepFM/DIN/MMoE）→ 40 个带分数
+  ↓
+重排（MMR + 打散 + 新鲜度 + 业务规则）→ 最终 Top 20
+  ↓
+返回
+```
+
+每一步都在收窄范围、提升质量。召回负责"找得到"，精排负责"排得准"，重排负责"看着舒服"。
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | 工业界 |
+|---|---|---|
+| 多样性算法 | MMR（贪心） | DPP（行列式点过程，全局最优多样性） |
+| 打散规则 | 按类型 | 按类型 + 作者 + 来源 + 已曝光 |
+| 新鲜度 | 统一 boost | 时间衰减函数 + 冷启动流量池 |
+| 业务规则 | 手动强插 | 规则引擎 + A/B 实验 + 合规审核层 |
+| 执行速度 | 几十毫秒够了 | 要求 < 10ms（40 个候选 MMR 就够快） |
