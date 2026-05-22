@@ -14,8 +14,17 @@ import { HardNegativeCover } from "@/app/blog/hard-negative-eval/cover";
 import { DINSequenceCover } from "@/app/blog/din-sequence/cover";
 import { MMoECover } from "@/app/blog/mmoe-multitask/cover";
 import { RerankingCover } from "@/app/blog/reranking-diversity/cover";
+import { EngineeringCover } from "@/app/blog/engineering-recommender/cover";
 
 const posts: PostData[] = [
+  {
+    slug: "engineering-recommender",
+    title: "把推荐系统工程化",
+    date: "2026-05-22",
+    summary:
+      "Docker 一键启动、PostgreSQL 持久化、Redis 缓存、结构化日志、模型热切换。把能跑的 demo 变成能部署的服务。",
+    cover: <EngineeringCover />,
+  },
   {
     slug: "reranking-diversity",
     title: "重排：让推荐列表不再千篇一律",

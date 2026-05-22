@@ -1,0 +1,172 @@
+export const metadata = {
+  title: "把推荐系统工程化",
+}
+
+# 把推荐系统工程化
+
+前八个版本做完了推荐系统的算法主线：5 路召回 → 精排（DeepFM/DIN/MMoE）→ 重排。跑通了整条链路，用户 5 输入进去能出来 20 部排好序的电影。
+
+但这个"跑通"有很多前提：
+
+- 数据从 pkl 文件读，换台机器就找不到了
+- 没有缓存，每次请求都跑完整流水线（~50ms）
+- 出了 bug 不知道哪里出的，因为没有日志
+- 想换个模型要改代码重启服务
+- 别人想跑你这个项目，要手动装 Python + 装包 + 下数据
+
+工业界的说法是：能跑 ≠ 能上线。这个版本做的就是把"能跑"变成"能部署"。
+
+---
+
+## 做了什么
+
+### Docker 一键启动
+
+```bash
+docker-compose up --build -d
+```
+
+一条命令启动三个容器：
+
+| 容器 | 作用 |
+|------|------|
+| api | FastAPI 推荐服务 |
+| postgres | 数据持久化 |
+| redis | 推荐结果缓存 |
+
+别人 clone 你的项目，装好 Docker 跑一条命令就能用。不用关心 Python 版本、依赖冲突。
+
+### PostgreSQL 替代文件
+
+原来：启动时从 `movies.pkl` 读 3883 部电影到内存。文件删了数据就没了。
+
+现在：数据存在 PostgreSQL 里。有索引可以按条件查，有事务保证一致性，重启不丢数据。顺便加了两张业务表：
+
+```sql
+recommendation_logs  -- 每次推荐记录（谁、推了什么、用了哪个模型、花了多久）
+model_versions       -- 模型注册表（名字、版本、路径、AUC、是否激活）
+```
+
+推荐日志存下来之后，后面做 A/B 实验和效果追踪有数据可查。
+
+### Redis 缓存
+
+同一个用户 5 分钟内第二次请求，直接返回上次的结果：
+
+```text
+第一次: 走完整流水线，~50ms，cached=false
+第二次: 从 Redis 取，<1ms，cached=true
+```
+
+模型切换时自动清空缓存，避免返回过期结果。
+
+### 结构化日志
+
+每次请求自动产生一条 JSON 日志：
+
+```json
+{
+  "ts": "2026-05-22T10:00:00Z",
+  "level": "info",
+  "event": "recommendation",
+  "user_id": "5",
+  "latency_ms": 42,
+  "model": "deepfm_v1",
+  "cached": false
+}
+```
+
+出了问题 `grep user_id=xxx` 就能追溯。日志写到 stdout，Docker 自动收集。
+
+### 模型热切换
+
+不停服换模型：
+
+```bash
+# 查看所有注册的模型
+curl http://localhost:8000/api/admin/models
+
+# 切换到 DIN（不需要重启）
+curl -X POST http://localhost:8000/api/admin/models/activate \
+  -H "Content-Type: application/json" \
+  -d '{"name":"din","version":"v1"}'
+```
+
+切换后下一次请求自动用新模型。缓存同时清空。
+
+### 健康检查
+
+```bash
+curl http://localhost:8000/health
+```
+
+```json
+{
+  "status": "ok",
+  "database": "connected",
+  "redis": "connected",
+  "model_loaded": "deepfm_v1"
+}
+```
+
+负载均衡器靠这个判断实例是否可用。PG 挂了 status 变成 "degraded"，可以自动剔除或报警。
+
+---
+
+## 响应格式
+
+所有接口有统一的 schema：
+
+```json
+{
+  "user_id": "5",
+  "items": [
+    {"movie_id": "858", "title": "Godfather, The (1972)", "genres": "Action|Crime|Drama", "score": 1.0},
+    {"movie_id": "260", "title": "Star Wars IV", "genres": "Action|Adventure|Fantasy|Sci-Fi", "score": 0.71}
+  ],
+  "model_version": "deepfm_v1",
+  "latency_ms": 42.3,
+  "cached": false,
+  "recall_count": 20
+}
+```
+
+前端拿到的永远是这个格式，不会因为内部重构而变。字段加了但不会删，向前兼容。
+
+---
+
+## 项目结构
+
+```text
+recommender-service/
+├── app/
+│   ├── main.py              # 入口 + 生命周期管理
+│   ├── config.py            # 环境变量配置
+│   ├── middleware.py        # 请求日志
+│   ├── db/                  # PostgreSQL 层
+│   ├── cache/               # Redis 层
+│   ├── schemas/             # Pydantic 响应模型
+│   ├── routers/             # 路由拆分
+│   └── recommender/         # 核心算法（从 V1-V8 迁移）
+├── scripts/init_db.py       # 建表 + 数据导入
+├── docker-compose.yml       # 一键启动 3 个服务
+└── Dockerfile
+```
+
+算法代码从 `minimal-backend/` 原样迁移过来，不改逻辑。工程化是在外面包了一层：缓存、日志、配置、容器化。
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | 工业界 |
+|---|---|---|
+| 部署 | Docker Compose (单机) | Kubernetes (多机 + 自动扩缩) |
+| 缓存 | Redis 单实例 | Redis Cluster + 多级缓存 |
+| 日志 | stdout JSON | ELK / Loki 日志平台 |
+| 监控 | /health 端点 | Prometheus + Grafana 全链路监控 |
+| 模型管理 | 数据库表 | MLflow / Kubeflow + 模型仓库 |
+| CI/CD | 无 | GitHub Actions + 蓝绿部署 |
+| 配置 | .env 文件 | Apollo / Consul 配置中心 |
+
+核心差距不在代码，在规模。单机 3000 部电影不需要 Kubernetes，但架构思路是一样的：无状态服务 + 外部存储 + 缓存加速 + 可观测性。
