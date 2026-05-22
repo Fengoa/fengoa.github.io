@@ -8,6 +8,7 @@ import { Grid } from "@/components/ui/grid";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { NavHoverDemo } from "@/components/ui/nav-hover-demo";
 import { RecommenderPipeline } from "@/components/blog/recommender-pipeline";
+import { RecSystemLandscape } from "@/components/blog/rec-system-landscape";
 
 export const H1 = (props: ComponentPropsWithoutRef<"h1">) => (
   <h1 className="mb-8 font-semibold text-2xl md:text-4xl" {...props} />
@@ -232,6 +233,7 @@ export const components = {
   BorderBeam,
   NavHoverDemo,
   RecommenderPipeline,
+  RecSystemLandscape,
   h1: H1,
   H1: H1,
   h2: H2,

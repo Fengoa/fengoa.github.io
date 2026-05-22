@@ -15,8 +15,17 @@ import { DINSequenceCover } from "@/app/blog/din-sequence/cover";
 import { MMoECover } from "@/app/blog/mmoe-multitask/cover";
 import { RerankingCover } from "@/app/blog/reranking-diversity/cover";
 import { EngineeringCover } from "@/app/blog/engineering-recommender/cover";
+import { LandscapeCover } from "@/app/blog/recommender-landscape/cover";
 
 const posts: PostData[] = [
+  {
+    slug: "recommender-landscape",
+    title: "推荐系统全景图",
+    date: "2026-05-22",
+    summary:
+      "从数据层到评估体系，7 个环节的完整架构。对照工业界标准看我们做了什么、还差什么、前沿在哪。",
+    cover: <LandscapeCover />,
+  },
   {
     slug: "engineering-recommender",
     title: "把推荐系统工程化",

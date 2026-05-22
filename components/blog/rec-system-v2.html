@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>推荐系统全景图 2.0</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+  background: #f8f7f4;
+  color: #1a1a18;
+  padding: 40px 32px 60px;
+}
+.page { max-width: 940px; margin: 0 auto; }
+
+/* HEADER */
+.header { text-align: center; margin-bottom: 28px; }
+.header h1 { font-size: 20px; font-weight: 600; color: #2c2c2a; letter-spacing: 3px; margin-bottom: 8px; }
+.header p { font-size: 12px; color: #aaa; line-height: 1.6; }
+
+/* LEGEND */
+.legend {
+  display: flex; justify-content: center; gap: 18px; margin-bottom: 28px;
+  flex-wrap: wrap; font-size: 11.5px; color: #666;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.ld { width: 9px; height: 9px; border-radius: 2px; }
+.ld-mature { background: #888780; }
+.ld-frontier { background: #7F77DD; }
+
+/* FLOW */
+.flow { display: flex; flex-direction: column; }
+
+/* LAYER */
+.layer { border-radius: 12px; padding: 18px 18px 16px; border: 1.5px solid; }
+.layer-head {
+  font-size: 14px; font-weight: 600; margin-bottom: 13px;
+  display: flex; align-items: center; gap: 8px;
+}
+.tag {
+  font-size: 9.5px; font-weight: 700; padding: 2px 7px;
+  border-radius: 3px; line-height: 1.5; letter-spacing: 0.4px;
+}
+.tag-new { background: #d85a30; color: #fff; }
+.tag-edge { background: #7F77DD; color: #fff; }
+
+/* CARDS ROW */
+.cards { display: flex; gap: 9px; flex-wrap: wrap; }
+.card { flex: 1; min-width: 120px; border-radius: 8px; padding: 10px 12px; border: 1px solid; }
+.cn { font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+.cd { font-size: 10.5px; line-height: 1.75; }
+.f { color: #7F77DD; font-style: italic; }
+
+/* RANK PANELS */
+.rank-row { display: flex; gap: 9px; }
+.rp { flex: 1; border-radius: 8px; padding: 11px 13px; border: 1px solid; }
+.rp-t { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+.rp-d { font-size: 10.5px; line-height: 1.8; }
+.rank-mid { display: flex; align-items: center; color: #ddd; font-size: 18px; padding: 0 2px; }
+
+/* CONNECTORS */
+.conn {
+  display: flex; align-items: center; justify-content: center;
+  padding: 6px 0; gap: 0;
+}
+.conn-inner { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.conn-bar { width: 1.5px; height: 12px; background: #ccc; }
+.conn-chip {
+  font-size: 10px; font-weight: 600; padding: 2px 12px;
+  border-radius: 10px; letter-spacing: 0.2px;
+}
+.conn-arrow-svg { height: 8px; width: 10px; }
+
+/* ── LAYER COLOR THEMES ── */
+/* Data */
+.l-data { background: #e6f1fb; border-color: #b5d4f4; }
+.l-data .layer-head { color: #042c53; }
+.l-data .card { background: #fff; border-color: #b5d4f4; }
+.l-data .cn { color: #0c447c; }
+.l-data .cd { color: #185fa5; }
+/* Chip */
+.chip-data { background: #b5d4f4; color: #0c447c; }
+
+/* Feature */
+.l-feat { background: #e1f5ee; border-color: #9fe1cb; }
+.l-feat .layer-head { color: #04342c; }
+.l-feat .card { background: #fff; border-color: #9fe1cb; }
+.l-feat .cn { color: #085041; }
+.l-feat .cd { color: #0f6e56; }
+.chip-feat { background: #9fe1cb; color: #085041; }
+
+/* Recall */
+.l-recall { background: #eeedfe; border-color: #afa9ec; }
+.l-recall .layer-head { color: #26215c; }
+.l-recall .card { background: #fff; border-color: #afa9ec; }
+.l-recall .cn { color: #3c3489; }
+.l-recall .cd { color: #534ab7; }
+.chip-recall { background: #afa9ec; color: #26215c; }
+
+/* Rank */
+.l-rank { background: #faece7; border-color: #f5c4b3; }
+.l-rank .layer-head { color: #4a1b0c; }
+.l-rank .rp { background: #fff; border-color: #f5c4b3; }
+.l-rank .rp-t { color: #993c1d; }
+.l-rank .rp-d { color: #d85a30; }
+.chip-rank { background: #f5c4b3; color: #993c1d; }
+
+/* Rerank */
+.l-rerank { background: #fbeaf0; border-color: #f4c0d1; }
+.l-rerank .layer-head { color: #4b1528; }
+.l-rerank .card { background: #fff; border-color: #f4c0d1; }
+.l-rerank .cn { color: #72243e; }
+.l-rerank .cd { color: #993556; }
+.chip-rerank { background: #f4c0d1; color: #72243e; }
+
+/* Strategy */
+.l-strat { background: #eaf3de; border-color: #c0dd97; }
+.l-strat .layer-head { color: #173404; }
+.l-strat .card { background: #fff; border-color: #c0dd97; }
+.l-strat .cn { color: #27500a; }
+.l-strat .cd { color: #3b6d11; }
+.chip-strat { background: #c0dd97; color: #27500a; }
+
+/* Eval */
+.l-eval { background: #faeeda; border-color: #fac775; }
+.l-eval .layer-head { color: #412402; }
+.l-eval .card { background: #fff; border-color: #fac775; }
+.l-eval .cn { color: #633806; }
+.l-eval .cd { color: #854f0b; }
+.chip-eval { background: #fac775; color: #633806; }
+
+/* BOTTOM NOTES */
+.bottom-notes { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.note-box {
+  border-radius: 9px; padding: 12px 16px;
+  border: 1px solid #d3d1c7; background: #f1efe8;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.note-icon { font-size: 20px; line-height: 1.2; flex-shrink: 0; }
+.note-title { font-size: 12px; font-weight: 600; color: #444441; margin-bottom: 4px; }
+.note-body { font-size: 11px; color: #6b6b66; line-height: 1.75; }
+.note-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.note-tag {
+  font-size: 10px; padding: 2px 9px; border-radius: 10px;
+  background: #e6e4dc; color: #5f5e5a; font-weight: 500;
+}
+
+@media print {
+  body { background: #fff; padding: 20px; }
+  .page { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>推荐系统全景图 2.0</h1>
+    <p>新增特征工程层 · 重排层 · LLM/多模态召回 · 因果推断去偏 · 数据飞轮闭环 · 工程服务层</p>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="ld ld-mature"></div>成熟技术（正体）</div>
+    <div class="legend-item"><div class="ld ld-frontier"></div><em>斜紫体</em> = 前沿 / LLM 新兴技术</div>
+    <div class="legend-item"><span class="tag tag-new">NEW</span>本次新增</div>
+    <div class="legend-item"><span class="tag tag-edge">前沿</span>实验性</div>
+  </div>
+
+  <div class="flow">
+
+    <!-- ① 数据层 -->
+    <div class="layer l-data">
+      <div class="layer-head">① 数据层</div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">用户行为</div>
+          <div class="cd">点击 / 购买 / 评分<br>停留 / 跳过 / 分享</div>
+        </div>
+        <div class="card">
+          <div class="cn">用户画像</div>
+          <div class="cd">年龄 / 偏好 / 标签<br>会员层 / 活跃度</div>
+        </div>
+        <div class="card">
+          <div class="cn">物品特征</div>
+          <div class="cd">类目 / 标签 / 属性<br><span class="f">图文视频多模态</span></div>
+        </div>
+        <div class="card">
+          <div class="cn">上下文</div>
+          <div class="cd">时间 / 位置 / 设备<br>当前 Session 序列</div>
+        </div>
+        <div class="card">
+          <div class="cn">社交</div>
+          <div class="cd">好友 / 关注关系<br>互动图谱</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-inner">
+        <div class="conn-bar"></div>
+        <span class="conn-chip chip-data">全量数据</span>
+        <div class="conn-bar"></div>
+      </div>
+    </div>
+
+    <!-- ② 特征工程层 NEW -->
+    <div class="layer l-feat">
+      <div class="layer-head">② 特征工程层 <span class="tag tag-new">NEW</span></div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">特征存储</div>
+          <div class="cd">在线：Redis / Flink<br>离线：Hive / Spark<br>Feature Store</div>
+        </div>
+        <div class="card">
+          <div class="cn">Embedding 预计算</div>
+          <div class="cd">用户 / 物品 Emb<br><span class="f">LLM 语义向量</span><br><span class="f">多模态 Emb（CLIP）</span></div>
+        </div>
+        <div class="card">
+          <div class="cn">特征交叉</div>
+          <div class="cd">Target Attention<br>用户–物品 Cross<br>序列池化</div>
+        </div>
+        <div class="card">
+          <div class="cn">样本工程</div>
+          <div class="cd">Hard Negative Mining<br>正负样本比例控制<br>样本时效性管理</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-inner">
+        <div class="conn-bar"></div>
+        <span class="conn-chip chip-recall">亿级物品库</span>
+        <div class="conn-bar"></div>
+      </div>
+    </div>
+
+    <!-- ③ 召回层 -->
+    <div class="layer l-recall">
+      <div class="layer-head">③ 召回层（多路召回）</div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">协同过滤</div>
+          <div class="cd">User-CF / Item-CF<br>Matrix Factorization<br>ALS / SVD++ / BPR<br>SLIM</div>
+        </div>
+        <div class="card">
+          <div class="cn">内容 / 语义</div>
+          <div class="cd">TF-IDF / Word2Vec<br>双塔 DSSM<br>Sentence-BERT<br>Faiss / HNSW ANN<br><span class="f">LLM 语义召回</span></div>
+        </div>
+        <div class="card">
+          <div class="cn">图 / 社交</div>
+          <div class="cd">DeepWalk / Node2Vec<br>GCN / GraphSAGE<br>LightGCN / PinSage<br>知识图谱 KG</div>
+        </div>
+        <div class="card">
+          <div class="cn">序列 / 规则</div>
+          <div class="cd">GRU4Rec / SASRec<br>BERT4Rec<br>热门 / 新品召回<br>运营 / 规则兜底</div>
+        </div>
+        <div class="card" style="border-left: 3px solid #7F77DD;">
+          <div class="cn" style="display:flex;align-items:center;gap:5px;">多模态 <span class="tag tag-edge" style="font-size:9px;">前沿</span></div>
+          <div class="cd"><span class="f">CLIP-based 召回<br>视频帧特征索引<br>跨模态检索</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-inner">
+        <div class="conn-bar"></div>
+        <span class="conn-chip chip-recall">千级候选集</span>
+        <div class="conn-bar"></div>
+      </div>
+    </div>
+
+    <!-- ④ 排序层 -->
+    <div class="layer l-rank">
+      <div class="layer-head">④ 排序层</div>
+      <div class="rank-row">
+        <div class="rp" style="flex:1;">
+          <div class="rp-t">粗排</div>
+          <div class="rp-d">
+            向量点积（轻量双塔）<br>
+            LR / GBDT<br>
+            简单 MLP / FM<br>
+            → 百级候选集
+          </div>
+        </div>
+        <div class="rank-mid">→</div>
+        <div class="rp" style="flex:2;">
+          <div class="rp-t">精排</div>
+          <div class="rp-d">
+            Wide &amp; Deep / DeepFM / xDeepFM<br>
+            DIN / DIEN（用户兴趣建模）<br>
+            DCN v2 / BST / DLRM<br>
+            多目标排序（MMoE / PLE）<br>
+            <span class="f">LLM 排序器（LLM4Rec）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-inner">
+        <div class="conn-bar"></div>
+        <span class="conn-chip chip-rerank">十级候选集</span>
+        <div class="conn-bar"></div>
+      </div>
+    </div>
+
+    <!-- ⑤ 重排层 NEW -->
+    <div class="layer l-rerank">
+      <div class="layer-head">⑤ 重排层 <span class="tag tag-new">NEW</span></div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">列表级优化</div>
+          <div class="cd">PRM（实用重排模型）<br>DLCM / SetRank<br>上下文感知重排</div>
+        </div>
+        <div class="card">
+          <div class="cn">位置 / 曝光去偏</div>
+          <div class="cd">Position Bias 修正<br>IPW / DR 方法<br><span class="f">因果推断（反事实）</span></div>
+        </div>
+        <div class="card">
+          <div class="cn">打散控制</div>
+          <div class="cd">品类 / 来源打散<br>相似内容去重<br>疲劳度衰减</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-inner">
+        <div class="conn-bar"></div>
+        <span class="conn-chip chip-strat">最终结果集</span>
+        <div class="conn-bar"></div>
+      </div>
+    </div>
+
+    <!-- ⑥ 业务策略层 -->
+    <div class="layer l-strat">
+      <div class="layer-head">⑥ 业务策略层</div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">多样性 / 打散</div>
+          <div class="cd">MMR / DPP<br>内容多样化</div>
+        </div>
+        <div class="card">
+          <div class="cn">去重 / 过滤</div>
+          <div class="cd">曝光去重<br>黑名单 / 违规</div>
+        </div>
+        <div class="card">
+          <div class="cn">探索与利用</div>
+          <div class="cd">ε-greedy / UCB<br>Bandit / RL</div>
+        </div>
+        <div class="card">
+          <div class="cn">冷启动</div>
+          <div class="cd">用户 / 物品冷启<br><span class="f">LLM 冷启补全</span></div>
+        </div>
+        <div class="card">
+          <div class="cn">人工干预</div>
+          <div class="cd">打压 / 提权 / 运营<br>约束优化</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-inner">
+        <div class="conn-bar"></div>
+        <span class="conn-chip chip-eval">线上曝光</span>
+        <div class="conn-bar"></div>
+      </div>
+    </div>
+
+    <!-- ⑦ 评估体系 -->
+    <div class="layer l-eval">
+      <div class="layer-head">⑦ 评估体系</div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">离线评估</div>
+          <div class="cd">AUC / NDCG / Recall@K<br>冷热用户分群<br><span class="f">Novelty / Serendipity</span></div>
+        </div>
+        <div class="card">
+          <div class="cn">在线 A/B 测试</div>
+          <div class="cd">CTR / CVR / GMV<br>时长 / 留存<br><span class="f">LTV 长期效果</span><br><span class="f">Holdout 实验</span></div>
+        </div>
+        <div class="card">
+          <div class="cn">多样性 / 公平性</div>
+          <div class="cd">ILS / Coverage<br>茧房效应检测<br><span class="f">公平性 / 去偏指标</span></div>
+        </div>
+        <div class="card">
+          <div class="cn">工程指标 <span class="tag tag-new" style="font-size:9px;">NEW</span></div>
+          <div class="cd">P99 延迟 / QPS<br>召回率 / 缓存命中<br>降级触发频率</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ANNOTATIONS -->
+    <div class="bottom-notes">
+
+      <!-- Data Flywheel -->
+      <div class="note-box">
+        <div class="note-icon">↺</div>
+        <div>
+          <div class="note-title">数据飞轮（反馈闭环）</div>
+          <div class="note-body">
+            用户行为 → 训练样本实时回流 → 特征 / 模型持续迭代 → 更好的推荐 → 更多高质量行为数据<br>
+            关键环节：曝光偏差修正（IPW）· Hard Negative 挖掘 · 样本时效管理 · Holdout 评估集隔离
+          </div>
+        </div>
+      </div>
+
+      <!-- Engineering Layer -->
+      <div class="note-box">
+        <div class="note-icon" style="font-size:17px; padding-top:2px;">⚙</div>
+        <div style="flex:1;">
+          <div class="note-title">模型服务 / 工程层（横跨全链路）</div>
+          <div class="note-tags">
+            <span class="note-tag">在线推理：TF Serving / Triton</span>
+            <span class="note-tag">向量检索：Milvus / Faiss</span>
+            <span class="note-tag">特征服务：Redis / Feature Store</span>
+            <span class="note-tag">延迟目标 &lt; 50ms P99</span>
+            <span class="note-tag">降级：热门兜底</span>
+            <span class="note-tag">灰度 / 流量分桶</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scale Overview -->
+      <div class="note-box" style="background:#f8f7f4;">
+        <div class="note-icon" style="font-size:14px; padding-top:3px; color:#888;">▶</div>
+        <div>
+          <div class="note-title">数量漏斗（量级参考）</div>
+          <div class="note-body" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:4px;">
+            <span class="conn-chip" style="background:#b5d4f4;color:#0c447c;">全量亿级</span>
+            <span style="color:#ccc;">→</span>
+            <span class="conn-chip chip-recall">千万级（特征）</span>
+            <span style="color:#ccc;">→</span>
+            <span class="conn-chip chip-recall">千级（召回）</span>
+            <span style="color:#ccc;">→</span>
+            <span class="conn-chip chip-rank">百级（粗排）</span>
+            <span style="color:#ccc;">→</span>
+            <span class="conn-chip chip-rerank">十级（精排）</span>
+            <span style="color:#ccc;">→</span>
+            <span class="conn-chip chip-strat">最终展示</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
