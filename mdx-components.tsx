@@ -235,6 +235,7 @@ export const components = {
   NavHoverDemo,
   RecommenderPipeline,
   RecSystemLandscape,
+  LLMSystemLandscape,
   h1: H1,
   H1: H1,
   h2: H2,

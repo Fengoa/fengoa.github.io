@@ -258,17 +258,82 @@ const posts: PostData[] = [
 
 export default function Home() {
   const [activeTag, setActiveTag] = useState(ALL_TAG);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  // 计算每个标签的文章数量
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    counts[ALL_TAG] = posts.length;
+    for (const tag of TAGS) {
+      if (tag !== ALL_TAG) {
+        counts[tag] = posts.filter((p) => p.tag === tag).length;
+      }
+    }
+    return counts;
+  }, []);
 
   const filteredPosts = useMemo(() => {
     if (activeTag === ALL_TAG) return posts;
     return posts.filter((p) => p.tag === activeTag);
   }, [activeTag]);
 
+  // 分页
+  const totalPages = Math.ceil(filteredPosts.length / PAGE_SIZE);
+  const paginatedPosts = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredPosts.slice(start, start + PAGE_SIZE);
+  }, [filteredPosts, currentPage]);
+
+  // 切换标签时重置页码
+  const handleTagChange = (tag: string) => {
+    setActiveTag(tag);
+    setCurrentPage(1);
+  };
+
   return (
     <main className="py-20">
       <Grid.System>
-        <BlogHero tags={TAGS} activeTag={activeTag} onTagChange={setActiveTag} />
-        <PostList posts={filteredPosts} />
+        <BlogHero
+          tags={TAGS}
+          activeTag={activeTag}
+          onTagChange={handleTagChange}
+          tagCounts={tagCounts}
+        />
+        <PostList posts={paginatedPosts} />
+
+        {/* 分页 */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 py-8">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-xs font-mono rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            >
+              上一页
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1.5 text-xs font-mono rounded-md border transition-colors ${
+                  currentPage === i + 1
+                    ? "border-foreground/60 text-foreground bg-foreground/5"
+                    : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/40"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-xs font-mono rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            >
+              下一页
+            </button>
+          </div>
+        )}
       </Grid.System>
     </main>
   );

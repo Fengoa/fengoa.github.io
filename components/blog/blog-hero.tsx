@@ -15,9 +15,11 @@ interface BlogHeroProps {
   tags?: string[];
   activeTag?: string;
   onTagChange?: (tag: string) => void;
+  /** 每个标签对应的文章数量 */
+  tagCounts?: Record<string, number>;
 }
 
-export function BlogHero({ tags, activeTag, onTagChange }: BlogHeroProps) {
+export function BlogHero({ tags, activeTag, onTagChange, tagCounts }: BlogHeroProps) {
   // 计算居中偏移：6个标签占6格，从第4列开始（12列中居中）
   const tagCount = tags?.length ?? 0;
   const startCol = Math.floor((12 - tagCount) / 2) + 1;
@@ -81,7 +83,7 @@ export function BlogHero({ tags, activeTag, onTagChange }: BlogHeroProps) {
                 <button
                   onClick={() => onTagChange?.(tag)}
                   className={cn(
-                    "size-full flex items-center justify-center",
+                    "size-full flex flex-col items-center justify-center gap-1",
                     "text-xs font-mono transition-colors duration-200",
                     "hover:bg-foreground/[0.03] dark:hover:bg-foreground/[0.05]",
                     activeTag === tag
@@ -89,7 +91,12 @@ export function BlogHero({ tags, activeTag, onTagChange }: BlogHeroProps) {
                       : "text-muted-foreground"
                   )}
                 >
-                  {tag}
+                  <span>{tag}</span>
+                  {tagCounts && (
+                    <span className="text-[10px] opacity-60">
+                      {tagCounts[tag] ?? 0}
+                    </span>
+                  )}
                 </button>
               </Grid.Cell>
             ))}
