@@ -145,27 +145,47 @@ MLP 的问题：
 2. 拼接方式权重太多，窗口大了参数爆炸
 3. 所有位置权重相同，不管哪个字符更重要
 
-Attention 的想法：让每个位置动态决定"看"哪些位置。
+**核心想法**：让模型自己决定"看哪里"，而不是固定看前 N 个。
+
+举个例子。要预测 `"the king said to his ___"` 的下一个词：
 
 ```text
-"the king said to his"
-      ↓
-预测下一个词时，"said" 比 "to" 更重要
-→ 给 "said" 更高的注意力权重
+the   king   said   to   his   ???
+ ↑      ↑↑     ↑↑↑    ↑    ↑↑
+低关注  高关注  最关注  低关注 高关注
 ```
 
-实现：
+"said" 和 "king" 对预测下一个词更关键，"the" 和 "to" 没什么信息量。Attention 让模型根据当前位置的需要，动态分配对历史每个位置的关注程度。
+
+**怎么实现这个"动态关注"？**
+
+每个位置同时扮演两个角色：
+
+- 当它需要信息时，发出一个 **Query**（"我在找什么？"）
+- 当它被别人查看时，提供一个 **Key**（"我有什么？"）和一个 **Value**（"我的实际内容"）
+
+匹配过程：
 
 ```text
-Q（Query）= "我在找什么信息"
-K（Key）  = "我能提供什么信息"
-V（Value）= "我的实际内容"
-
-注意力权重 = softmax(Q × K^T / √d)
-输出 = 注意力权重 × V
+当前位置的 Query 和所有历史位置的 Key 做点积
+→ 点积大 = 匹配度高 = 注意力权重高
+→ 按权重加权求和所有位置的 Value
+→ 得到当前位置的输出
 ```
 
-加上 FFN（前馈网络）、LayerNorm、残差连接，就是一个完整的 Transformer Block。堆 2 层，配上 4 个 attention head，就是我们的 MiniGPT：
+写成公式就一行：
+
+```text
+输出 = softmax(Q × K^T / √d) × V
+```
+
+除以 √d 是为了稳定数值（点积会随维度变大）。
+
+**从 Attention 到完整模型**
+
+单个 Attention 只能学一种"关注模式"。但语言理解需要同时关注多种东西（语法、语义、位置关系），所以用 4 个 Attention Head 并行，各学各的模式，最后拼起来。
+
+加上 FFN（前馈网络做非线性变换）、LayerNorm（稳定训练）、残差连接（防止梯度消失），就是一个 Transformer Block。堆 2 层就是我们的 MiniGPT：
 
 ```text
 Token Embedding + Position Embedding

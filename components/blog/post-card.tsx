@@ -17,6 +17,8 @@ export type PostData = {
   cover?: string | ReactNode;
   /** 分类标签 */
   tag?: string;
+  /** 封面形状：circle（默认）或 square */
+  coverShape?: "circle" | "square";
 };
 
 function formatDate(dateStr: string) {
@@ -62,7 +64,10 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
             isEven ? "md:order-2 md:justify-end" : "md:order-1 md:justify-start"
           )}
         >
-          <div className="aspect-square rounded-full overflow-hidden w-[80%] flex-none md:size-80 border">
+          <div className={cn(
+            "aspect-square overflow-hidden w-[80%] flex-none md:size-80 border",
+            post.coverShape === "square" ? "rounded-2xl" : "rounded-full"
+          )}>
             {post.cover &&
               (typeof post.cover === "string" ? (
                 <Image

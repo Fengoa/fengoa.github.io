@@ -102,24 +102,24 @@ export function EfficientAttentionCover({ className }: { className?: string }) {
   ];
 
   return (
-    <div className={cn("relative aspect-square w-full overflow-hidden rounded-full", "bg-gradient-to-br from-[#f0fdfa] via-[#ecfdf5] to-[#f0fdfa] dark:from-[#0f1f1a] dark:via-[#0d1f18] dark:to-[#0f1f1a]", className)}>
+    <div className={cn("relative aspect-square w-full overflow-hidden rounded-2xl", "bg-gradient-to-br from-[#f0fdf4] via-[#ecfdf5] to-[#d1fae5] dark:from-[#052e16] dark:via-[#064e3b] dark:to-[#052e16]", className)}>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-14">
         {/* Q 行 */}
         <div className="flex gap-1">
           {Array.from({ length: blocks[phase][0] }, (_, i) => (
-            <motion.div key={`q-${i}`} className="w-3 h-3 rounded-sm bg-emerald-400/70" animate={{ scale: [1, 1.1, 1] }} transition={{ delay: i * 0.05, duration: 0.5 }} />
+            <motion.div key={`q-${i}`} className="w-3 h-3 rounded-sm bg-emerald-500" animate={{ scale: [1, 1.1, 1] }} transition={{ delay: i * 0.05, duration: 0.5 }} />
           ))}
         </div>
-        <div className="text-[8px] font-mono text-emerald-600/60 dark:text-emerald-400/60">Q heads: 8</div>
+        <div className="text-[8px] font-mono text-emerald-700 dark:text-emerald-300">Q heads: 8</div>
         {/* KV 行 */}
         <div className="flex gap-1">
           {Array.from({ length: blocks[phase][1] }, (_, i) => (
-            <motion.div key={`kv-${phase}-${i}`} initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.08 }} className="w-3 h-3 rounded-sm bg-teal-400/70" />
+            <motion.div key={`kv-${phase}-${i}`} initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.08 }} className="w-3 h-3 rounded-sm bg-teal-500" />
           ))}
         </div>
-        <div className="text-[8px] font-mono text-teal-600/60 dark:text-teal-400/60">KV heads: {blocks[phase][1]}</div>
+        <div className="text-[8px] font-mono text-teal-700 dark:text-teal-300">KV heads: {blocks[phase][1]}</div>
         {/* 标签 */}
-        <div className="text-[10px] font-mono text-foreground/60 mt-1">{labels[phase]}</div>
+        <div className="text-[10px] font-mono font-semibold text-foreground/80 mt-1">{labels[phase]}</div>
       </div>
     </div>
   );
@@ -137,19 +137,19 @@ export function SFTCover({ className }: { className?: string }) {
   }, []);
 
   return (
-    <div className={cn("relative aspect-square w-full overflow-hidden rounded-full", "bg-gradient-to-br from-[#fef3c7] via-[#fef9c3] to-[#fefce8] dark:from-[#1c1a0f] dark:via-[#1e1c10] dark:to-[#1c1a0f]", className)}>
+    <div className={cn("relative aspect-square w-full overflow-hidden rounded-2xl", "bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] dark:from-[#1c1508] dark:via-[#2a1f0a] dark:to-[#3b2c0f]", className)}>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-12">
         {/* Instruction */}
-        <div className="w-full rounded border border-amber-200/60 dark:border-amber-800/40 bg-white/80 dark:bg-neutral-900/50 px-3 py-1.5">
-          <div className="text-[8px] font-mono text-amber-600/80 dark:text-amber-400/60 mb-0.5">Instruction</div>
-          <div className="text-[10px] text-foreground/70">What is 2+2?</div>
+        <div className="w-full rounded-lg border border-amber-300 dark:border-amber-600 bg-white dark:bg-neutral-900 px-3 py-2 shadow-sm">
+          <div className="text-[8px] font-mono text-amber-600 dark:text-amber-400 font-semibold mb-0.5">Instruction</div>
+          <div className="text-[11px] text-foreground">What is 2+2?</div>
         </div>
         {/* Arrow */}
-        <motion.div animate={{ opacity: show ? 1 : 0.3 }} className="text-amber-400 text-xs">↓</motion.div>
+        <motion.div animate={{ opacity: show ? 1 : 0.4 }} className="text-amber-500 dark:text-amber-400 text-sm font-bold">↓</motion.div>
         {/* Response */}
-        <motion.div animate={{ opacity: show ? 1 : 0.3, y: show ? 0 : 4 }} transition={{ duration: 0.4 }} className="w-full rounded border border-emerald-200/60 dark:border-emerald-800/40 bg-white/80 dark:bg-neutral-900/50 px-3 py-1.5">
-          <div className="text-[8px] font-mono text-emerald-600/80 dark:text-emerald-400/60 mb-0.5">Response</div>
-          <div className="text-[10px] text-foreground/70">{show ? "4" : "..."}</div>
+        <motion.div animate={{ opacity: show ? 1 : 0.4, y: show ? 0 : 4 }} transition={{ duration: 0.4 }} className="w-full rounded-lg border border-emerald-300 dark:border-emerald-600 bg-white dark:bg-neutral-900 px-3 py-2 shadow-sm">
+          <div className="text-[8px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold mb-0.5">Response</div>
+          <div className="text-[11px] text-foreground">{show ? "4" : "..."}</div>
         </motion.div>
       </div>
     </div>
