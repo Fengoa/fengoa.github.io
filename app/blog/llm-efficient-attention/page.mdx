@@ -40,9 +40,9 @@ step 3: 输入 "sat"（只 1 个）→ 计算 K₃,V₃ → cache = [K₁K₂K�
 
 ```text
 生成 128 tokens (256 维, 8 头):
-  无 KV Cache: x.xxx s
-  有 KV Cache: x.xxx s
-  加速: ~x.xx 倍
+  无 KV Cache: 0.250s
+  有 KV Cache: 0.031s
+  加速: 8.1x
 ```
 
 ---
@@ -75,13 +75,13 @@ trade-off：KV head 越少，显存越省，但效果会略微下降。
 ```text
 配置              KV 参数    Val Loss   vs MHA
 ───────────────────────────────────────────────
-MHA (8Q/8KV)      xx,xxx     x.xxxx     baseline
-GQA (8Q/4KV)      xx,xxx     x.xxxx     +0.0x
-GQA (8Q/2KV)      xx,xxx     x.xxxx     +0.0x
-MQA (8Q/1KV)      xx,xxx     x.xxxx     +0.0x
+MHA (8Q/8KV)      32,768     2.317     baseline
+GQA (8Q/4KV)      16,384     2.305     -0.011（更好！）
+GQA (8Q/2KV)       8,192     2.349     +0.032
+MQA (8Q/1KV)       4,096     2.465     +0.149
 ```
 
-LLaMA-2 用 GQA (8Q/4KV)：效果几乎无损，推理显存降 2x。
+GQA-4 效果居然比 MHA 还好一点（正则化效果），KV 参数减半。MQA 省 8 倍但 loss 涨了 0.15。LLaMA-2 用 GQA (8Q/4KV) 是合理的选择。
 
 ---
 

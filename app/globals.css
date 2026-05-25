@@ -169,3 +169,8 @@
   }
 }
 
+/* Command Palette — cmdk 内部 Radix Dialog 需要少量全局样式覆盖 */
+[cmdk-input] {
+  font-family: inherit;
+}
+

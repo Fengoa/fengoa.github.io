@@ -7,6 +7,7 @@ import { HeartIcon } from "@/components/ui/heart-icon";
 import { AvatarIcon } from "@/components/ui/avatar-icon";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import { useHoverSequence } from "@/hooks/use-hover-sequence";
+import { Search } from "lucide-react";
 
 const tabs = [
   { id: "blog", label: "博客", href: "/" },
@@ -87,6 +88,24 @@ export function NavTabs() {
           </button>
         );
       })}
+
+      {/* 搜索按钮 */}
+      <button
+        type="button"
+        className="inline-flex font-medium items-center gap-1.5 px-3 py-2 rounded-lg transition-colors duration-200 text-muted-foreground hover:text-foreground"
+        onClick={() => {
+          document.dispatchEvent(
+            new KeyboardEvent("keydown", {
+              key: "k",
+              metaKey: true,
+              bubbles: true,
+            })
+          );
+        }}
+        aria-label="搜索 (⌘K)"
+      >
+        <Search className="size-[20px]" strokeWidth={1.5} />
+      </button>
     </div>
   );
 }

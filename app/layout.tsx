@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { NavTabs } from "@/components/nav-tabs";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 import { TextLoop } from "@/components/motion-primitives/text-loop";
+import { CommandPalette } from "@/components/command-palette";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          {/* 搜索弹窗 */}
+          <CommandPalette />
+
           {/* 顶部导航 */}
           <nav className="fixed top-0 left-0 right-0 z-50 h-16">
             <div className="absolute inset-0 -bottom-4 backdrop-blur-3xl bg-linear-to-b from-background to-transparent pointer-events-none mask-[linear-gradient(black_30%,rgba(0,0,0,0.8)_70%,transparent_100%)]" />

@@ -102,12 +102,12 @@ def apply_rotary_emb(q, k, freqs):
 ```text
 位置编码方式        参数量        Val Loss    vs RoPE
 ─────────────────────────────────────────────────────
-none (无)           ~xxx,xxx      x.xxxx     +x.xxxx
-learned (绝对)      ~xxx,xxx      x.xxxx     +x.xxxx
-rope (旋转)         ~xxx,xxx      x.xxxx      0.0000
+none (无)           411,136       1.9404     +0.3626
+learned (绝对)      419,328       1.6511     +0.0733
+rope (旋转)         411,136       1.5778      0.0000
 ```
 
-RoPE 效果最好，而且参数更少（不需要位置 embedding 表）。
+RoPE 效果最好，而且参数更少（不需要位置 embedding 表的 8192 个参数）。
 
 ---
 
@@ -117,11 +117,11 @@ RoPE 效果最好，而且参数更少（不需要位置 embedding 表）。
 
 ```text
                 推理 ctx=64    推理 ctx=96    推理 ctx=128
-learned:        x.xxxx         崩溃            崩溃
-rope:           x.xxxx         x.xxxx         x.xxxx（轻微上升）
+learned:        1.63           2.17           2.55    ← loss 暴涨
+rope:           1.59           1.58           1.73    ← 基本稳定
 ```
 
-RoPE 能外推是因为它编码的是**相对距离**——不管绝对位置多大，只要 token 之间的距离在训练时见过，就能正常工作。
+learned 从 ctx=64 到 ctx=128，loss 从 1.63 涨到 2.55（+56%），基本不可用。RoPE 只从 1.59 涨到 1.73（+9%），仍然能正常生成。
 
 ---
 
