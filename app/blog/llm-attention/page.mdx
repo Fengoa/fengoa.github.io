@@ -1,0 +1,249 @@
+export const metadata = {
+  title: "Attention 到底在做什么",
+}
+
+# Attention 到底在做什么
+
+上一篇的 MLP 把前 16 个字符的 embedding 拼起来过全连接。问题是：
+
+1. **窗口固定**。第 17 个字符之前的信息全丢了
+2. **权重固定**。不管输入什么，第 1 个位置和第 16 个位置的权重是一样的
+3. **参数爆炸**。窗口从 16 扩到 64，第一层参数就要 ×4
+
+Self-Attention 的思路：让每个位置**动态决定**看前面哪些位置，看多少。不用手动设置窗口大小，模型自己学哪些位置重要。
+
+---
+
+## 一个类比
+
+想象你在考试时遇到一道阅读理解题。题目问"这个人物最终做了什么决定？"
+
+你不会从头把文章再读一遍。你会：
+1. 带着**问题**（Query）去扫文章
+2. 看文章每个段落的**标题/关键词**（Key）
+3. 找到匹配的段落后，仔细读那段的**内容**（Value）
+
+这就是 Attention：
+- **Q (Query)**：当前位置想找什么信息
+- **K (Key)**：每个位置能提供什么信息
+- **V (Value)**：每个位置的实际内容
+
+匹配度高的位置（Q·K 大）贡献更多内容（V 的权重更大）。
+
+---
+
+## 计算过程
+
+用 "I am a cat" 4 个 token 演示完整计算：
+
+### Step 1：线性投影
+
+每个 token 的 embedding 通过三个不同的线性层变成 Q/K/V：
+
+```text
+Q = embedding × W_q    "我在找什么"
+K = embedding × W_k    "我能提供什么"
+V = embedding × W_v    "我的实际内容"
+```
+
+W_q, W_k, W_v 是可学习的参数。训练过程让模型学会：什么样的 Query 该匹配什么样的 Key。
+
+### Step 2：注意力分数
+
+每对 (i, j) 算一个分数——i 的 Query 和 j 的 Key 有多匹配：
+
+```text
+score[i][j] = Q[i] · K[j] / √d
+```
+
+除以 √d 是为了稳定梯度（点积会随维度变大）。
+
+```text
+注意力分数矩阵:
+           I      am      a     cat
+  I:    -0.98   -0.26   -0.28  -0.35
+  am:   -0.34    0.06   -0.15  -0.10
+  a:     1.03    0.26   -0.13   0.18
+  cat:   0.26    0.12   -0.10   0.04
+```
+
+### Step 3：因果掩码
+
+语言模型从左到右生成，位置 i 不能看到 i 之后的内容（否则就是作弊）：
+
+```text
+掩码:      I     am     a    cat
+  I:       ✓      ✗     ✗     ✗     ← "I" 只能看自己
+  am:      ✓      ✓     ✗     ✗     ← "am" 能看 "I" 和自己
+  a:       ✓      ✓     ✓     ✗
+  cat:     ✓      ✓     ✓     ✓     ← "cat" 能看所有前面的
+```
+
+把看不到的位置设为 -∞，softmax 后变成 0。
+
+### Step 4：Softmax → 注意力权重
+
+```text
+注意力权重 (每行和=1):
+           I      am      a     cat    含义
+  I:     1.00    0       0      0     ← 只能看自己
+  am:    0.40    0.60    0      0     ← 40% 看 "I", 60% 看自己
+  a:     0.56    0.26    0.18   0     ← "a" 最关注 "I"
+  cat:   0.31    0.27    0.22   0.25  ← 分散关注前面所有
+```
+
+### Step 5：加权求和
+
+每个位置的输出 = 按注意力权重对 Value 做加权平均：
+
+```text
+output["cat"] = 0.31 × V["I"] + 0.27 × V["am"] + 0.22 × V["a"] + 0.25 × V["cat"]
+```
+
+关注度高的 token 的 Value 贡献更多信息。
+
+---
+
+## 代码实现
+
+核心就 5 行：
+
+```python
+def attention(Q, K, V, mask):
+    d = Q.shape[-1]
+    scores = Q @ K.transpose(-2, -1) / math.sqrt(d)   # 相似度
+    scores = scores.masked_fill(mask == 0, float('-inf'))  # 因果掩码
+    weights = F.softmax(scores, dim=-1)                # 归一化
+    output = weights @ V                               # 加权求和
+    return output
+```
+
+对比 MLP 那篇的排序公式——"DeepFM 自动学特征之间的关系"——Attention 做的事情类似：自动学 token 之间的关系。区别是 Attention 的关系是**动态的**（取决于输入内容），MLP 的权重是**固定的**。
+
+---
+
+## 在真实模型上看 Attention
+
+加载第一篇训练好的 MiniGPT（2 层 × 4 头），输入 "KING RICHARD:"，看每个 head 学到了什么模式。
+
+### Layer 0, Head 2：局部模式
+
+```text
+每个位置最关注的: 前一个位置
+  'I' ← 'K'(0.84)
+  'N' ← 'I'(0.79)
+  'G' ← 'N'(0.82)
+  ' ' ← 'G'(0.71)
+  ...
+```
+
+这个 head 学会了 **"看前一个字符"**——本质上就是 Bigram。模型保留了一个 head 来做局部预测。
+
+### Layer 0, Head 0：递减模式
+
+```text
+  'G' ← 'K'(0.84), 'I'(0.12), 'N'(0.03)
+  'R' ← 'G'(0.55), 'N'(0.22), ' '(0.09)
+```
+
+这个 head 关注**距离较远的字符**，尤其是词的开头位置。有点像"记住这个词是从哪里开始的"。
+
+### Layer 1, Head 2：全局模式
+
+```text
+  几乎所有位置都关注开头的 'K'（权重 0.3+）
+```
+
+这个 head 学会了 **"记住开头"**——知道整个序列以 "K" 开始（角色名的第一个字母），这对预测后续字符格式很重要。
+
+### 总结：不同 head 分工
+
+```text
+Layer 0:
+  Head 0: 分散关注（综合上下文）
+  Head 1: 分散关注（综合上下文）
+  Head 2: 局部模式（看前一个字符，像 bigram）
+  Head 3: 局部模式（看前一个字符）
+
+Layer 1:
+  Head 0: 分散关注
+  Head 1: 分散关注
+  Head 2: 全局模式（关注开头）
+  Head 3: 分散关注
+```
+
+模型自己学出了这些分工。没有人告诉它"Head 2 负责看前一个字符"。梯度下降自动找到了这种组合效率最高。
+
+---
+
+## 为什么要多个头
+
+一个 attention head 只有一组 W_q/W_k/W_v，只能学一种"关注模式"。
+
+但语言理解需要多种模式并行：
+- 需要一个 head 做局部预测（看前一个字符的转移概率）
+- 需要一个 head 看全局（记住角色名、段落结构）
+- 需要一个 head 看中距离（单词内部的模式）
+
+多头注意力：N 个 head 独立计算，输出拼接：
+
+```text
+head_1 = Attention(Q_1, K_1, V_1)   # 各自用不同的 W_q/W_k/W_v
+head_2 = Attention(Q_2, K_2, V_2)
+head_3 = Attention(Q_3, K_3, V_3)
+head_4 = Attention(Q_4, K_4, V_4)
+
+output = Concat(head_1, ..., head_4) @ W_o
+```
+
+MiniGPT 用 4 个头，每个 32 维，拼起来 = 128 维 = n_embd。参数量和单头 128 维是一样的，但表达能力更强。
+
+---
+
+## Attention vs MLP 排序的类比
+
+和推荐系统的排序做类比：
+
+| | 推荐系统排序 | Self-Attention |
+|---|---|---|
+| 输入 | 用户特征 + 物品特征 | Token 的 embedding |
+| 目标 | 预测用户对物品的偏好分 | 预测每对 token 的关联分 |
+| 权重 | DeepFM 学特征交互 | Q/K 学 token 交互 |
+| 输出 | 加权的物品分 | 加权的 Value 汇聚 |
+
+关键区别：推荐系统排序的特征交互权重是**针对特征类型固定的**（"Under 18 × 动画" 永远是同一个权重），而 Attention 的权重是**针对具体输入动态计算的**（"cat" 看 "the" 多少取决于这个句子里 "the" 旁边有什么）。
+
+---
+
+## 代码结构
+
+```text
+minimal-llm/src/
+  attention_explained.py    # 逐步演示 Attention 计算
+  visualize_attention.py    # 加载模型，可视化注意力权重
+  model.py                  # 原有实现（SelfAttention/MultiHeadAttention）
+```
+
+运行：
+
+```bash
+python attention_explained.py                        # 逐步计算演示
+python visualize_attention.py --text "KING RICHARD:" # 真实模型的注意力
+python visualize_attention.py --text "To be or not"  # 换一段文本试试
+```
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | GPT-4 级别 |
+|------|---------|-----------|
+| 注意力类型 | 标准 Multi-Head | Grouped-Query Attention (GQA) |
+| Head 数 | 4 | 96+ |
+| 上下文长度 | 64 | 128K+ |
+| 位置编码 | 学习的绝对位置 | RoPE（旋转位置编码） |
+| 效率优化 | 无 | Flash Attention, KV Cache |
+
+核心原理完全相同：Q×K 算权重，权重×V 得输出。工业界的改进都是在效率上——怎么算得更快、存得更少、看得更远。
+
+下一篇把这些组件组装成完整的 Transformer——加上 FFN、LayerNorm、残差连接，解释为什么每个组件都不可或缺。

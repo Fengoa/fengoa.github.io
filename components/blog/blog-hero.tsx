@@ -1,6 +1,27 @@
 import { Grid } from "@/components/ui/grid";
+import { cn } from "@/lib/utils";
 
-export function BlogHero() {
+// 每个标签选中时的颜色
+const TAG_COLORS: Record<string, string> = {
+  "全部": "bg-neutral-100 dark:bg-neutral-800/60",
+  "大模型": "bg-violet-100 dark:bg-violet-900/40",
+  "推荐系统": "bg-cyan-100 dark:bg-cyan-900/40",
+  "生活": "bg-amber-100 dark:bg-amber-900/40",
+  "资源": "bg-emerald-100 dark:bg-emerald-900/40",
+  "建站": "bg-rose-100 dark:bg-rose-900/40",
+};
+
+interface BlogHeroProps {
+  tags?: string[];
+  activeTag?: string;
+  onTagChange?: (tag: string) => void;
+}
+
+export function BlogHero({ tags, activeTag, onTagChange }: BlogHeroProps) {
+  // 计算居中偏移：6个标签占6格，从第4列开始（12列中居中）
+  const tagCount = tags?.length ?? 0;
+  const startCol = Math.floor((12 - tagCount) / 2) + 1;
+
   return (
     <>
       {/* 第 1 行：12 列空格子 */}
@@ -36,16 +57,62 @@ export function BlogHero() {
         <Grid.Cell row={1} column={12} />
       </Grid>
 
-      {/* 第 3 行：12 列空格子 */}
+      {/* 第 3 行：标签筛选格子，居中排列 */}
       <Grid rows={1} columns={12}>
-        {Array.from({ length: 12 }, (_, i) => (
-          <Grid.Cell
-            key={`r3-${i}`}
-            row={1}
-            column={i + 1}
-            className="aspect-square"
-          />
-        ))}
+        {tags && tags.length > 0 ? (
+          <>
+            {/* 左侧空格子 */}
+            {Array.from({ length: startCol - 1 }, (_, i) => (
+              <Grid.Cell
+                key={`r3-left-${i}`}
+                row={1}
+                column={i + 1}
+                className="aspect-square"
+              />
+            ))}
+            {/* 标签格子 */}
+            {tags.map((tag, i) => (
+              <Grid.Cell
+                key={tag}
+                row={1}
+                column={startCol + i}
+                className="aspect-square"
+              >
+                <button
+                  onClick={() => onTagChange?.(tag)}
+                  className={cn(
+                    "size-full flex items-center justify-center",
+                    "text-xs font-mono transition-colors duration-200",
+                    "hover:bg-foreground/[0.03] dark:hover:bg-foreground/[0.05]",
+                    activeTag === tag
+                      ? cn(TAG_COLORS[tag] || "bg-neutral-100 dark:bg-neutral-800/60", "text-foreground")
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {tag}
+                </button>
+              </Grid.Cell>
+            ))}
+            {/* 右侧空格子 */}
+            {Array.from({ length: 12 - (startCol - 1) - tagCount }, (_, i) => (
+              <Grid.Cell
+                key={`r3-right-${i}`}
+                row={1}
+                column={startCol + tagCount + i}
+                className="aspect-square"
+              />
+            ))}
+          </>
+        ) : (
+          Array.from({ length: 12 }, (_, i) => (
+            <Grid.Cell
+              key={`r3-${i}`}
+              row={1}
+              column={i + 1}
+              className="aspect-square"
+            />
+          ))
+        )}
         <Grid.Cross row={1} column={12} anchor="bottom-right" />
       </Grid>
     </>

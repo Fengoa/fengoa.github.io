@@ -15,6 +15,8 @@ export type PostData = {
   summary: string;
   /** 图片路径 或自定义 React 组件 */
   cover?: string | ReactNode;
+  /** 分类标签 */
+  tag?: string;
 };
 
 function formatDate(dateStr: string) {

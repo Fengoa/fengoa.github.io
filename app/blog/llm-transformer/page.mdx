@@ -1,0 +1,220 @@
+export const metadata = {
+  title: "搭一个完整的 Transformer",
+}
+
+# 搭一个完整的 Transformer
+
+上一篇讲了 Self-Attention——让每个位置动态决定看前面哪些位置。但只有 Attention 不够。试过去掉其他组件，模型效果会明显崩掉。
+
+完整的 Transformer Block 长这样：
+
+```text
+输入 x
+  │
+  ├─→ LayerNorm → Multi-Head Attention ─→ (+) ← 残差连接
+  │                                        │
+  ├─→ LayerNorm → FFN ─────────────────→ (+) ← 残差连接
+  │                                        │
+  输出
+```
+
+四个组件各有不可替代的作用。这篇用消融实验来证明——逐一去掉，看 loss 崩多少。
+
+---
+
+## 消融实验
+
+同一个配置（2 层、128 维、4 头、64 上下文），训练 3000 步，逐一去掉一个组件：
+
+| 变体 | Val Loss | vs 完整版 | 含义 |
+|------|----------|-----------|------|
+| **完整 Transformer** | **1.70** | — | baseline |
+| 去掉 LayerNorm | 2.25 | +0.55 ↑↑↑ | 训练不稳定，梯度爆炸 |
+| 去掉位置编码 | 2.15 | +0.45 ↑↑↑ | 不知道字符顺序 |
+| 去掉残差连接 | 2.03 | +0.33 ↑↑↑ | 深层梯度消失 |
+| 去掉 FFN | 1.91 | +0.21 ↑↑ | 缺少"思考"能力 |
+
+每个组件都不可或缺。下面逐个解释为什么。
+
+---
+
+## LayerNorm：稳定训练
+
+**去掉后果：loss +0.55，最严重。**
+
+没有 LayerNorm 时，每一层的输出范围不可控——前面的层如果输出值很大，后面的层收到的输入就太大，梯度也跟着爆炸。
+
+LayerNorm 的做法很简单：把每个位置的向量归一化到均值=0、方差=1：
+
+```python
+def layer_norm(x):
+    mean = x.mean(dim=-1, keepdim=True)
+    std = x.std(dim=-1, keepdim=True)
+    return (x - mean) / (std + 1e-5)
+```
+
+相当于每一层的入口有一个"音量旋钮"，不管前面输出多大多小，都拧到标准范围再处理。
+
+GPT-2 用 **Pre-Norm**（先 Norm 再 Attention/FFN），而不是原论文的 Post-Norm。Pre-Norm 训练更稳定，是目前的标准做法：
+
+```python
+# Pre-Norm (我们用的)
+x = x + attn(layer_norm(x))
+
+# Post-Norm (原始论文，已淘汰)
+x = layer_norm(x + attn(x))
+```
+
+---
+
+## 残差连接：信息高速公路
+
+**去掉后果：loss +0.33。**
+
+没有残差连接时，信息只能一层层串行传递。每过一层，原始信号都会被"变换"一次。两层还行，几十层之后原始信息就被洗没了，梯度也传不回去。
+
+残差连接的做法：把输入直接加到输出上：
+
+```python
+x = x + attention(x)   # 不是 x = attention(x)
+```
+
+这意味着就算 Attention 的输出是 0（啥也没学到），x 也不会丢失——它还是原来的值。每一层是在原始信息的基础上"做增量修改"，而不是"完全替换"。
+
+对反向传播来说，残差连接提供了一条梯度的"高速公路"——梯度可以直接从最后一层传回第一层，不经过中间层的非线性变换。这就是为什么 Transformer 能堆几十层而不崩的原因。
+
+---
+
+## FFN：知识存储
+
+**去掉后果：loss +0.21。**
+
+Attention 负责"看哪些位置"，FFN 负责"看完之后做什么"。
+
+结构很简单：两层全连接，中间扩大 4 倍：
+
+```python
+class FFN(nn.Module):
+    def __init__(self, n_embd):
+        self.net = nn.Sequential(
+            nn.Linear(n_embd, 4 * n_embd),   # 128 → 512
+            nn.GELU(),                        # 非线性激活
+            nn.Linear(4 * n_embd, n_embd),   # 512 → 128
+        )
+```
+
+FFN 的作用可以理解为**知识记忆**。研究表明 Transformer 中大部分"事实知识"存储在 FFN 的权重里。Attention 决定"去哪个书架取书"，FFN 是那个"书架"。
+
+为什么要先扩大 4 倍再缩回来？因为高维空间能存储更多信息。128 维的向量能编码的状态有限，扩到 512 维就多了 4 倍的"存储格子"。
+
+---
+
+## 位置编码：知道顺序
+
+**去掉后果：loss +0.45。**
+
+Self-Attention 的计算里没有任何"位置"的概念——它只看 Q·K 的匹配度，不管 token 在第 1 个位置还是第 64 个位置。
+
+但语言是有顺序的！"cat sat on mat" 和 "mat sat on cat" 意思完全不同。
+
+最简单的位置编码：给每个位置一个可学习的向量，加到 token embedding 上：
+
+```python
+tok_emb = self.token_embedding(idx)      # 这是什么 token
+pos_emb = self.position_embedding(pos)   # 这个 token 在哪个位置
+x = tok_emb + pos_emb                    # 两者叠加
+```
+
+模型通过 pos_emb 知道：位置 0 的 "the" 和位置 10 的 "the" 虽然 token 一样，但处在不同的句子位置，意义可能不同。
+
+这种"学习的绝对位置编码"是 GPT-2 的做法。缺点是位置数固定——训练时 ctx=64 就只能处理 64 以内的序列。后面会讲 RoPE（旋转位置编码），能外推到更长的序列。
+
+---
+
+## 完整结构：GPT-2 的骨架
+
+把所有组件组装起来：
+
+```text
+输入 token_ids (B, T)
+    │
+    ▼
+Token Embedding (vocab_size, n_embd)    → 每个 token 变成向量
+    +
+Position Embedding (ctx, n_embd)        → 加上位置信息
+    │
+    ▼
+┌─── Transformer Block × N ───┐
+│                              │
+│  LayerNorm                   │
+│      ↓                       │
+│  Multi-Head Attention        │
+│      ↓                       │
+│  (+) ← 残差连接              │
+│      ↓                       │
+│  LayerNorm                   │
+│      ↓                       │
+│  FFN (expand 4x → shrink)   │
+│      ↓                       │
+│  (+) ← 残差连接              │
+│                              │
+└──────────────────────────────┘
+    │
+    ▼
+Final LayerNorm
+    │
+    ▼
+Linear (n_embd → vocab_size)            → 预测下一个 token
+```
+
+参数量计算（我们的 MiniGPT 配置）：
+
+```text
+Token Embedding:    65 × 128    =   8,320
+Position Embedding: 64 × 128    =   8,192
+Block × 2:
+  Attention Q/K/V:  128 × 128 × 3 × 2 = 98,304
+  Attention proj:   128 × 128 × 2      = 32,768
+  FFN fc1:          128 × 512 × 2      = 131,072
+  FFN fc2:          512 × 128 × 2      = 131,072
+  LayerNorm:        128 × 4 × 2        =  1,024
+LM Head:            128 × 65           =   8,320
+                                   ─────────────
+                                   Total ≈ 420K
+```
+
+GPT-2 Small 是同样的结构，只是数字更大：12 层、768 维、12 头、vocab=50257 → 124M 参数。GPT-4 估计是几十到上百层、数千维 → 万亿参数。**结构完全一样，只是规模不同。**
+
+---
+
+## 代码
+
+```text
+minimal-llm/src/
+  model.py      # MiniGPT 实现（完整 Transformer）
+  ablation.py   # 消融实验（去掉各组件对比）
+```
+
+运行：
+
+```bash
+python ablation.py   # 跑完约 2 分钟，输出对比表
+```
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | GPT-4 级别 |
+|------|---------|-----------|
+| 层数 | 2 | 100+ |
+| 维度 | 128 | 8000+ |
+| 参数量 | 420K | 万亿 |
+| Norm | Pre-LayerNorm | RMSNorm (更快) |
+| FFN | GELU 激活 | SwiGLU (更好) |
+| 位置编码 | 学习的绝对位置 | RoPE (能外推) |
+| 注意力 | 标准多头 | GQA (省显存) |
+
+核心架构一模一样：残差 + Norm + Attention + FFN。工业界的改进是把每个组件换成更好的变体——RMSNorm 比 LayerNorm 快、SwiGLU 比 GELU 效果好、RoPE 比绝对位置能外推。但骨架不变。
+
+下一篇开始训练一个"真正有用"的模型——加大数据量、调整超参数、观察 loss 曲线和生成质量的关系。

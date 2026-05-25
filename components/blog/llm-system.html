@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大语言模型全景图</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: #f8f7f4;
+  color: #1a1a18;
+  padding: 40px 32px 60px;
+}
+.page { max-width: 980px; margin: 0 auto; }
+
+/* HEADER */
+.header { text-align: center; margin-bottom: 26px; }
+.header h1 { font-size: 21px; font-weight: 600; color: #2c2c2a; letter-spacing: 3px; margin-bottom: 8px; }
+.header p { font-size: 12px; color: #aaa; line-height: 1.6; }
+
+/* LEGEND */
+.legend {
+  display: flex; justify-content: center; gap: 18px; margin-bottom: 26px;
+  flex-wrap: wrap; font-size: 11.5px; color: #666;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.ld { width: 9px; height: 9px; border-radius: 2px; }
+.ld-mature  { background: #888780; }
+.ld-frontier{ background: #7F77DD; }
+
+/* FLOW */
+.flow { display: flex; flex-direction: column; }
+
+/* LAYER */
+.layer { border-radius: 12px; padding: 17px 18px 15px; border: 1.5px solid; }
+.layer-head {
+  font-size: 14px; font-weight: 600; margin-bottom: 13px;
+  display: flex; align-items: center; gap: 8px;
+}
+.tag {
+  font-size: 9.5px; font-weight: 700; padding: 2px 7px;
+  border-radius: 3px; line-height: 1.5; letter-spacing: 0.4px;
+}
+.tag-new  { background: #d85a30; color: #fff; }
+.tag-edge { background: #7F77DD; color: #fff; }
+.tag-hot  { background: #ba7517; color: #fff; }
+
+/* CARDS ROW */
+.cards { display: flex; gap: 9px; flex-wrap: wrap; }
+.card { flex: 1; min-width: 118px; border-radius: 8px; padding: 10px 12px; border: 1px solid; }
+.card.wide { min-width: 200px; flex: 2; }
+.card.narrow { min-width: 100px; flex: 0.8; }
+.cn { font-size: 12px; font-weight: 600; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+.cd { font-size: 10.5px; line-height: 1.8; }
+.f  { color: #7F77DD; font-style: italic; }
+.divider { border-top: 1px dashed #e0ddd6; margin: 6px 0; }
+
+/* RANK PANELS */
+.rank-row { display: flex; gap: 9px; }
+.rp { flex: 1; border-radius: 8px; padding: 11px 13px; border: 1px solid; }
+.rp-t { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+.rp-d { font-size: 10.5px; line-height: 1.8; }
+.rank-mid { display: flex; align-items: center; color: #ddd; font-size: 18px; padding: 0 2px; }
+
+/* CONNECTORS */
+.conn { display: flex; align-items: center; justify-content: center; padding: 5px 0; }
+.conn-inner { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.conn-bar  { width: 1.5px; height: 12px; background: #ccc; }
+.conn-chip { font-size: 10px; font-weight: 600; padding: 2px 12px; border-radius: 10px; letter-spacing: 0.2px; }
+
+/* ── LAYER COLOR THEMES ── */
+.l-data   { background: #e6f1fb; border-color: #b5d4f4; }
+.l-data   .layer-head { color: #042c53; }
+.l-data   .card { background: #fff; border-color: #b5d4f4; }
+.l-data   .cn   { color: #0c447c; }
+.l-data   .cd   { color: #185fa5; }
+.chip-data { background: #b5d4f4; color: #0c447c; }
+
+.l-arch   { background: #eeedfe; border-color: #afa9ec; }
+.l-arch   .layer-head { color: #26215c; }
+.l-arch   .card { background: #fff; border-color: #afa9ec; }
+.l-arch   .cn   { color: #3c3489; }
+.l-arch   .cd   { color: #534ab7; }
+.chip-arch { background: #afa9ec; color: #26215c; }
+
+.l-pretrain { background: #e1f5ee; border-color: #9fe1cb; }
+.l-pretrain .layer-head { color: #04342c; }
+.l-pretrain .card { background: #fff; border-color: #9fe1cb; }
+.l-pretrain .cn   { color: #085041; }
+.l-pretrain .cd   { color: #0f6e56; }
+.chip-pretrain { background: #9fe1cb; color: #085041; }
+
+.l-align  { background: #faece7; border-color: #f5c4b3; }
+.l-align  .layer-head { color: #4a1b0c; }
+.l-align  .rp { background: #fff; border-color: #f5c4b3; }
+.l-align  .rp-t { color: #993c1d; }
+.l-align  .rp-d { color: #d85a30; }
+.chip-align { background: #f5c4b3; color: #993c1d; }
+
+.l-infer  { background: #fbeaf0; border-color: #f4c0d1; }
+.l-infer  .layer-head { color: #4b1528; }
+.l-infer  .card { background: #fff; border-color: #f4c0d1; }
+.l-infer  .cn   { color: #72243e; }
+.l-infer  .cd   { color: #993556; }
+.chip-infer { background: #f4c0d1; color: #72243e; }
+
+.l-cap    { background: #faeeda; border-color: #fac775; }
+.l-cap    .layer-head { color: #412402; }
+.l-cap    .card { background: #fff; border-color: #fac775; }
+.l-cap    .cn   { color: #633806; }
+.l-cap    .cd   { color: #854f0b; }
+.chip-cap { background: #fac775; color: #633806; }
+
+.l-eval   { background: #eaf3de; border-color: #c0dd97; }
+.l-eval   .layer-head { color: #173404; }
+.l-eval   .card { background: #fff; border-color: #c0dd97; }
+.l-eval   .cn   { color: #27500a; }
+.l-eval   .cd   { color: #3b6d11; }
+.chip-eval { background: #c0dd97; color: #27500a; }
+
+.l-app    { background: #f1efe8; border-color: #d3d1c7; }
+.l-app    .layer-head { color: #2c2c2a; }
+.l-app    .card { background: #fff; border-color: #d3d1c7; }
+.l-app    .cn   { color: #2c2c2a; }
+.l-app    .cd   { color: #5f5e5a; }
+.chip-app { background: #d3d1c7; color: #444441; }
+
+/* BOTTOM NOTES */
+.bottom-notes { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.note-box {
+  border-radius: 9px; padding: 12px 16px;
+  border: 1px solid #d3d1c7; background: #f1efe8;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.note-icon  { font-size: 18px; line-height: 1.3; flex-shrink: 0; }
+.note-title { font-size: 12px; font-weight: 600; color: #444441; margin-bottom: 4px; }
+.note-body  { font-size: 11px; color: #6b6b66; line-height: 1.75; }
+.note-tags  { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+.note-tag   { font-size: 10px; padding: 2px 9px; border-radius: 10px; background: #e6e4dc; color: #5f5e5a; font-weight: 500; }
+
+/* two-column inner layout */
+.two-col { display: flex; gap: 9px; }
+.two-col > .card { flex: 1; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>大语言模型全景图</h1>
+    <p>数据 · 架构 · 预训练 · 后训练对齐 · 推理部署 · 能力扩展 · 评估 · 应用</p>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="ld ld-mature"></div>成熟技术（正体）</div>
+    <div class="legend-item"><div class="ld ld-frontier"></div><em>斜紫体</em> = 前沿 / 新兴技术</div>
+    <div class="legend-item"><span class="tag tag-hot">热点</span>近期研究热点</div>
+    <div class="legend-item"><span class="tag tag-edge">前沿</span>实验性</div>
+  </div>
+
+  <div class="flow">
+
+    <!-- ① 数据层 -->
+    <div class="layer l-data">
+      <div class="layer-head">① 数据层</div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">预训练语料</div>
+          <div class="cd">
+            网页：Common Crawl / C4<br>
+            书籍：Books3 / Gutenberg<br>
+            代码：GitHub / Stack<br>
+            学术：arXiv / S2ORC<br>
+            百科：Wikipedia / Wikidata
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">数据处理流程</div>
+          <div class="cd">
+            语言识别 / 去重（MinHash）<br>
+            质量过滤（困惑度 / 规则）<br>
+            有毒内容过滤<br>
+            <span class="f">合成数据生成</span><br>
+            <span class="f">数据配比课程学习</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">指令 / 对齐数据</div>
+          <div class="cd">
+            人工标注指令数据<br>
+            Self-Instruct 蒸馏<br>
+            RLHF 偏好数据（chosen / rejected）<br>
+            <span class="f">LLM 自动标注（Constitutional AI）</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">多模态数据</div>
+          <div class="cd">
+            图文对：LAION / CC<br>
+            视频：HowTo100M<br>
+            音频：LibriSpeech<br>
+            <span class="f">交错图文 MMC4</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn"><div class="conn-inner">
+      <div class="conn-bar"></div>
+      <span class="conn-chip chip-arch">万亿 Token 语料</span>
+      <div class="conn-bar"></div>
+    </div></div>
+
+    <!-- ② 模型架构层 -->
+    <div class="layer l-arch">
+      <div class="layer-head">② 模型架构层</div>
+      <div class="cards">
+        <div class="card wide">
+          <div class="cn">Transformer 核心组件</div>
+          <div class="cd">
+            <b style="color:#3c3489">Attention：</b>MHA → MQA → GQA（KV共享） / <span class="f">MLA（DeepSeek）</span><br>
+            <b style="color:#3c3489">FFN：</b>Dense FFN / SwiGLU / <span class="f">MoE（稀疏激活）</span><br>
+            <b style="color:#3c3489">Norm：</b>LayerNorm → RMSNorm（Pre-Norm）<br>
+            <b style="color:#3c3489">位置编码：</b>绝对 PE → ALiBi → RoPE → <span class="f">YaRN 外推</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">主流范式</div>
+          <div class="cd">
+            <b style="color:#3c3489">Decoder-only</b><br>GPT / LLaMA / Qwen<br>
+            <div class="divider"></div>
+            <b style="color:#3c3489">Enc-Dec</b><br>T5 / BART / GLM<br>
+            <div class="divider"></div>
+            <b style="color:#3c3489">Encoder-only</b><br>BERT / RoBERTa
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">非 Transformer 架构</div>
+          <div class="cd">
+            <span class="f">Mamba（SSM / 线性）</span><br>
+            <span class="f">RWKV（线性 RNN）</span><br>
+            <span class="f">RetNet</span><br>
+            <span class="f">Hybrid（Attention+SSM）</span><br>
+            <span class="f">xLSTM</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">MoE 架构 <span class="tag tag-hot">热点</span></div>
+          <div class="cd">
+            Top-K 路由 / Softmax<br>
+            Expert 并行 / 负载均衡<br>
+            <span class="f">DeepSeekMoE 细粒度</span><br>
+            <span class="f">共享 Expert + 路由 Expert</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn"><div class="conn-inner">
+      <div class="conn-bar"></div>
+      <span class="conn-chip chip-pretrain">随机初始化参数</span>
+      <div class="conn-bar"></div>
+    </div></div>
+
+    <!-- ③ 预训练层 -->
+    <div class="layer l-pretrain">
+      <div class="layer-head">③ 预训练层</div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">训练目标</div>
+          <div class="cd">
+            CLM（因果语言模型）<br>
+            MLM（掩码语言模型）<br>
+            PrefixLM（前缀混合）<br>
+            <span class="f">Diffusion LM</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">分布式训练</div>
+          <div class="cd">
+            数据并行（DP / DDP）<br>
+            张量并行（TP）<br>
+            流水线并行（PP）<br>
+            序列并行（SP）<br>
+            ZeRO-1/2/3（显存优化）
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">训练优化技术</div>
+          <div class="cd">
+            Flash Attention 1/2/3<br>
+            混合精度（BF16 / FP8）<br>
+            Gradient Checkpointing<br>
+            梯度裁剪 / LR Warmup<br>
+            <span class="f">FP8 训练（H100）</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">Scaling Laws</div>
+          <div class="cd">
+            Kaplan Law（参数优先）<br>
+            Chinchilla Law（数据优先）<br>
+            计算最优配比 N ∝ D<br>
+            <span class="f">推理时 Scaling（CoT/搜索）</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">续训 / 领域适配</div>
+          <div class="cd">
+            Domain-Adaptive PT<br>
+            长上下文续训<br>
+            多语言扩充词表<br>
+            <span class="f">Continual Pretraining</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn"><div class="conn-inner">
+      <div class="conn-bar"></div>
+      <span class="conn-chip chip-align">Base Model</span>
+      <div class="conn-bar"></div>
+    </div></div>
+
+    <!-- ④ 后训练 / 对齐层 -->
+    <div class="layer l-align">
+      <div class="layer-head">④ 后训练 · 对齐层</div>
+      <div class="rank-row">
+        <div class="rp">
+          <div class="rp-t">SFT（监督微调）</div>
+          <div class="rp-d">
+            指令跟随数据微调<br>
+            Chat Template 格式化<br>
+            全参 / LoRA / QLoRA<br>
+            多轮对话 / System Prompt<br>
+            <span class="f">合成数据蒸馏（Alpaca 系）</span>
+          </div>
+        </div>
+        <div class="rank-mid">→</div>
+        <div class="rp">
+          <div class="rp-t">RLHF / 偏好优化</div>
+          <div class="rp-d">
+            RM 训练（Bradley-Terry）<br>
+            PPO（在线 RL）<br>
+            DPO / IPO / SimPO（离线）<br>
+            GRPO（Group Relative）<br>
+            <span class="f">RLVR（可验证奖励，o1路线）</span><br>
+            <span class="f">Process Reward Model（PRM）</span>
+          </div>
+        </div>
+        <div class="rank-mid">→</div>
+        <div class="rp">
+          <div class="rp-t">安全对齐 / 红队</div>
+          <div class="rp-d">
+            Constitutional AI<br>
+            安全 SFT（拒绝回复）<br>
+            Red Teaming（自动 / 人工）<br>
+            Jailbreak 防御<br>
+            <span class="f">Self-Play / 对抗对齐</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn"><div class="conn-inner">
+      <div class="conn-bar"></div>
+      <span class="conn-chip chip-infer">Chat / Instruct Model</span>
+      <div class="conn-bar"></div>
+    </div></div>
+
+    <!-- ⑤ 推理 / 部署层 -->
+    <div class="layer l-infer">
+      <div class="layer-head">⑤ 推理 · 部署层</div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">解码策略</div>
+          <div class="cd">
+            Greedy / Beam Search<br>
+            Top-p（Nucleus）/ Top-k<br>
+            Temperature Sampling<br>
+            <span class="f">Best-of-N / 自洽性</span><br>
+            <span class="f">Speculative Decoding</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">推理加速</div>
+          <div class="cd">
+            KV Cache（标准 / 压缩）<br>
+            PagedAttention（vLLM）<br>
+            Continuous Batching<br>
+            Flash Decoding<br>
+            <span class="f">Chunked Prefill</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">量化压缩</div>
+          <div class="cd">
+            GPTQ / AWQ（W4/W8）<br>
+            SmoothQuant（W8A8）<br>
+            FP8 推理<br>
+            <span class="f">1-bit LLM（BitNet）</span><br>
+            <span class="f">KV Cache 量化</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">服务框架</div>
+          <div class="cd">
+            vLLM / TGI<br>
+            TensorRT-LLM<br>
+            SGLang<br>
+            Ollama（本地）<br>
+            <span class="f">MoonCake / Prefill-Decode 分离</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">长文本推理</div>
+          <div class="cd">
+            滑动窗口 Attention<br>
+            Ring Attention<br>
+            YaRN / LongRoPE<br>
+            <span class="f">无限上下文（MemGPT）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn"><div class="conn-inner">
+      <div class="conn-bar"></div>
+      <span class="conn-chip chip-cap">部署就绪模型</span>
+      <div class="conn-bar"></div>
+    </div></div>
+
+    <!-- ⑥ 能力扩展层 -->
+    <div class="layer l-cap">
+      <div class="layer-head">⑥ 能力扩展层</div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">推理能力 <span class="tag tag-hot">热点</span></div>
+          <div class="cd">
+            Chain-of-Thought（CoT）<br>
+            Tree-of-Thought（ToT）<br>
+            Self-Consistency<br>
+            <span class="f">RLVR / o1 慢思考</span><br>
+            <span class="f">Monte Carlo Tree Search</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">多模态 <span class="tag tag-hot">热点</span></div>
+          <div class="cd">
+            视觉编码器（CLIP / ViT）<br>
+            视觉–语言对齐（LLaVA）<br>
+            音频理解（Whisper）<br>
+            <span class="f">视频理解</span><br>
+            <span class="f">任意模态 Unified Token</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">工具 / 函数调用</div>
+          <div class="cd">
+            Function Calling<br>
+            Code Interpreter<br>
+            Web Search 集成<br>
+            结构化输出（JSON）<br>
+            <span class="f">MCP 工具协议</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">Agent / 自主行动 <span class="tag tag-hot">热点</span></div>
+          <div class="cd">
+            ReAct（推理+行动）<br>
+            Reflexion（自我反思）<br>
+            多 Agent 协作<br>
+            <span class="f">Computer Use（GUI）</span><br>
+            <span class="f">Long-horizon Planning</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">参数高效微调</div>
+          <div class="cd">
+            LoRA / DoRA / LoRA+<br>
+            Prefix Tuning<br>
+            Adapter<br>
+            IA³ / P-Tuning v2<br>
+            <span class="f">MoE-LoRA</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn"><div class="conn-inner">
+      <div class="conn-bar"></div>
+      <span class="conn-chip chip-eval">线上服务</span>
+      <div class="conn-bar"></div>
+    </div></div>
+
+    <!-- ⑦ 评估体系 -->
+    <div class="layer l-eval">
+      <div class="layer-head">⑦ 评估体系</div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">知识 / 推理</div>
+          <div class="cd">
+            MMLU / MMLU-Pro<br>
+            HellaSwag / ARC<br>
+            GSM8K / MATH<br>
+            BBH（BIG-Bench Hard）
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">代码能力</div>
+          <div class="cd">
+            HumanEval / MBPP<br>
+            LiveCodeBench<br>
+            SWE-bench（真实 Bug）<br>
+            <span class="f">Aider Polyglot</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">对话 / 指令跟随</div>
+          <div class="cd">
+            MT-Bench（GPT-4裁判）<br>
+            AlpacaEval 2.0<br>
+            Chatbot Arena（人类投票）<br>
+            IFEval（可验证指令）
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">长文本 / 多模态</div>
+          <div class="cd">
+            RULER / Needle-in-Haystack<br>
+            LongBench<br>
+            MMBench / MMStar<br>
+            <span class="f">Video-MME</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">安全 / 可信</div>
+          <div class="cd">
+            TruthfulQA<br>
+            Jailbreak 测试集<br>
+            HarmBench<br>
+            <span class="f">多文化偏见评测</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn"><div class="conn-inner">
+      <div class="conn-bar"></div>
+      <span class="conn-chip chip-app">用户反馈闭环</span>
+      <div class="conn-bar"></div>
+    </div></div>
+
+    <!-- ⑧ 应用层 -->
+    <div class="layer l-app">
+      <div class="layer-head">⑧ 应用层</div>
+      <div class="cards">
+        <div class="card">
+          <div class="cn">RAG 检索增强</div>
+          <div class="cd">
+            Naive RAG（Chunk + Embed）<br>
+            Advanced RAG（重排序）<br>
+            Graph RAG（知识图谱）<br>
+            <span class="f">Agentic RAG</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">Agent 框架</div>
+          <div class="cd">
+            LangChain / LlamaIndex<br>
+            AutoGen / CrewAI<br>
+            OpenHands / SWE-agent<br>
+            <span class="f">多 Agent 编排</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">垂直领域</div>
+          <div class="cd">
+            代码：Copilot / Cursor<br>
+            医疗：Med-PaLM / HuatuoGPT<br>
+            法律 / 金融 / 教育<br>
+            科学：AlphaFold / Galactica
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">企业私有化</div>
+          <div class="cd">
+            模型私有化部署<br>
+            数据安全 / 合规<br>
+            知识库接入<br>
+            API 网关管理
+          </div>
+        </div>
+        <div class="card">
+          <div class="cn">生成应用</div>
+          <div class="cd">
+            文生图（DALL-E / SD）<br>
+            文生视频（Sora / Wan）<br>
+            TTS / 数字人<br>
+            <span class="f">全模态统一生成</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ANNOTATIONS -->
+    <div class="bottom-notes">
+
+      <!-- Data Flywheel -->
+      <div class="note-box">
+        <div class="note-icon">↺</div>
+        <div>
+          <div class="note-title">反馈飞轮（Post-training 闭环）</div>
+          <div class="note-body">
+            用户交互 → 偏好数据收集 → 新一轮 RLHF / DPO 对齐 → 更好的模型 → 更多高质量交互数据<br>
+            关键环节：在线 RLHF · Constitutional AI 自动标注 · Reward Model 迭代 · Red Teaming 发现边界
+          </div>
+        </div>
+      </div>
+
+      <!-- Frontier hotspots -->
+      <div class="note-box">
+        <div class="note-icon" style="color:#7F77DD;">★</div>
+        <div style="flex:1;">
+          <div class="note-title">2024–2025 研究热点</div>
+          <div class="note-tags">
+            <span class="note-tag" style="background:#eeedfe;color:#534ab7;">推理时 Scaling（o1/R1）</span>
+            <span class="note-tag" style="background:#eeedfe;color:#534ab7;">MoE 稀疏大模型</span>
+            <span class="note-tag" style="background:#eeedfe;color:#534ab7;">多模态统一架构</span>
+            <span class="note-tag" style="background:#eeedfe;color:#534ab7;">长上下文百万 Token</span>
+            <span class="note-tag" style="background:#eeedfe;color:#534ab7;">RLVR 可验证奖励</span>
+            <span class="note-tag" style="background:#eeedfe;color:#534ab7;">Computer Use Agent</span>
+            <span class="note-tag" style="background:#eeedfe;color:#534ab7;">FP8 训练 / 推理</span>
+            <span class="note-tag" style="background:#eeedfe;color:#534ab7;">合成数据 + 蒸馏</span>
+            <span class="note-tag" style="background:#eeedfe;color:#534ab7;">Prefill-Decode 分离</span>
+            <span class="note-tag" style="background:#eeedfe;color:#534ab7;">World Model 融合</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Infrastructure -->
+      <div class="note-box">
+        <div class="note-icon" style="font-size:16px;">⚙</div>
+        <div style="flex:1;">
+          <div class="note-title">基础设施层（横跨全链路）</div>
+          <div class="note-tags">
+            <span class="note-tag">GPU 集群：H100 / H800 / A100</span>
+            <span class="note-tag">训练框架：Megatron-LM / DeepSpeed</span>
+            <span class="note-tag">通信：NVLink / InfiniBand / RDMA</span>
+            <span class="note-tag">存储：对象存储 + NFS</span>
+            <span class="note-tag">监控：Loss 曲线 / 梯度范数 / 显存</span>
+            <span class="note-tag">实验管理：W&B / MLflow</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Taxonomy -->
+      <div class="note-box" style="background:#f8f7f4;">
+        <div class="note-icon" style="font-size:14px;color:#888;">▶</div>
+        <div>
+          <div class="note-title">规模参考（以 LLaMA 系列为坐标）</div>
+          <div class="note-body" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:5px;">
+            <span class="conn-chip" style="background:#b5d4f4;color:#0c447c;">小模型 ≤7B</span>
+            <span style="color:#ccc;">→</span>
+            <span class="conn-chip chip-arch">中型 8–30B</span>
+            <span style="color:#ccc;">→</span>
+            <span class="conn-chip chip-pretrain">大型 30–100B</span>
+            <span style="color:#ccc;">→</span>
+            <span class="conn-chip chip-align">超大 100B+</span>
+            <span style="color:#ccc;">→</span>
+            <span class="conn-chip chip-cap">MoE 等效 1T+</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

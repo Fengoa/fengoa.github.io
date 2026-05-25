@@ -1,0 +1,221 @@
+export const metadata = {
+  title: "训练：让模型学会说话",
+}
+
+# 训练：让模型学会说话
+
+前四篇搭完了完整的 Transformer 模型。这篇做一件事：**认真训练一次**。
+
+用更大的模型（4 层、256 维、4M 参数），更好的 tokenizer（BPE-4000），更长的上下文（128 token），观察训练过程中模型从"乱码"到"像样的莎士比亚"的全过程。
+
+同时踩了一个大坑——**过拟合**——用真实数据展示它长什么样，怎么判断，怎么处理。
+
+---
+
+## 训练配置
+
+```text
+模型: 4 层, 256 维, 8 头, 4.17M 参数
+数据: BPE-4000 编码的 Shakespeare (267K tokens)
+上下文: 128 tokens ≈ 480 字符
+优化器: AdamW (β1=0.9, β2=0.95, weight_decay=0.1)
+学习率: warmup 200 步 → 3e-4 → cosine decay → 3e-5
+总步数: 10,000
+设备: Mac M 系列 (MPS)
+训练时间: 17 分钟
+```
+
+---
+
+## 训练过程
+
+### Loss 曲线
+
+```text
+step     0 | train 8.35 | val 8.35 ← ln(4000)=8.29，随机猜
+step   500 | train 5.40 | val 5.98 ← 在学习！
+step  1000 | train 4.71 | val 5.79
+step  1500 | train 4.13 | val 5.77 ← val loss 最低点 ★
+step  2000 | train 3.54 | val 5.88 ← val 开始涨了...
+step  4000 | train 1.62 | val 6.74 ← 差距越拉越大
+step  7000 | train 0.64 | val 7.61
+step 10000 | train 0.46 | val 7.90 ← train 完美，val 爆了
+```
+
+发生了什么？
+
+---
+
+## 过拟合
+
+**train loss 持续下降，val loss 先降后升**——这就是过拟合的标志。
+
+模型在"背答案"。它把 26 万个训练 token 记住了（train loss 0.46 ≈ 几乎完美预测），但这些记忆推广不到验证集。
+
+为什么会这样？
+
+```text
+模型参数: 4.17M
+训练数据: 267K tokens
+
+参数比数据还多 15 倍！
+```
+
+经验法则（Chinchilla Scaling Law）：参数量和训练 token 数应该大致 1:20。我们的情况是 1:0.06，数据严重不足。模型有足够的容量把整个训练集背下来。
+
+### 尽管过拟合了，生成效果仍然有进步
+
+关键观察：虽然 val loss 从 step 1500 开始恶化，但**生成质量在 step 2000-6000 持续提升**：
+
+**Step 2000（val_loss=5.88）：**
+```text
+Your subbeny your stified in one of love
+Make your good carrie: I will be your
+your love to me me the young proubigs?
+```
+→ 有单词但语法混乱，胡编乱造的词（subbeny、stified）
+
+**Step 6000（val_loss=7.42）：**
+```text
+First Citizen:
+He has the name of Marcius; and the pack our general,
+The multiers of Rome gates of Rome,
+And of his worthy
+Would not have deserved them.
+
+COMINIUS:
+Though he had he worn'd.
+```
+→ 角色对话格式正确，句子通顺，有逻辑（虽然在背训练集了）
+
+**最终生成（step 10000）：**
+```text
+KING RICHARD:
+What dreadful coward! forget thee again? thou shalt hear thy lip,
+Thou wilt fall backward when thou bested'st
+Attending up thy famous enemy?
+
+ROMEO:
+O, poor soul did cry thee in my sleep-hearted son!
+Gentle blood, that runagate, to have thee stirs.
+```
+→ 完美的莎士比亚风格。但很多片段是直接从训练集里背出来的。
+
+---
+
+## 训练技巧
+
+### 1. Cosine Learning Rate Schedule
+
+```text
+LR:
+  │     ╱── warmup (线性上升)
+  │    ╱
+  │   ╱ ╲
+  │  ╱    ╲── cosine decay (余弦衰减)
+  │ ╱      ╲
+  │╱        ╲_____ min_lr
+  └────────────────── steps
+```
+
+- **Warmup**（前 200 步）：LR 从 0 线性增到 max_lr。刚开始参数是随机的，太大的 LR 会把梯度带偏
+- **Cosine Decay**：LR 从 max_lr 平滑降到 min_lr。后期用小 LR 精调，避免在最优点附近震荡
+
+### 2. Gradient Clipping
+
+```python
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+```
+
+如果某一步的梯度异常大（比如遇到一个"难"样本），不让它把参数更新得太猛。把梯度向量的范数裁到 1.0 以内。
+
+### 3. Weight Decay
+
+```python
+optimizer = AdamW(..., weight_decay=0.1)
+```
+
+每步让权重往 0 方向收缩一点。防止权重长到太大，起正则化作用（抑制过拟合，虽然在我们这个数据不足的场景下帮助有限）。
+
+### 4. Weight Tying
+
+```python
+self.tok_emb.weight = self.lm_head.weight  # 共享权重
+```
+
+输入的 token embedding 和输出的预测层共享同一组参数。道理是：如果两个 token 的 embedding 相似（比如 "king" 和 "queen"），它们作为预测目标时也应该被模型认为相似。省参数 + 效果更好。
+
+---
+
+## 如果数据够用会怎样
+
+我们的问题是 4M 参数 vs 267K token。如果按 Chinchilla 法则配比：
+
+| 模型 | 参数量 | 需要的训练 token | 我们有的 |
+|------|--------|-----------------|---------|
+| 当前 | 4.17M | ~80M | 267K (差 300 倍) |
+| 合理配比 | ~13K | 267K | 267K ✓ |
+
+两种解法：
+1. **缩小模型**到 ~13K 参数（太小了，学不到什么）
+2. **增大数据**到几十 MB 文本（正解，但 Shakespeare 就这么多）
+
+工业界不存在这个问题——几十 TB 的互联网文本，模型再大也不够背。
+
+---
+
+## 正确的做法：Early Stopping
+
+回头看 loss 曲线，最佳 val loss 出现在 **step 1500**（5.77）。之后每多训一步都在恶化。
+
+正确做法是在 val loss 连续 N 步不降时停止训练，用那个最佳 checkpoint。我们的代码已经在做了（自动保存 best val loss 对应的权重）。
+
+```text
+最佳模型: step 1500, val_loss = 5.77
+最终模型: step 10000, val_loss = 7.90
+
+最佳模型反而更好！
+```
+
+---
+
+## 代码结构
+
+```text
+minimal-llm/src/
+  train_full.py    # 正式训练（cosine LR + gradient clip + 大模型）
+  logs/
+    train_log.json # 训练日志（每步的 train/val loss + lr）
+  checkpoints/
+    gpt_full_best.pt  # 最佳模型权重
+```
+
+运行：
+
+```bash
+python train_full.py                    # 默认配置（17分钟）
+python train_full.py --max_steps 3000   # 快速版（5分钟，避免过拟合）
+python train_full.py --n_layer 2 --n_embd 128  # 小模型（适配小数据）
+```
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | GPT-4 级别 |
+|------|---------|-----------|
+| 数据量 | 267K tokens (1MB) | 几万亿 tokens (几十 TB) |
+| 模型 | 4M 参数 | 万亿参数 |
+| 训练时间 | 17 分钟，单卡 | 几个月，数千 GPU |
+| 过拟合 | 严重（参数 >> 数据） | 不会（数据 >> 参数） |
+| LR Schedule | Cosine | Cosine（一样） |
+| 优化器 | AdamW | AdamW（一样） |
+| 训练策略 | 单阶段 | 多阶段（预训练 → SFT → RLHF） |
+
+训练技巧（cosine LR、gradient clip、weight decay、weight tying）在工业界完全一样。唯一区别是数据规模——有了足够多的数据，过拟合问题消失，模型越大效果越好。
+
+这就是 Scaling Law 的核心：只要数据和算力同步扩大，模型效果持续提升。
+
+---
+
+Phase 1 到此完结。5 篇文章从 Bigram 走到了完整的 Transformer 训练，核心链路跑通了。接下来的 Phase 2 会进入进阶主题：Scaling Law、RoPE、SFT、RLHF、推理优化、部署。
