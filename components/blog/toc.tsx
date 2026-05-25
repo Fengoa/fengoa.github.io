@@ -58,6 +58,25 @@ export function TableOfContents() {
 
   return (
     <nav className="flex flex-col gap-6">
+      {/* 返回按钮 */}
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
+      >
+        <svg
+          className="size-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 14l-4-4 4-4" />
+          <path d="M5 10h11a4 4 0 0 1 0 8h-1" />
+        </svg>
+        <span>博客</span>
+      </Link>
       {/* 目录列表 */}
       {headings.length > 0 && (
         <div className="flex flex-col gap-2.5">
@@ -93,25 +112,6 @@ export function TableOfContents() {
           ))}
         </div>
       )}
-      {/* 返回按钮 */}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
-      >
-        <svg
-          className="size-3.5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M9 14l-4-4 4-4" />
-          <path d="M5 10h11a4 4 0 0 1 0 8h-1" />
-        </svg>
-        <span>博客</span>
-      </Link>
     </nav>
   );
 }
