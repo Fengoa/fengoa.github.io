@@ -1,5 +1,6 @@
 import React from "react";
 import { TableOfContents } from "@/components/blog/toc";
+import { RelatedPosts } from "@/components/blog/related-posts";
 
 export default function BlogLayout({
   children,
@@ -13,6 +14,7 @@ export default function BlogLayout({
         <aside className="hidden xl:block absolute left-full ml-8 w-48 top-0 h-full">
           <div className="sticky top-40">
             <TableOfContents />
+            <RelatedPosts />
           </div>
         </aside>
 

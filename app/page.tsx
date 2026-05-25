@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { PostList } from "@/components/blog/post-list";
 import { BlogHero } from "@/components/blog/blog-hero";
 import { Grid } from "@/components/ui/grid";
@@ -37,7 +38,7 @@ import {
 } from "@/app/blog/llm-scaling-law/cover";
 
 const ALL_TAG = "全部";
-const TAGS = [ALL_TAG, "大模型", "推荐系统", "生活", "资源", "建站"];
+const TAGS = [ALL_TAG, "大模型", "推荐系统", "资源", "建站"];
 
 const posts: PostData[] = [
   {
@@ -277,9 +278,38 @@ const posts: PostData[] = [
 ];
 
 export default function Home() {
-  const [activeTag, setActiveTag] = useState(ALL_TAG);
-  const [currentPage, setCurrentPage] = useState(1);
+  return (
+    <Suspense>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // 从 URL 读取初始状态
+  const initialTag = searchParams.get("tag") || ALL_TAG;
+  const initialPage = Number(searchParams.get("page")) || 1;
+
+  const [activeTag, setActiveTag] = useState(
+    TAGS.includes(initialTag) ? initialTag : ALL_TAG
+  );
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const PAGE_SIZE = 10;
+
+  // 同步状态到 URL
+  const updateURL = useCallback(
+    (tag: string, page: number) => {
+      const params = new URLSearchParams();
+      if (tag !== ALL_TAG) params.set("tag", tag);
+      if (page > 1) params.set("page", String(page));
+      const query = params.toString();
+      router.replace(query ? `/?${query}` : "/", { scroll: false });
+    },
+    [router]
+  );
 
   // 计算每个标签的文章数量
   const tagCounts = useMemo(() => {
@@ -305,10 +335,17 @@ export default function Home() {
     return filteredPosts.slice(start, start + PAGE_SIZE);
   }, [filteredPosts, currentPage]);
 
-  // 切换标签时重置页码
+  // 切换标签
   const handleTagChange = (tag: string) => {
     setActiveTag(tag);
     setCurrentPage(1);
+    updateURL(tag, 1);
+  };
+
+  // 切换页码
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURL(activeTag, page);
   };
 
   return (
@@ -326,7 +363,7 @@ export default function Home() {
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 py-8">
             <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               className="px-3 py-1.5 text-xs font-mono rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-30 disabled:pointer-events-none"
             >
@@ -335,7 +372,7 @@ export default function Home() {
             {Array.from({ length: totalPages }, (_, i) => (
               <button
                 key={i + 1}
-                onClick={() => setCurrentPage(i + 1)}
+                onClick={() => handlePageChange(i + 1)}
                 className={`px-3 py-1.5 text-xs font-mono rounded-md border transition-colors ${
                   currentPage === i + 1
                     ? "border-foreground/60 text-foreground bg-foreground/5"
@@ -346,7 +383,7 @@ export default function Home() {
               </button>
             ))}
             <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-1.5 text-xs font-mono rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-30 disabled:pointer-events-none"
             >
