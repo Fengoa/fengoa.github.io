@@ -46,7 +46,7 @@ export function BlogHero({ tags, activeTag, onTagChange, tagCounts }: BlogHeroPr
         mergedAreas={[{ row: 1, column: 2, colSpan: 10 }]}
       >
         <Grid.Cell row={1} column={1} />
-        <Grid.Cell row={1} column={2} colSpan={10}>
+        {/* <Grid.Cell row={1} column={2} colSpan={10}>
           <div className="flex flex-col items-center justify-center py-8">
             <h1 className="text-4xl md:text-5xl font-bold leading-tight text-foreground text-center">
               好的故事
@@ -55,7 +55,7 @@ export function BlogHero({ tags, activeTag, onTagChange, tagCounts }: BlogHeroPr
               沙漠中融化的雪，加快了春暖花开。
             </p>
           </div>
-        </Grid.Cell>
+        </Grid.Cell> */}
         <Grid.Cell row={1} column={12} />
       </Grid>
 

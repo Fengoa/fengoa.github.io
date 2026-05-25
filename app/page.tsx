@@ -67,6 +67,7 @@ const posts: PostData[] = [
     tag: "大模型",
     summary: "从数据层到应用层，大模型完整技术栈全貌。对照工业界看做了什么、差什么、前沿在哪。",
     cover: <LandscapeLLMCover />,
+    coverShape: "square",
   },
   {
     slug: "llm-rag",
@@ -75,6 +76,7 @@ const posts: PostData[] = [
     tag: "大模型",
     summary: "检索增强生成：先搜相关文档拼进 prompt，再让模型回答。解决知识截止和私有数据问题。",
     cover: <RAGCover />,
+    coverShape: "square",
   },
   {
     slug: "llm-deploy",
@@ -83,6 +85,7 @@ const posts: PostData[] = [
     tag: "大模型",
     summary: "用 vLLM 把模型包成 OpenAI 兼容 API：Docker 部署、Streaming、负载监控、成本估算。",
     cover: <DeployCover />,
+    coverShape: "square",
   },
   {
     slug: "llm-inference",

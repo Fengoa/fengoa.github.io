@@ -174,3 +174,9 @@
   font-family: inherit;
 }
 
+/* 代码块空行保留高度 */
+code .sh__line:empty {
+  display: block;
+  min-height: 1lh;
+}
+

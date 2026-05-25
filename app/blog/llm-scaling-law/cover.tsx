@@ -226,7 +226,7 @@ export function InferenceCover({ className }: { className?: string }) {
 }
 
 // =============================================================================
-// 12 — 部署：容器/服务器图标
+// 12 — 部署：终端风格的服务架构
 // =============================================================================
 
 export function DeployCover({ className }: { className?: string }) {
@@ -236,23 +236,36 @@ export function DeployCover({ className }: { className?: string }) {
     return () => clearInterval(timer);
   }, []);
 
+  const services = [
+    { label: "FastAPI", port: "8000", color: "border-emerald-400 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
+    { label: "vLLM Engine", port: "GPU", color: "border-violet-400 bg-violet-500/10 text-violet-700 dark:text-violet-300" },
+    { label: "Redis Cache", port: "6379", color: "border-amber-400 bg-amber-500/10 text-amber-700 dark:text-amber-300" },
+  ];
+
   return (
-    <div className={cn("relative aspect-square w-full overflow-hidden rounded-full", "bg-gradient-to-br from-[#eff6ff] via-[#dbeafe] to-[#eff6ff] dark:from-[#0f1a2e] dark:via-[#101e33] dark:to-[#0f1a2e]", className)}>
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-14">
-        {/* 三个容器方块 */}
-        {["API", "Model", "Cache"].map((label, i) => (
-          <motion.div key={label} animate={{ opacity: active === i ? 1 : 0.5, scale: active === i ? 1.05 : 1 }} className={cn("w-full rounded border px-3 py-1.5 text-center font-mono text-[9px]", active === i ? "border-blue-300 dark:border-blue-700 bg-blue-50/80 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "border-neutral-200 dark:border-neutral-700 bg-white/50 dark:bg-neutral-800/30 text-muted-foreground")}>
-            {label}
+    <div className={cn("relative aspect-square w-full overflow-hidden rounded-2xl", "bg-[#1e293b] dark:bg-[#0f172a]", className)}>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-12">
+        {/* 标题 */}
+        <div className="text-[9px] font-mono text-slate-400 mb-1 self-start">$ docker compose up</div>
+        {/* 服务方块 */}
+        {services.map((svc, i) => (
+          <motion.div key={svc.label} animate={{ opacity: active === i ? 1 : 0.6, scale: active === i ? 1.03 : 1 }} className={cn("w-full rounded-lg border px-4 py-2 flex items-center justify-between font-mono text-[11px]", svc.color)}>
+            <span className="font-semibold">{svc.label}</span>
+            <span className="text-[9px] opacity-70">:{svc.port}</span>
           </motion.div>
         ))}
-        <div className="text-[8px] font-mono text-blue-500/50 mt-1">:8000</div>
+        {/* 状态 */}
+        <div className="flex items-center gap-1.5 mt-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[9px] font-mono text-emerald-400">healthy</span>
+        </div>
       </div>
     </div>
   );
 }
 
 // =============================================================================
-// 13 — RAG：检索+生成的管道
+// 13 — RAG：检索+生成的管道（清晰大字版）
 // =============================================================================
 
 export function RAGCover({ className }: { className?: string }) {
@@ -262,51 +275,59 @@ export function RAGCover({ className }: { className?: string }) {
     return () => clearInterval(timer);
   }, []);
 
-  const steps = ["Query", "Retrieve", "Context", "Generate"];
-  const colors = ["text-violet-500", "text-blue-500", "text-amber-500", "text-emerald-500"];
+  const steps = [
+    { label: "Query", icon: "?", color: "bg-violet-500 text-white" },
+    { label: "Retrieve", icon: "⌕", color: "bg-blue-500 text-white" },
+    { label: "Context", icon: "◫", color: "bg-amber-500 text-white" },
+    { label: "Generate", icon: "▶", color: "bg-emerald-500 text-white" },
+  ];
 
   return (
-    <div className={cn("relative aspect-square w-full overflow-hidden rounded-full", "bg-gradient-to-br from-[#faf5ff] via-[#f3e8ff] to-[#faf5ff] dark:from-[#1a1025] dark:via-[#1c1230] dark:to-[#1a1025]", className)}>
-      <div className="absolute inset-0 flex items-center justify-center p-12">
-        <div className="flex flex-col gap-1.5 w-full">
-          {steps.map((s, i) => (
-            <motion.div key={s} animate={{ opacity: step >= i ? 1 : 0.3, x: step >= i ? 0 : -5 }} transition={{ duration: 0.3 }} className={cn("flex items-center gap-2 text-[10px] font-mono", step === i ? colors[i] : "text-muted-foreground/60")}>
-              <div className={cn("w-1.5 h-1.5 rounded-full", step >= i ? "bg-current" : "bg-muted-foreground/20")} />
-              {s}
-              {i < 3 && <span className="text-[8px] text-muted-foreground/30 ml-auto">→</span>}
-            </motion.div>
-          ))}
-        </div>
+    <div className={cn("relative aspect-square w-full overflow-hidden rounded-2xl", "bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e1b4b]", className)}>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-12">
+        {steps.map((s, i) => (
+          <motion.div key={s.label} animate={{ opacity: step >= i ? 1 : 0.25, scale: step === i ? 1.05 : 1, x: step >= i ? 0 : -10 }} transition={{ duration: 0.3 }} className="w-full flex items-center gap-3">
+            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold", step >= i ? s.color : "bg-white/10 text-white/30")}>
+              {s.icon}
+            </div>
+            <span className={cn("font-mono text-sm font-semibold", step >= i ? "text-white" : "text-white/30")}>{s.label}</span>
+            {i < 3 && <span className={cn("ml-auto text-xs", step > i ? "text-white/60" : "text-white/15")}>→</span>}
+          </motion.div>
+        ))}
       </div>
     </div>
   );
 }
 
 // =============================================================================
-// 14 — 全景图：分层堆叠的彩色条
+// 14 — 全景图：分层架构图（大字清晰版）
 // =============================================================================
 
 export function LandscapeLLMCover({ className }: { className?: string }) {
   const layers = [
-    { color: "bg-[#b5d4f4]", label: "Data" },
-    { color: "bg-[#afa9ec]", label: "Arch" },
-    { color: "bg-[#9fe1cb]", label: "Train" },
-    { color: "bg-[#f5c4b3]", label: "Align" },
-    { color: "bg-[#f4c0d1]", label: "Infer" },
-    { color: "bg-[#fac775]", label: "Cap" },
-    { color: "bg-[#c0dd97]", label: "Eval" },
-    { color: "bg-[#d3d1c7]", label: "App" },
+    { color: "bg-blue-400", label: "Data" },
+    { color: "bg-indigo-400", label: "Architecture" },
+    { color: "bg-emerald-400", label: "Pretrain" },
+    { color: "bg-orange-400", label: "Alignment" },
+    { color: "bg-pink-400", label: "Inference" },
+    { color: "bg-amber-400", label: "Capability" },
+    { color: "bg-green-400", label: "Evaluation" },
+    { color: "bg-slate-400", label: "Application" },
   ];
 
   return (
-    <div className={cn("relative aspect-square w-full overflow-hidden rounded-full", "bg-gradient-to-b from-[#fafaf9] to-[#f5f5f4] dark:from-[#1a1a18] dark:to-[#151514]", className)}>
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-[3px] px-16 py-14">
+    <div className={cn("relative aspect-square w-full overflow-hidden rounded-2xl", "bg-[#0f172a] dark:bg-[#020617]", className)}>
+      <div className="absolute inset-0 flex flex-col items-stretch justify-center gap-1.5 px-10 py-12">
         {layers.map((layer, i) => (
-          <motion.div key={layer.label} className={cn("w-full h-2.5 rounded-sm opacity-70", layer.color)} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: i * 0.1, duration: 0.4 }} />
+          <motion.div key={layer.label} className="flex items-center gap-2" initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }} transition={{ delay: i * 0.08, duration: 0.4 }}>
+            <div className={cn("h-4 rounded-sm flex-1 origin-left", layer.color)} style={{ opacity: 0.85 }} />
+            <span className="text-[8px] font-mono text-slate-400 w-16 text-right">{layer.label}</span>
+          </motion.div>
         ))}
       </div>
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="text-[9px] font-mono text-foreground/30 tracking-wider">8 LAYERS</div>
+      {/* 标题 */}
+      <div className="absolute bottom-5 left-0 right-0 text-center">
+        <span className="text-[10px] font-mono text-slate-500 tracking-widest">FULL STACK</span>
       </div>
     </div>
   );
