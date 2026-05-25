@@ -7,6 +7,39 @@ import { Search, FileText, ArrowRight } from "lucide-react";
 import { Dialog, VisuallyHidden } from "radix-ui";
 import { search, getAllPosts, type SearchHit } from "@/lib/search";
 
+/** 高亮文本中匹配的关键词 */
+function Highlight({ text, query }: { text: string; query: string }) {
+  if (!query.trim() || !text) return <>{text}</>;
+
+  // 将搜索词拆成关键字（按空格分割）
+  const keywords = query
+    .trim()
+    .split(/\s+/)
+    .filter((k) => k.length > 0);
+
+  if (keywords.length === 0) return <>{text}</>;
+
+  // 构造正则匹配所有关键词
+  const escaped = keywords.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const regex = new RegExp(`(${escaped.join("|")})`, "gi");
+
+  const parts = text.split(regex);
+
+  return (
+    <>
+      {parts.map((part, i) =>
+        regex.test(part) ? (
+          <mark key={i} className="bg-amber-200/60 dark:bg-amber-500/30 text-inherit rounded-sm px-0.5">
+            {part}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -121,7 +154,9 @@ export function CommandPalette() {
             <FileText className="size-4 text-muted-foreground shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 text-sm font-medium">
-                <span className="truncate">{hit.title}</span>
+                <span className="truncate">
+                  <Highlight text={hit.title} query={query} />
+                </span>
                 {hit.tag && (
                   <span className="shrink-0 text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                     {hit.tag}
@@ -129,7 +164,7 @@ export function CommandPalette() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                {hit.summary}
+                <Highlight text={hit.summary} query={query} />
               </p>
             </div>
             <ArrowRight className="size-3.5 text-muted-foreground shrink-0 opacity-0 data-[selected=true]:opacity-100 transition-opacity" />

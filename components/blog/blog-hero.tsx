@@ -6,7 +6,7 @@ const TAG_COLORS: Record<string, string> = {
   "全部": "bg-neutral-100 dark:bg-neutral-800/60",
   "大模型": "bg-violet-100 dark:bg-violet-900/40",
   "推荐系统": "bg-cyan-100 dark:bg-cyan-900/40",
-  "生活": "bg-amber-100 dark:bg-amber-900/40",
+  "数学": "bg-amber-100 dark:bg-amber-900/40",
   "资源": "bg-emerald-100 dark:bg-emerald-900/40",
   "建站": "bg-rose-100 dark:bg-rose-900/40",
 };

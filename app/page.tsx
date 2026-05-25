@@ -36,11 +36,21 @@ import {
   RAGCover,
   LandscapeLLMCover,
 } from "@/app/blog/llm-scaling-law/cover";
+import { LinearAlgebraCover } from "@/app/blog/linear-algebra-for-dl/cover";
 
 const ALL_TAG = "全部";
-const TAGS = [ALL_TAG, "大模型", "推荐系统", "资源", "建站"];
+const TAGS = [ALL_TAG, "大模型", "推荐系统", "数学", "资源", "建站"];
 
 const posts: PostData[] = [
+  {
+    slug: "linear-algebra-for-dl",
+    title: "线性代数：深度学习用到的那些",
+    date: "2026-05-25",
+    tag: "数学",
+    summary:
+      "不讲证明，只讲直觉。向量、点积、矩阵乘法、SVD、旋转矩阵——每个概念都对应到 Attention、LoRA、RoPE、矩阵分解召回的具体场景。",
+    cover: <LinearAlgebraCover />,
+  },
   {
     slug: "rec-llm-bridge",
     title: "推荐系统 × 大模型：四层重叠与五大范式",
@@ -89,6 +99,7 @@ const posts: PostData[] = [
     tag: "大模型",
     summary: "把 RLHF 的 4 模型+PPO 简化为 2 模型+分类 loss。从偏好数据直接学「什么回答更好」。",
     cover: <DPOCover />,
+    coverShape: "square",
   },
   {
     slug: "llm-sft",
@@ -97,6 +108,7 @@ const posts: PostData[] = [
     tag: "大模型",
     summary: "用指令-回复对微调，让模型从「续写」变成「回答」。LoRA 只训 1% 参数，效果接近全参数微调。",
     cover: <SFTCover />,
+    coverShape: "square",
   },
   {
     slug: "llm-efficient-attention",
@@ -105,6 +117,7 @@ const posts: PostData[] = [
     tag: "大模型",
     summary: "KV Cache 不重复算历史 token（10x 加速），GQA 多 Q 共享 KV（显存降 2-8x），Flash Attention IO 优化（2-4x）。",
     cover: <EfficientAttentionCover />,
+    coverShape: "square",
   },
   {
     slug: "llm-rope",

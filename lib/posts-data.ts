@@ -9,6 +9,7 @@ export interface PostMeta {
 }
 
 export const postsMeta: PostMeta[] = [
+  { slug: "linear-algebra-for-dl", title: "线性代数：深度学习用到的那些", tag: "数学" },
   { slug: "rec-llm-bridge", title: "推荐系统 × 大模型：四层重叠与五大范式", tag: "推荐系统" },
   { slug: "llm-landscape", title: "大模型全景图", tag: "大模型" },
   { slug: "llm-rag", title: "RAG：给模型外接知识", tag: "大模型" },

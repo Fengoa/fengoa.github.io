@@ -168,19 +168,19 @@ export function DPOCover({ className }: { className?: string }) {
   }, []);
 
   return (
-    <div className={cn("relative aspect-square w-full overflow-hidden rounded-full", "bg-gradient-to-br from-[#fdf2f8] via-[#fce7f3] to-[#fdf2f8] dark:from-[#1c1018] dark:via-[#1e1220] dark:to-[#1c1018]", className)}>
+    <div className={cn("relative aspect-square w-full overflow-hidden rounded-2xl", "bg-gradient-to-br from-[#fdf2f8] via-[#fce7f3] to-[#fbcfe8] dark:from-[#1f0a18] dark:via-[#2d1025] dark:to-[#3b1530]", className)}>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-14">
         {/* Chosen */}
-        <motion.div animate={{ scale: pulse ? 1.05 : 1, opacity: pulse ? 1 : 0.7 }} className="w-full rounded border border-emerald-300/60 dark:border-emerald-700/40 bg-emerald-50/80 dark:bg-emerald-900/20 px-3 py-2 text-center">
-          <div className="text-[10px] text-emerald-700 dark:text-emerald-300">chosen</div>
-          <div className="text-[8px] text-emerald-600/60 dark:text-emerald-400/40 mt-0.5">detailed, helpful</div>
+        <motion.div animate={{ scale: pulse ? 1.05 : 1, opacity: pulse ? 1 : 0.8 }} className="w-full rounded-lg border-2 border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/40 px-3 py-2.5 text-center shadow-sm">
+          <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">chosen</div>
+          <div className="text-[9px] text-emerald-600 dark:text-emerald-400 mt-0.5">detailed, helpful</div>
         </motion.div>
         {/* VS */}
-        <div className="text-[9px] font-mono text-muted-foreground/50">vs</div>
+        <div className="text-[10px] font-mono font-bold text-foreground/60">vs</div>
         {/* Rejected */}
-        <motion.div animate={{ scale: pulse ? 0.95 : 1, opacity: pulse ? 0.5 : 0.7 }} className="w-full rounded border border-red-200/60 dark:border-red-800/40 bg-red-50/50 dark:bg-red-900/10 px-3 py-2 text-center">
-          <div className="text-[10px] text-red-600/70 dark:text-red-300/70 line-through">rejected</div>
-          <div className="text-[8px] text-red-500/40 dark:text-red-400/30 mt-0.5">lazy, unhelpful</div>
+        <motion.div animate={{ scale: pulse ? 0.95 : 1, opacity: pulse ? 0.5 : 0.8 }} className="w-full rounded-lg border-2 border-red-300 dark:border-red-500 bg-red-50 dark:bg-red-900/30 px-3 py-2.5 text-center shadow-sm">
+          <div className="text-[11px] font-semibold text-red-600 dark:text-red-300 line-through">rejected</div>
+          <div className="text-[9px] text-red-500 dark:text-red-400 mt-0.5">lazy, unhelpful</div>
         </motion.div>
       </div>
     </div>
