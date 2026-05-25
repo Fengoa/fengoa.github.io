@@ -1,0 +1,164 @@
+export const metadata = {
+  title: "部署上线",
+}
+
+# 部署上线
+
+模型训好了、量化了、推理优化了。现在要让别人能用——发一个 HTTP 请求就能拿到回答。
+
+这篇讲怎么用 vLLM 把模型包成 API 服务：Docker 部署、OpenAI 兼容格式、Streaming 输出、负载监控。和推荐系统工程化那篇思路一样——把"能跑"变成"能用"。
+
+---
+
+## 推理框架选型
+
+| 框架 | 特点 | 适用场景 |
+|------|------|---------|
+| vLLM | PagedAttention + Continuous Batching，吞吐最高 | 生产服务 |
+| TGI | HuggingFace 出品，功能全面 | 生产服务 |
+| llama.cpp | 纯 C++ 实现，CPU 也能跑 | 本地/边缘设备 |
+| Ollama | llama.cpp 的易用封装 | 个人使用 |
+
+生产用 vLLM 或 TGI。个人玩用 Ollama。
+
+---
+
+## vLLM 一键部署
+
+```bash
+# 安装
+pip install vllm
+
+# 启动服务（OpenAI 兼容 API）
+vllm serve meta-llama/Llama-3-8B-Instruct \
+  --quantization awq \
+  --max-model-len 4096 \
+  --port 8000
+```
+
+就这样。然后就可以用标准 OpenAI SDK 调用：
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8000/v1", api_key="dummy")
+response = client.chat.completions.create(
+    model="meta-llama/Llama-3-8B-Instruct",
+    messages=[{"role": "user", "content": "What is 2+2?"}],
+    stream=True,
+)
+for chunk in response:
+    print(chunk.choices[0].delta.content, end="")
+```
+
+---
+
+## Streaming 输出
+
+用户不想等 5 秒才看到完整回答。Streaming 让 token 生成一个就返回一个：
+
+```text
+SSE (Server-Sent Events):
+  data: {"choices": [{"delta": {"content": "The"}}]}
+  data: {"choices": [{"delta": {"content": " capital"}}]}
+  data: {"choices": [{"delta": {"content": " of"}}]}
+  ...
+  data: [DONE]
+```
+
+前端收到每个 chunk 立刻显示，用户感知的延迟从"等 5 秒出完整回答"变成"0.2 秒开始出字"。
+
+---
+
+## Docker 部署
+
+```dockerfile
+FROM vllm/vllm-openai:latest
+ENV MODEL_NAME=meta-llama/Llama-3-8B-Instruct
+CMD ["--model", "${MODEL_NAME}", "--quantization", "awq", "--port", "8000"]
+```
+
+```yaml
+# docker-compose.yml
+services:
+  llm:
+    image: vllm/vllm-openai:latest
+    ports: ["8000:8000"]
+    volumes: ["./models:/models"]
+    deploy:
+      resources:
+        reservations:
+          devices: [{capabilities: [gpu]}]
+    command: >
+      --model /models/llama-3-8b-awq
+      --quantization awq
+      --max-model-len 4096
+```
+
+---
+
+## API 设计：兼容 OpenAI
+
+为什么要兼容 OpenAI 格式？因为所有 SDK、工具（LangChain、Cursor、Continue）都支持 OpenAI 格式。换个 `base_url` 就能从 GPT-4 切到你自己的模型，代码一行不用改。
+
+关键接口：
+- `POST /v1/chat/completions` — 对话
+- `POST /v1/completions` — 补全
+- `GET /v1/models` — 模型列表
+- `GET /health` — 健康检查
+
+---
+
+## 成本估算
+
+```text
+LLaMA-3-8B (AWQ INT4):
+  显存: ~5GB
+  GPU: 1x A10G (24GB) 或 1x L4 (24GB)
+  云成本: ~$0.5-1/小时 (AWS/GCP spot)
+
+支撑:
+  延迟: ~50ms/token
+  吞吐: ~200 tokens/s (单卡)
+  并发: ~10-20 请求
+
+月成本: ~$400-700 (7x24 在线)
+```
+
+对比 OpenAI API：gpt-4o 约 $2.5/M tokens。如果每月处理 10M tokens，自部署 ($500) 比 API ($25) 贵 20 倍。但如果处理 1B tokens，自部署 ($500) 比 API ($2500) 便宜 5 倍。
+
+---
+
+## 代码
+
+```text
+minimal-llm/src/
+  （这篇没有独立训练脚本，是部署指南）
+```
+
+实际部署命令：
+
+```bash
+# 本地测试（用 Ollama，最简单）
+ollama run llama3
+
+# 生产部署（用 vLLM + Docker）
+docker compose up -d
+curl http://localhost:8000/v1/chat/completions \
+  -d '{"model":"llama3","messages":[{"role":"user","content":"hello"}]}'
+```
+
+---
+
+## 和工业界的距离
+
+| 环节 | 个人部署 | 大厂级别 |
+|------|---------|---------|
+| 框架 | vLLM 单实例 | vLLM + Kubernetes 集群 |
+| 负载均衡 | Nginx | Envoy + 自动扩缩容 |
+| 监控 | /health | Prometheus + Grafana |
+| 模型管理 | 手动换 | A/B 测试 + 灰度发布 |
+| 安全 | API Key | 内容审核 + Rate Limiting |
+| 成本 | 单卡 ~$500/月 | 数千卡 ~$数百万/月 |
+
+下一篇讲 RAG——模型知识截止到训练时，怎么让它回答最新的问题。

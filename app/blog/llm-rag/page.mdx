@@ -1,0 +1,162 @@
+export const metadata = {
+  title: "RAG：给模型外接知识",
+}
+
+# RAG：给模型外接知识
+
+模型的知识截止到训练那一刻。问它"今天天气怎样"？不知道。问它你公司内部的文档？不知道。
+
+RAG（Retrieval-Augmented Generation）的思路很简单：先检索相关信息，拼到 prompt 里，再让模型基于这些信息回答。相当于给模型开了"开卷考试"。
+
+---
+
+## 流程
+
+```text
+用户问题: "LLaMA 3 有什么新特性?"
+    │
+    ▼
+1. Embedding: 把问题变成向量
+    │
+    ▼
+2. 检索: 在向量数据库中找最相似的文档片段
+    │
+    ▼
+3. 拼接: 把检索到的片段放进 prompt
+    │
+    ▼
+4. 生成: 模型基于 context 回答
+
+Prompt:
+  "根据以下信息回答问题：
+   [文档片段1] LLaMA 3 使用了 GQA 和更大的词表...
+   [文档片段2] LLaMA 3 在 15T tokens 上训练...
+
+   问题：LLaMA 3 有什么新特性?
+   回答："
+```
+
+---
+
+## 关键组件
+
+### 1. Embedding 模型
+
+把文本变成向量（语义相似的文本，向量距离近）：
+
+```python
+from sentence_transformers import SentenceTransformer
+model = SentenceTransformer("BAAI/bge-small-en-v1.5")
+embeddings = model.encode(["hello world", "hi there"])
+```
+
+### 2. 向量数据库
+
+存储文档向量，支持快速近邻搜索：
+
+| 数据库 | 特点 |
+|--------|------|
+| ChromaDB | 最简单，本地跑 |
+| pgvector | PostgreSQL 插件，适合已有 PG 的场景 |
+| Milvus | 分布式，适合大规模 |
+| Pinecone | 全托管，不用运维 |
+
+### 3. Chunk 策略
+
+文档太长塞不进 context，需要切成小块：
+
+```text
+固定大小: 每 512 token 切一段（简单但可能切断语义）
+按段落:  按 \n\n 切（保持语义完整）
+递归:    先按大段切，太长的再细切（LangChain 默认）
+语义:    按 embedding 相似度切（最智能但最慢）
+```
+
+---
+
+## 常见问题
+
+### 检索不准
+
+问题："公司的请假政策是什么？"
+检索到："公司的加班政策是..."（关键词匹配但语义不对）
+
+解法：
+- 用更好的 embedding 模型（bge-large > bge-small）
+- Hybrid search（向量 + BM25 关键词混合）
+- Re-ranking（检索 20 条，用精排模型选 top 5）
+
+### 上下文太长
+
+检索了 10 段，每段 500 token = 5000 token 的 context。加上 system prompt 和问题，超过模型的 ctx limit。
+
+解法：
+- 减少检索数量
+- 压缩检索结果（用小模型摘要）
+- 用支持长上下文的模型（128K+）
+
+### 幻觉
+
+模型看了 context 但还是编造信息——"根据文档..."然后说了文档里没有的东西。
+
+解法：
+- Prompt 里加"只基于提供的信息回答，不确定就说不知道"
+- Citation：要求模型标注信息来源
+- 后处理：验证回答是否能在 context 中找到依据
+
+---
+
+## 和直接微调的对比
+
+| | RAG | 微调 |
+|---|---|---|
+| 知识更新 | 实时（改文档即可） | 需要重新训练 |
+| 成本 | 低（只需向量数据库） | 高（GPU 训练） |
+| 准确性 | 高（有原文依据） | 可能幻觉 |
+| 适用场景 | 事实性问答 | 风格/能力改变 |
+| 局限 | 依赖检索质量 | 需要标注数据 |
+
+大部分"让模型了解私有数据"的需求，RAG 是首选。只有当需要改变模型的**行为模式**时才需要微调。
+
+---
+
+## 代码
+
+```python
+# 最简 RAG pipeline（伪代码）
+from chromadb import Client
+from openai import OpenAI
+
+# 1. 索引文档
+db = Client()
+collection = db.create_collection("docs")
+for chunk in split_documents("my_docs/"):
+    embedding = embed(chunk)
+    collection.add(documents=[chunk], embeddings=[embedding])
+
+# 2. 检索 + 生成
+query = "LLaMA 3 有什么新特性?"
+results = collection.query(query_embeddings=[embed(query)], n_results=3)
+context = "\n".join(results["documents"][0])
+
+response = openai.chat.completions.create(
+    messages=[
+        {"role": "system", "content": f"基于以下信息回答：\n{context}"},
+        {"role": "user", "content": query},
+    ]
+)
+```
+
+---
+
+## 和工业界的距离
+
+| 环节 | 基础版 | 生产级 |
+|------|--------|--------|
+| 检索 | 单路向量 | 向量 + BM25 + Re-ranking |
+| Chunk | 固定 512 | 语义分割 + 重叠窗口 |
+| 向量库 | ChromaDB | Milvus 集群 |
+| 评估 | 人工看 | Ragas / TruLens 自动评估 |
+| 更新 | 手动重索引 | 增量更新 + CDC 同步 |
+
+下一篇（最后一篇）——大模型全景图，回头看整个技术栈。

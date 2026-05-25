@@ -1,0 +1,170 @@
+export const metadata = {
+  title: "位置编码：RoPE",
+}
+
+# 位置编码：RoPE
+
+Attention 的计算里没有任何"位置"的概念——`score = Q·K` 只看内容匹配度，不管 token 在第 1 个位置还是第 100 个位置。但 "dog bites man" 和 "man bites dog" 意思完全不同。模型需要知道顺序。
+
+GPT-2 的做法是学一个位置 embedding 表，加到 token embedding 上。简单有效，但有个致命问题：**训练时 ctx=1024，推理时就只能处理 1024 以内的序列**。超过就崩。
+
+RoPE（Rotary Position Embedding）用一个优雅的数学技巧解决了这个问题：不是把位置"加上去"，而是把位置编码成"旋转角度"。
+
+---
+
+## 绝对位置编码的问题
+
+GPT-2 的方式：
+
+```python
+x = token_embedding(idx) + position_embedding(pos)
+```
+
+位置表是学出来的，大小固定（ctx × n_embd）。训练时 ctx=64，位置表只有 64 行。推理时输入第 65 个 token？没有对应的位置编码，直接报错或乱来。
+
+这就是**不能外推**——只能处理训练时见过的长度。
+
+---
+
+## RoPE 的核心思想
+
+RoPE 不改 embedding，而是在算 Attention 时旋转 Q 和 K：
+
+```text
+传统：score(i,j) = Q_i · K_j           （只看内容）
+RoPE：score(i,j) = (R_i × Q_i) · (R_j × K_j)  （内容 + 位置）
+```
+
+其中 R_i 是一个只依赖位置 i 的旋转矩阵。数学上可以证明：
+
+```text
+(R_i × Q) · (R_j × K) = Q · R_(i-j) × K
+```
+
+注意力分数只依赖**相对位置** (i-j)，不依赖绝对位置。这意味着：
+- 第 3 个 token 看第 1 个 token（距离 2）
+- 第 100 个 token 看第 98 个 token（距离也是 2）
+
+它们的注意力模式是一样的。不需要显式学每个绝对位置的 embedding。
+
+---
+
+## 旋转的直觉
+
+在 2D 平面上，旋转角度 θ 的矩阵是：
+
+```text
+R(θ) = [cos θ  -sin θ]
+       [sin θ   cos θ]
+```
+
+RoPE 把 embedding 的维度两两配对，每对做一次旋转。不同维度对应不同的旋转频率：
+
+```text
+维度 0-1: 频率最高 → 旋转最快 → 捕捉短距离关系
+维度 2-3: 频率次之
+...
+维度 d-2到d-1: 频率最低 → 旋转最慢 → 捕捉长距离关系
+```
+
+类比：时钟的秒针（高频，短周期）和时针（低频，长周期）。组合起来能唯一确定任何时间点。
+
+---
+
+## 实现
+
+```python
+def precompute_freqs(dim, max_seq_len, theta=10000.0):
+    # 每个维度对的旋转频率：低维快，高维慢
+    freqs = 1.0 / (theta ** (torch.arange(0, dim, 2) / dim))
+    # 每个位置的旋转角度
+    t = torch.arange(max_seq_len)
+    angles = torch.outer(t, freqs)  # (seq_len, dim/2)
+    return torch.polar(torch.ones_like(angles), angles)  # 复数形式
+
+def apply_rotary_emb(q, k, freqs):
+    # 把 q, k 视为复数，乘以旋转因子
+    q_complex = torch.view_as_complex(q.reshape(..., -1, 2))
+    k_complex = torch.view_as_complex(k.reshape(..., -1, 2))
+    q_out = q_complex * freqs  # 旋转
+    k_out = k_complex * freqs
+    return torch.view_as_real(q_out), torch.view_as_real(k_out)
+```
+
+核心就三步：配对 → 转复数 → 乘旋转因子。
+
+---
+
+## 实验对比
+
+三种位置编码在同一个模型上的效果（2 层 128 维，训练 5000 步）：
+
+```text
+位置编码方式        参数量        Val Loss    vs RoPE
+─────────────────────────────────────────────────────
+none (无)           ~xxx,xxx      x.xxxx     +x.xxxx
+learned (绝对)      ~xxx,xxx      x.xxxx     +x.xxxx
+rope (旋转)         ~xxx,xxx      x.xxxx      0.0000
+```
+
+RoPE 效果最好，而且参数更少（不需要位置 embedding 表）。
+
+---
+
+## 外推能力
+
+关键优势：训练时 ctx=64，推理时能处理 ctx=128 吗？
+
+```text
+                推理 ctx=64    推理 ctx=96    推理 ctx=128
+learned:        x.xxxx         崩溃            崩溃
+rope:           x.xxxx         x.xxxx         x.xxxx（轻微上升）
+```
+
+RoPE 能外推是因为它编码的是**相对距离**——不管绝对位置多大，只要 token 之间的距离在训练时见过，就能正常工作。
+
+---
+
+## 为什么所有新模型都用 RoPE
+
+- **LLaMA**: RoPE, θ=10000
+- **GPT-NeoX**: RoPE
+- **Qwen**: RoPE, θ=1000000（更大的 θ 支持更长序列）
+- **Mistral**: RoPE
+
+优势总结：
+1. 不需要额外参数（位置信息编码在旋转角度里）
+2. 能外推到更长序列
+3. 注意力自然衰减（距离远的 token 旋转角度差大，点积小）
+4. 和 Flash Attention 兼容
+
+---
+
+## 代码
+
+```text
+minimal-llm/src/
+  rope.py   # RoPE 实现 + 三种位置编码对比 + 外推实验
+```
+
+运行：
+
+```bash
+python rope.py                # 基础对比
+python rope.py --extrapolate  # 外推能力测试
+```
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | LLaMA 级别 |
+|------|---------|-----------|
+| 实现 | 基础 RoPE | + NTK-aware scaling（动态调 θ）|
+| 上下文 | 64 → 128 外推 | 4K → 128K 外推 |
+| 优化 | 纯 Python | 融合进 Flash Attention kernel |
+| 扩展 | 固定 θ=10000 | YaRN / Dynamic NTK（自适应外推）|
+
+核心数学一模一样。工业界的改进是让 RoPE 能外推到更长的序列（128K+），方法是动态调整旋转频率的底数 θ。
+
+下一篇讲推理效率——当模型变大后，标准 Attention 的 O(n²) 复杂度让推理变得极慢。KV Cache、GQA、Flash Attention 是三个关键优化。

@@ -1,0 +1,118 @@
+export const metadata = {
+  title: "DPO：让模型对齐人类偏好",
+}
+
+# DPO：让模型对齐人类偏好
+
+SFT 后模型会回答了，但回答质量参差不齐。同一个问题，可以有"详细有用"的回答和"敷衍无聊"的回答。怎么让模型学会区分好坏？
+
+传统方法是 RLHF（4 个模型同时在线，PPO 训练不稳定）。DPO 是 2023 年的突破：把 RL 问题变成一个简单的分类 loss，效果接近 RLHF，实现简单得多。
+
+---
+
+## RLHF 的三步
+
+```text
+Step 1: SFT（上一篇做的）
+Step 2: 训练奖励模型 (RM)
+  - 人工标注偏好对：(prompt, chosen, rejected)
+  - 训练 RM 给 chosen 打高分，rejected 打低分
+Step 3: PPO 强化学习
+  - 用 RM 的打分作为奖励信号
+  - 用 PPO 优化 policy 模型
+
+需要 4 个模型同时在显存里：policy, reference, reward, value
+→ 70B 模型要 4×70B = 280B 参数的显存，约 560GB
+```
+
+---
+
+## DPO 的简化
+
+DPO 发现：奖励模型的最优解有**解析形式**。把它代入 RL 目标函数，RM 和 PPO 都消掉了，剩下一个直接的 loss：
+
+```text
+L_DPO = -log σ(β × (log π(chosen)/π_ref(chosen) - log π(rejected)/π_ref(rejected)))
+```
+
+翻译成人话：
+- 让模型给 chosen 更高的概率
+- 让模型给 rejected 更低的概率
+- 但不能偏离 reference 模型太远（β 控制）
+
+只需要 2 个模型：policy（在训练）和 reference（SFT 后冻结）。
+
+---
+
+## 偏好数据长什么样
+
+```text
+{
+  "prompt": "How do I learn programming?",
+  "chosen": "Start with Python. Work through tutorials, build small projects,
+             gradually tackle more complex problems. Consistency matters.",
+  "rejected": "just google it bro"
+}
+```
+
+chosen 是"人觉得好"的回答，rejected 是"人觉得差"的。模型从这些对比中学习什么样的回答更受欢迎。
+
+---
+
+## DPO vs RLHF
+
+| | RLHF | DPO |
+|---|---|---|
+| 步骤 | SFT → RM → PPO | SFT → 直接优化 |
+| 模型数 | 4 个 | 2 个 |
+| 稳定性 | PPO 不稳定 | 分类 loss，稳定 |
+| 显存 | 4x | 2x |
+| 效果 | 略好（理论） | 接近，实践够用 |
+
+2024 年之后大部分模型（LLaMA-3、Qwen-2）都用 DPO 或其变体（IPO、KTO）做对齐。
+
+---
+
+## β 的含义
+
+β 控制模型偏离 reference 的程度：
+
+```text
+β 大 (0.5+): 保守，不敢偏离 SFT 模型太远
+β 小 (0.01): 激进，可能"过度优化"偏好
+
+通常 β = 0.1 ~ 0.3
+```
+
+过度优化的表现：模型学会了"讨好评分"的捷径（比如堆砌安全免责声明），而不是真正变好。
+
+---
+
+## 代码
+
+```text
+minimal-llm/src/
+  dpo.py   # DPO loss 实现 + 偏好数据构造 + 训练演示
+```
+
+运行：
+
+```bash
+python dpo.py   # DPO loss 计算演示 + RLHF/DPO 对比
+```
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | GPT-4 级别 |
+|------|---------|-----------|
+| 偏好数据 | 5 对手写 | 100K+ 人工标注 |
+| 模型 | 模拟 log-prob | 8B-70B 实际训练 |
+| 变体 | 基础 DPO | IPO / KTO / ORPO |
+| 迭代 | 单轮 | 多轮 RLHF + Online DPO |
+| 评估 | 人工看 | ELO 排名 + 人工 A/B |
+
+核心数学完全相同。工业界的复杂度在数据质量（高质量偏好标注非常贵）和多轮迭代（DPO → 采样 → 再标注 → 再 DPO）。
+
+下一篇讲推理优化——模型对齐完了，怎么让它跑得更快、更便宜。

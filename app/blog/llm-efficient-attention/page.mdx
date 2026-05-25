@@ -1,0 +1,166 @@
+export const metadata = {
+  title: "高效注意力：GQA + KV Cache",
+}
+
+# 高效注意力：GQA + KV Cache
+
+标准 Self-Attention 的复杂度是 O(n²)——序列长度翻倍，计算量翻 4 倍。训练 1024 token 的序列还行，推理时自回归生成 4096 个 token，每生成一个都要重新算前面所有 token 的 K/V，太慢了。
+
+这篇讲三个关键优化：KV Cache（不重复计算）、GQA（减少 KV 头数）、Flash Attention（IO 优化）。它们组合起来让推理速度提升 10-50 倍。
+
+---
+
+## 问题：推理时的重复计算
+
+自回归生成是逐 token 的：
+
+```text
+step 1: 输入 "The"        → 算 K₁,V₁ → 预测 "cat"
+step 2: 输入 "The cat"    → 算 K₁,V₁,K₂,V₂ → 预测 "sat"
+step 3: 输入 "The cat sat" → 算 K₁,V₁,K₂,V₂,K₃,V₃ → 预测 "on"
+```
+
+每一步都要重新算之前所有 token 的 K 和 V！第 1000 步要重新算 999 个 token 的 K/V。总计算量 ∝ n²。
+
+---
+
+## KV Cache：只算新 token
+
+核心想法：之前 token 的 K 和 V 不会变（因为是因果的，后面的 token 不影响前面的），缓存起来就行。
+
+```text
+step 1: 输入 "The"        → 计算 K₁,V₁ → 存入 cache
+step 2: 输入 "cat"（只 1 个）→ 计算 K₂,V₂ → cache = [K₁K₂, V₁V₂]
+step 3: 输入 "sat"（只 1 个）→ 计算 K₃,V₃ → cache = [K₁K₂K₃, V₁V₂V₃]
+```
+
+每步只计算 1 个新 token 的 Q/K/V，然后 Q 和完整的 K cache 做 attention。总计算量从 O(n²) 降到 O(n)。
+
+实测加速：
+
+```text
+生成 128 tokens (256 维, 8 头):
+  无 KV Cache: x.xxx s
+  有 KV Cache: x.xxx s
+  加速: ~x.xx 倍
+```
+
+---
+
+## GQA：减少 KV 存储
+
+KV Cache 解决了速度问题，但带来了显存问题——每个 token 的 K/V 都要存在 GPU 内存里。
+
+对 LLaMA-70B：
+```text
+每层 KV Cache = 2 × seq_len × n_kv_head × head_size × sizeof(float16)
+总 KV Cache = 80 层 × 2 × 4096 × 64 × 128 × 2 bytes ≈ 10GB
+
+光 KV Cache 就要 10GB 显存！
+```
+
+GQA 的解法：让多个 Q head 共享一组 K/V head。
+
+```text
+标准 MHA:  8 个 Q head, 8 个 K head, 8 个 V head
+GQA-4:    8 个 Q head, 4 个 K head, 4 个 V head  → KV 显存减半
+GQA-2:    8 个 Q head, 2 个 K head, 2 个 V head  → KV 显存降 4x
+MQA:      8 个 Q head, 1 个 K head, 1 个 V head  → KV 显存降 8x
+```
+
+trade-off：KV head 越少，显存越省，但效果会略微下降。
+
+实测（1 层模型，简单对比）：
+
+```text
+配置              KV 参数    Val Loss   vs MHA
+───────────────────────────────────────────────
+MHA (8Q/8KV)      xx,xxx     x.xxxx     baseline
+GQA (8Q/4KV)      xx,xxx     x.xxxx     +0.0x
+GQA (8Q/2KV)      xx,xxx     x.xxxx     +0.0x
+MQA (8Q/1KV)      xx,xxx     x.xxxx     +0.0x
+```
+
+LLaMA-2 用 GQA (8Q/4KV)：效果几乎无损，推理显存降 2x。
+
+---
+
+## Flash Attention：硬件感知的实现
+
+标准 Attention 的瓶颈不是计算而是**内存读写**。GPU 的算力远超内存带宽。
+
+标准实现：
+```text
+1. 算 QK^T → 写入显存（n×n 矩阵）
+2. 读取 QK^T → 算 softmax → 写回
+3. 读取权重 → 算 ×V → 写回
+```
+
+三次读写 n×n 矩阵。n=4096 时就是 64MB 的数据搬运。
+
+Flash Attention 的做法：**分块计算，在片上 SRAM 完成**。
+
+```text
+把 Q/K/V 切成小块 → 每块在 SRAM 中完成 QK^T + softmax + ×V
+→ 永远不把完整的 n×n 注意力矩阵写入显存
+```
+
+效果：
+- 显存从 O(n²) 降到 O(n)
+- 速度快 2-4x
+- 数学上完全等价（不是近似）
+
+PyTorch 2.0+ 内置：
+
+```python
+# 自动使用 Flash Attention（需要 CUDA）
+y = F.scaled_dot_product_attention(q, k, v, is_causal=True)
+```
+
+---
+
+## 三者组合
+
+现代模型（LLaMA-3, GPT-4）同时使用三个优化：
+
+```text
+训练时: Flash Attention（省显存，快）
+推理时: KV Cache（不重复算）+ GQA（KV Cache 小）+ Flash Attention（GEMV 快）
+```
+
+| 优化 | 解决什么 | 效果 |
+|------|---------|------|
+| KV Cache | 推理重复计算 | ~10x 加速 |
+| GQA | KV Cache 显存 | 2-8x 显存减少 |
+| Flash Attention | IO 瓶颈 | 2-4x 加速 + 显存降低 |
+
+---
+
+## 代码
+
+```text
+minimal-llm/src/
+  efficient_attention.py  # KV Cache + GQA 实现 + benchmark
+```
+
+运行：
+
+```bash
+python efficient_attention.py   # KV Cache 速度对比 + GQA 效果对比
+```
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | vLLM/TGI 级别 |
+|------|---------|--------------|
+| KV Cache | 简单 Python list | PagedAttention（分页管理）|
+| GQA | 基础 repeat_interleave | 融合 CUDA kernel |
+| Flash Attention | PyTorch SDPA | FlashAttention-3 (Hopper GPU) |
+| 序列长度 | 64-256 | 128K+ |
+| 并发 | 单请求 | Continuous Batching（多请求共享） |
+
+核心概念完全一致。工业界的改进在实现层面——用 CUDA C++ 写自定义 kernel，用 PagedAttention 管理多请求共享的 KV Cache 内存。
+
+下一篇开始做对齐——让模型从"能写句子"变成"能回答问题"。SFT（监督微调）是第一步。

@@ -1,0 +1,111 @@
+export const metadata = {
+  title: "SFT：教模型听话",
+}
+
+# SFT：教模型听话
+
+预训练完的模型会"续写"，但不会"回答"。给它 "What is 2+2?"，它不会回答 "4"，而是续写成 "What is 2+2? What is 3+3? What is..."——因为训练数据里问题后面通常跟着更多问题。
+
+SFT（Supervised Fine-Tuning）的目标：用指令-回复对继续训练，让模型学会"看到问题就回答"的模式。
+
+---
+
+## 预训练 vs SFT
+
+```text
+预训练数据: "The cat sat on the mat. The dog..."
+  → 模型学会: 给定前文，续写下一个 token
+
+SFT 数据:
+  ### Instruction:
+  What is the capital of France?
+
+  ### Response:
+  The capital of France is Paris.
+
+  → 模型学会: 看到 Instruction 就在 Response 后面生成答案
+```
+
+本质上还是"预测下一个 token"，只是训练数据变了。模型学到的是一种**格式**——"Instruction/Response 模板"。
+
+---
+
+## Chat Template
+
+不同模型用不同的格式标记指令和回复：
+
+```text
+Alpaca:
+  ### Instruction:\n{question}\n\n### Response:\n{answer}
+
+ChatML (GPT-4):
+  <|im_start|>user\n{question}<|im_end|>\n<|im_start|>assistant\n{answer}<|im_end|>
+
+LLaMA-2 Chat:
+  [INST] {question} [/INST] {answer}
+```
+
+格式本身不重要，重要的是训练时和推理时**一致**。用 Alpaca 格式训的模型，推理时也必须用 Alpaca 格式问它。
+
+---
+
+## LoRA：训 1% 的参数
+
+全参数微调一个 7B 模型需要 ~28GB 显存（参数 + 梯度 + 优化器状态）。LoRA 的做法：
+
+```text
+原始: y = Wx                    (W 是 d×d 的大矩阵)
+LoRA: y = Wx + BAx              (A: d×r, B: r×d, r << d)
+
+只训练 A 和 B，冻结 W。
+r=4 时，参数量 = 2 × d × 4 = 8d << d²
+```
+
+比如 W 是 4096×4096 = 16M 参数，LoRA r=8 时只加 4096×8×2 = 65K 参数（0.4%）。
+
+效果？对大部分任务，LoRA 微调效果达到全参数微调的 95%+。
+
+---
+
+## 灾难性遗忘
+
+SFT 的一个风险：模型在学新东西时忘记旧能力。
+
+```text
+SFT 前: 能写流畅的文章，但不会回答问题
+SFT 后: 会回答问题，但写文章能力下降了
+```
+
+缓解方法：
+- 混入一部分预训练数据继续训
+- 用 LoRA（原始权重不动，减少遗忘）
+- 控制 SFT 的步数（不要训太久）
+
+---
+
+## 代码
+
+```text
+minimal-llm/src/
+  sft.py   # LoRA 实现 + SFT 训练演示 + 前后对比
+```
+
+运行：
+
+```bash
+python sft.py   # 演示 LoRA + SFT 流程
+```
+
+---
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | LLaMA-3 级别 |
+|------|---------|-------------|
+| 数据 | 10 条手写指令 | 10 万+ 高质量指令 |
+| 模型 | 420K 参数 | 8B-70B 参数 |
+| LoRA | r=8，基础实现 | QLoRA (4-bit quantized LoRA) |
+| 格式 | Alpaca | ChatML + tool use tokens |
+| 框架 | 手写 | HuggingFace TRL / Axolotl |
+
+下一篇讲 DPO——SFT 让模型学会"回答问题"，DPO 让模型学会"回答得更好"。
