@@ -1,0 +1,310 @@
+
+<h2 class="sr-only">推荐系统与大语言模型的重叠领域全景</h2>
+<style>
+.ov-wrap { padding: 4px 0 16px; font-family: var(--font-sans); }
+.ov-cat { margin-bottom: 20px; }
+.ov-cat-head {
+  font-size: 12px; font-weight: 500; letter-spacing: 0.6px;
+  padding: 5px 12px; border-radius: var(--border-radius-md);
+  margin-bottom: 10px; display: inline-flex; align-items: center; gap: 7px;
+}
+.head-purple { background: #EEEDFE; color: #3C3489; border: 0.5px solid #AFA9EC; }
+.head-teal   { background: #E1F5EE; color: #085041; border: 0.5px solid #5DCAA5; }
+.head-blue   { background: #E6F1FB; color: #0C447C; border: 0.5px solid #85B7EB; }
+.head-coral  { background: #FAECE7; color: #712B13; border: 0.5px solid #F0997B; }
+.ov-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.ov-card {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 11px 13px 10px;
+}
+.ov-card-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px; }
+.ov-sides { display: flex; align-items: stretch; gap: 0; }
+.ov-side {
+  flex: 1; font-size: 10.5px; line-height: 1.65;
+  padding: 6px 8px; border-radius: 6px;
+}
+.ov-side-rec  { background: #E6F1FB; color: #0C447C; }
+.ov-side-llm  { background: #EEEDFE; color: #3C3489; }
+.ov-side-label { font-size: 9.5px; font-weight: 600; letter-spacing: 0.4px; opacity: 0.7; margin-bottom: 2px; }
+.ov-bridge {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 6px; color: var(--color-text-tertiary); font-size: 13px; flex-shrink: 0;
+}
+.ov-card.full { grid-column: span 2; }
+.ov-card.full .ov-sides { gap: 0; }
+.highlight-border { border-color: #AFA9EC; border-width: 1px; }
+</style>
+
+<div class="ov-wrap">
+
+  <div class="ov-cat">
+    <div class="ov-cat-head head-purple">完全共享 — 同一套技术，两边都在用</div>
+    <div class="ov-grid">
+
+      <div class="ov-card highlight-border">
+        <div class="ov-card-title">Transformer / Attention</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            BST / SASRec / BERT4Rec<br>DIN Target-Attention
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            GPT / LLaMA / Qwen<br>MHA → GQA → MLA
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">Embedding 向量化</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            Item/User Embedding<br>Field Value Emb
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            Token Embedding<br>Position Embedding
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">ANN 近似最近邻检索</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            召回层向量检索<br>Faiss / HNSW / Milvus
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            RAG 文档检索<br>Faiss / HNSW / pgvector
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">知识蒸馏 / 模型压缩</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            轻量粗排蒸馏<br>Teacher→Student
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            Alpaca / Vicuna 蒸馏<br>QLoRA 压缩部署
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="ov-cat">
+    <div class="ov-cat-head head-teal">范式共享 — 同一思路，不同实例化</div>
+    <div class="ov-grid">
+
+      <div class="ov-card">
+        <div class="ov-card-title">序列建模</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            GRU4Rec / SASRec<br>BERT4Rec（行为序列）
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            GPT（Token序列）<br>BERT（双向语言模型）
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">自监督预训练</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            行为掩码预测<br>对比学习增强
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            MLM / CLM 预训练<br>万亿 Token 语料
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">混合专家 MoE</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            MMoE / PLE<br>多目标 Gate 路由
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            Mixtral / DeepSeekMoE<br>Token级稀疏路由
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">对比学习 / 双塔</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            DSSM 双塔召回<br>In-batch Negative
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            SimCSE / E5<br>文本向量表示学习
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="ov-cat">
+    <div class="ov-cat-head head-blue">目标 / 方法共享 — 优化同类问题</div>
+    <div class="ov-grid">
+
+      <div class="ov-card">
+        <div class="ov-card-title">强化学习 / 偏好优化</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            Bandit / ε-greedy<br>RL 长期收益建模
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            RLHF / PPO / DPO<br>GRPO / RLVR
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">多任务学习</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            CTR + CVR + GMV<br>共享底层特征塔
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            指令微调多任务<br>FLAN / T0
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">Scaling Laws</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            参数 × 数据最优配比<br>竞赛 $45K 奖项方向
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            Kaplan / Chinchilla<br>计算最优 N∝D
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">因果推断 / 去偏</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            曝光偏差 IPW / DR<br>位置偏差修正
+          </div>
+          <div class="ov-bridge">↔</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            对齐偏差去除<br>奖励模型偏差修正
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="ov-cat">
+    <div class="ov-cat-head head-coral">LLM → 推荐 直接融合（最前沿）</div>
+    <div class="ov-grid">
+
+      <div class="ov-card">
+        <div class="ov-card-title">LLM 直接做推荐</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐视角</div>
+            P5 / LLMRec / TALLRec<br>LLM4Rec 精排器
+          </div>
+          <div class="ov-bridge">→</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">LLM能力</div>
+            文本推理 + 世界知识<br>Zero-shot 泛化
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">RAG ↔ 召回 + 排序</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            召回（retrieve）<br>精排（rank）两阶段
+          </div>
+          <div class="ov-bridge">≈</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">大语言模型</div>
+            RAG：检索 + 生成<br>Re-ranker 重排
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">冷启动 × 语义理解</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            新用户/新物品冷启<br>无行为数据困境
+          </div>
+          <div class="ov-bridge">→</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">LLM能力</div>
+            语义 Emb 补全特征<br>文本描述理解物品
+          </div>
+        </div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-card-title">合成数据生成</div>
+        <div class="ov-sides">
+          <div class="ov-side ov-side-rec">
+            <div class="ov-side-label">推荐系统</div>
+            数据增强 / 负样本<br>用户行为模拟
+          </div>
+          <div class="ov-bridge">→</div>
+          <div class="ov-side ov-side-llm">
+            <div class="ov-side-label">LLM能力</div>
+            生成偏好数据<br>用户 Profile 描述
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

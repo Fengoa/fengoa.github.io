@@ -24,18 +24,38 @@ import {
   TransformerCover,
   TrainingCover,
 } from "@/app/blog/minimal-llm/cover";
+import {
+  ScalingLawCover,
+  RoPECover,
+  EfficientAttentionCover,
+  SFTCover,
+  DPOCover,
+  InferenceCover,
+  DeployCover,
+  RAGCover,
+  LandscapeLLMCover,
+} from "@/app/blog/llm-scaling-law/cover";
 
 const ALL_TAG = "全部";
 const TAGS = [ALL_TAG, "大模型", "推荐系统", "生活", "资源", "建站"];
 
 const posts: PostData[] = [
   {
+    slug: "rec-llm-bridge",
+    title: "推荐系统 × 大模型：四层重叠与五大范式",
+    date: "2026-05-25",
+    tag: "推荐系统",
+    summary:
+      "两个领域不是平行的，而是深度交织的。从完全共享到直接融合，四层递进关系全景。核心矛盾只有一个：ID vs Text。",
+    cover: <LandscapeCover />,
+  },
+  {
     slug: "llm-landscape",
     title: "大模型全景图",
     date: "2026-05-25",
     tag: "大模型",
     summary: "从数据层到应用层，大模型完整技术栈全貌。对照工业界看做了什么、差什么、前沿在哪。",
-    cover: <TrainingCover />,
+    cover: <LandscapeLLMCover />,
   },
   {
     slug: "llm-rag",
@@ -43,7 +63,7 @@ const posts: PostData[] = [
     date: "2026-05-25",
     tag: "大模型",
     summary: "检索增强生成：先搜相关文档拼进 prompt，再让模型回答。解决知识截止和私有数据问题。",
-    cover: <TrainingCover />,
+    cover: <RAGCover />,
   },
   {
     slug: "llm-deploy",
@@ -51,7 +71,7 @@ const posts: PostData[] = [
     date: "2026-05-25",
     tag: "大模型",
     summary: "用 vLLM 把模型包成 OpenAI 兼容 API：Docker 部署、Streaming、负载监控、成本估算。",
-    cover: <TransformerCover />,
+    cover: <DeployCover />,
   },
   {
     slug: "llm-inference",
@@ -59,7 +79,7 @@ const posts: PostData[] = [
     date: "2026-05-25",
     tag: "大模型",
     summary: "量化（FP16→INT4）、Speculative Decoding、Continuous Batching。组合起来推理速度提升 10-50 倍。",
-    cover: <TransformerCover />,
+    cover: <InferenceCover />,
   },
   {
     slug: "llm-dpo",
@@ -67,7 +87,7 @@ const posts: PostData[] = [
     date: "2026-05-25",
     tag: "大模型",
     summary: "把 RLHF 的 4 模型+PPO 简化为 2 模型+分类 loss。从偏好数据直接学「什么回答更好」。",
-    cover: <AttentionCover />,
+    cover: <DPOCover />,
   },
   {
     slug: "llm-sft",
@@ -75,7 +95,7 @@ const posts: PostData[] = [
     date: "2026-05-25",
     tag: "大模型",
     summary: "用指令-回复对微调，让模型从「续写」变成「回答」。LoRA 只训 1% 参数，效果接近全参数微调。",
-    cover: <AttentionCover />,
+    cover: <SFTCover />,
   },
   {
     slug: "llm-efficient-attention",
@@ -83,7 +103,7 @@ const posts: PostData[] = [
     date: "2026-05-25",
     tag: "大模型",
     summary: "KV Cache 不重复算历史 token（10x 加速），GQA 多 Q 共享 KV（显存降 2-8x），Flash Attention IO 优化（2-4x）。",
-    cover: <TokenizerCover />,
+    cover: <EfficientAttentionCover />,
   },
   {
     slug: "llm-rope",
@@ -91,7 +111,7 @@ const posts: PostData[] = [
     date: "2026-05-25",
     tag: "大模型",
     summary: "不加位置 embedding，而是旋转 Q/K 向量编码位置。优雅的数学技巧让模型能外推到训练时没见过的长度。",
-    cover: <TokenizerCover />,
+    cover: <RoPECover />,
   },
   {
     slug: "llm-scaling-law",
@@ -99,7 +119,7 @@ const posts: PostData[] = [
     date: "2026-05-25",
     tag: "大模型",
     summary: "参数量、数据量、算力三者的幂律关系。用实验验证 Chinchilla 结论：同样算力下，中等模型+足够数据 > 大模型+少数据。",
-    cover: <TrainingCover />,
+    cover: <ScalingLawCover />,
   },
   {
     slug: "llm-training",

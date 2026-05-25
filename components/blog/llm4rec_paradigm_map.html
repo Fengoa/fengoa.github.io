@@ -1,0 +1,237 @@
+
+<h2 class="sr-only">LLM直接做推荐的五大范式与融合深度</h2>
+<style>
+.pw { padding: 4px 0 8px; font-family: var(--font-sans); }
+.tension {
+  display: flex; align-items: center; gap: 0;
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden; margin-bottom: 18px;
+}
+.t-side {
+  flex: 1; padding: 10px 14px; font-size: 12px; font-weight: 500;
+  line-height: 1.5;
+}
+.t-rec { background: #E6F1FB; color: #0C447C; }
+.t-mid {
+  padding: 10px 14px; font-size: 11px; color: var(--color-text-tertiary);
+  border-left: 0.5px solid var(--color-border-tertiary);
+  border-right: 0.5px solid var(--color-border-tertiary);
+  text-align: center; white-space: nowrap;
+}
+.t-llm { background: #EEEDFE; color: #3C3489; }
+.t-sub { font-size: 10.5px; font-weight: 400; opacity: 0.8; }
+
+.paradigm { display: flex; flex-direction: column; gap: 7px; }
+.pd {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+.pd-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px 9px; border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+.depth-bar { width: 4px; align-self: stretch; border-radius: 2px; flex-shrink: 0; }
+.d1 { background: #B4B2A9; }
+.d2 { background: #85B7EB; }
+.d3 { background: #5DCAA5; }
+.d4 { background: #AFA9EC; }
+.d5 { background: #EF9F27; }
+.pd-level { font-size: 10px; font-weight: 600; letter-spacing: 0.4px; padding: 2px 7px; border-radius: 3px; flex-shrink: 0; }
+.lv1 { background: #F1EFE8; color: #5F5E5A; }
+.lv2 { background: #E6F1FB; color: #185FA5; }
+.lv3 { background: #E1F5EE; color: #0F6E56; }
+.lv4 { background: #EEEDFE; color: #534AB7; }
+.lv5 { background: #FAEEDA; color: #854F0B; }
+.pd-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+.pd-tagline { font-size: 10.5px; color: var(--color-text-secondary); }
+.pd-body { display: flex; gap: 0; }
+.pd-mech {
+  flex: 1.4; padding: 10px 14px; font-size: 11px;
+  color: var(--color-text-secondary); line-height: 1.75;
+  border-right: 0.5px solid var(--color-border-tertiary);
+}
+.pd-papers {
+  flex: 1; padding: 10px 14px; font-size: 10.5px;
+  color: var(--color-text-tertiary); line-height: 1.75;
+}
+.pd-mech b, .pd-papers b { color: var(--color-text-primary); font-weight: 500; }
+.pain { color: #993C1D; }
+.win  { color: #0F6E56; }
+.paper-tag {
+  display: inline-block; font-size: 9.5px; padding: 1px 6px;
+  border-radius: 3px; margin: 1px 2px 1px 0;
+  background: var(--color-background-secondary);
+  color: var(--color-text-secondary);
+  border: 0.5px solid var(--color-border-tertiary);
+}
+.section-label {
+  font-size: 10.5px; color: var(--color-text-tertiary);
+  margin-bottom: 6px; letter-spacing: 0.3px;
+}
+</style>
+
+<div class="pw">
+  <div class="tension">
+    <div class="t-side t-rec">
+      传统推荐<br>
+      <span class="t-sub">协同过滤 ID · 点击行为 · CF信号</span>
+    </div>
+    <div class="t-mid">← 融合深度 →</div>
+    <div class="t-side t-llm" style="text-align:right">
+      大语言模型<br>
+      <span class="t-sub">文本语义 · 世界知识 · 推理能力</span>
+    </div>
+  </div>
+
+  <div class="section-label">五大范式（浅→深）</div>
+  <div class="paradigm">
+
+    <div class="pd">
+      <div class="pd-head">
+        <div class="depth-bar d1"></div>
+        <span class="pd-level lv1">浅层 ①</span>
+        <span class="pd-name">LLM 作为零样本文本排序器</span>
+        <span class="pd-tagline">无微调，直接提示</span>
+      </div>
+      <div class="pd-body">
+        <div class="pd-mech">
+          <b>机制：</b>把用户历史行为转成自然语言 prompt，让 LLM 直接输出推荐结果或打分。无需任何推荐数据微调。<br><br>
+          <span class="win">✓ 零样本泛化，冷启动友好</span><br>
+          <span class="win">✓ 利用世界知识（知道电影类型、品牌关系）</span><br>
+          <span class="pain">✗ 完全忽略协同过滤信号</span><br>
+          <span class="pain">✗ 延迟极高，无法用于在线服务</span><br>
+          <span class="pain">✗ 对物品 ID 一无所知</span>
+        </div>
+        <div class="pd-papers">
+          <b>代表论文</b><br>
+          <span class="paper-tag">ChatRec 2023</span>
+          <span class="paper-tag">LLMRank 2023</span>
+          <span class="paper-tag">GPT4Rec 2023</span>
+          <br><br>
+          <b>典型 Prompt</b><br>
+          "用户喜欢 A、B、C，<br>请从以下候选中排序：<br>X、Y、Z→"
+        </div>
+      </div>
+    </div>
+
+    <div class="pd">
+      <div class="pd-head">
+        <div class="depth-bar d2"></div>
+        <span class="pd-level lv2">浅层 ②</span>
+        <span class="pd-name">LLM 作为语义特征编码器</span>
+        <span class="pd-tagline">冻结 LLM，提取 Embedding</span>
+      </div>
+      <div class="pd-body">
+        <div class="pd-mech">
+          <b>机制：</b>用冻结的 LLM 把物品标题/描述编码成语义向量，替代或增强传统 ID Embedding，再接传统推荐模型。<br><br>
+          <span class="win">✓ 语义 Emb 解决冷启动</span><br>
+          <span class="win">✓ 可与传统 ID 模型结合</span><br>
+          <span class="win">✓ LLM 只做离线推断，延迟可控</span><br>
+          <span class="pain">✗ 冻结 LLM 无法学习推荐偏好</span><br>
+          <span class="pain">✗ 语义相似 ≠ 用户偏好相似</span>
+        </div>
+        <div class="pd-papers">
+          <b>代表论文</b><br>
+          <span class="paper-tag">UniSRec 2022</span>
+          <span class="paper-tag">MoRec 2023</span>
+          <span class="paper-tag">ONCE 2023</span>
+          <span class="paper-tag">RLMRec 2024</span>
+          <br><br>
+          <b>关键发现（MoRec）</b><br>
+          文本 Emb 在冷启动<br>超越 ID Emb，热启<br>动仍落后
+        </div>
+      </div>
+    </div>
+
+    <div class="pd">
+      <div class="pd-head">
+        <div class="depth-bar d3"></div>
+        <span class="pd-level lv3">中层 ③</span>
+        <span class="pd-name">P5 / 统一文本生成框架</span>
+        <span class="pd-tagline">微调 LLM，所有推荐任务→文本生成</span>
+      </div>
+      <div class="pd-body">
+        <div class="pd-mech">
+          <b>机制：</b>把评分预测、序列推荐、解释生成、搜索等全部转成 Seq2Seq 任务，用推荐数据微调 T5/LLaMA。物品用文本 ID 或自然语言表示。<br><br>
+          <span class="win">✓ 统一框架，多任务联合训练</span><br>
+          <span class="win">✓ 可生成推荐理由（可解释性强）</span><br>
+          <span class="pain">✗ 物品 ID 对 LLM 无语义意义</span><br>
+          <span class="pain">✗ 新物品 ID 需重新训练</span><br>
+          <span class="pain">✗ 生成速度慢，难工业落地</span>
+        </div>
+        <div class="pd-papers">
+          <b>代表论文</b><br>
+          <span class="paper-tag">P5 2022</span>
+          <span class="paper-tag">M6-Rec 2022</span>
+          <span class="paper-tag">TALLRec 2023</span>
+          <span class="paper-tag">LLaRA 2023</span>
+          <br><br>
+          <b>P5 的5类任务</b><br>
+          Rating · Seq Rec<br>Explanation · Search<br>Review Summarize
+        </div>
+      </div>
+    </div>
+
+    <div class="pd" style="border-color: #AFA9EC;">
+      <div class="pd-head">
+        <div class="depth-bar d4"></div>
+        <span class="pd-level lv4">深层 ④</span>
+        <span class="pd-name">语义 ID — 让 LLM 真正"认识"物品</span>
+        <span class="pd-tagline">核心突破：离散语义 Token 化物品</span>
+      </div>
+      <div class="pd-body">
+        <div class="pd-mech">
+          <b>机制：</b>用 RQ-VAE / VQ-VAE 把物品编码成一串离散语义 token（如 [42, 7, 156]），这些 token 既有语义含义又捕获协同信号，直接进 LLM 词表，像文字一样处理。<br><br>
+          <span class="win">✓ 同时捕获语义 + 协同过滤信号</span><br>
+          <span class="win">✓ LLM 可生成新物品 token（泛化）</span><br>
+          <span class="win">✓ 与 LLM 预训练框架完全兼容</span><br>
+          <span class="pain">✗ 量化训练复杂，token 数量爆炸</span><br>
+          <span class="pain">✗ 量化损失影响精度</span>
+        </div>
+        <div class="pd-papers">
+          <b>代表论文</b><br>
+          <span class="paper-tag">TIGER 2023</span>
+          <span class="paper-tag">VQ-Rec 2023</span>
+          <span class="paper-tag">LCRec 2023</span>
+          <span class="paper-tag">BIGRec 2023</span>
+          <span class="paper-tag">LETTER 2024</span>
+          <br><br>
+          <b>TIGER 核心思路</b><br>
+          物品描述 → BERT →<br>RQ-VAE → [c₁,c₂,c₃]<br>→ LLM 统一处理
+        </div>
+      </div>
+    </div>
+
+    <div class="pd" style="border-color: #EF9F27;">
+      <div class="pd-head">
+        <div class="depth-bar d5"></div>
+        <span class="pd-level lv5">前沿 ⑤</span>
+        <span class="pd-name">端到端统一 Backbone（竞赛目标方向）</span>
+        <span class="pd-tagline">序列行为 + 多字段特征 → 同一架构</span>
+      </div>
+      <div class="pd-body">
+        <div class="pd-mech">
+          <b>机制：</b>设计统一的 token 化方案，让行为序列 token、多字段类别特征 token、目标物品 token 进入同一个同构可堆叠 Backbone，一次前向传播完成所有交互。<br><br>
+          <span class="win">✓ 消除粗排/精排的结构割裂</span><br>
+          <span class="win">✓ 特征交互与序列建模深度融合</span><br>
+          <span class="win">✓ 遵循 Scaling Law，可系统扩展</span><br>
+          <span class="pain">✗ 工业落地延迟挑战极大</span><br>
+          <span class="pain">✗ 尚无成熟范式，正在探索中</span>
+        </div>
+        <div class="pd-papers">
+          <b>代表工作</b><br>
+          <span class="paper-tag">HSTU Meta 2024</span>
+          <span class="paper-tag">FEARec</span>
+          <span class="paper-tag">本次竞赛</span>
+          <br><br>
+          <b>竞赛两个奖项</b><br>
+          UniBlock Award<br>→ 统一架构设计<br>Scaling Award<br>→ 规模化实验
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

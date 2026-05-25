@@ -10,6 +10,7 @@ import { NavHoverDemo } from "@/components/ui/nav-hover-demo";
 import { RecommenderPipeline } from "@/components/blog/recommender-pipeline";
 import { RecSystemLandscape } from "@/components/blog/rec-system-landscape";
 import { LLMSystemLandscape } from "@/components/blog/llm-system-landscape";
+import { RecLLMBridge } from "@/components/blog/rec-llm-bridge";
 
 export const H1 = (props: ComponentPropsWithoutRef<"h1">) => (
   <h1 className="mb-8 font-semibold text-2xl md:text-4xl" {...props} />
@@ -236,6 +237,7 @@ export const components = {
   RecommenderPipeline,
   RecSystemLandscape,
   LLMSystemLandscape,
+  RecLLMBridge,
   h1: H1,
   H1: H1,
   h2: H2,
