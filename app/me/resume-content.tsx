@@ -148,9 +148,9 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                       <BlocksIcon size={16} />
                       <span>
                         广告
-                        <ExternalLink href="https://ad.qq.com/">
-                          投放平台/工作台
-                        </ExternalLink>
+                        {/* <ExternalLink href="https://ad.qq.com/"> */}
+                        投放平台/工作台
+                        {/* </ExternalLink> */}
                       </span>
                     </InfoItem>
                     <InfoItem>
@@ -158,7 +158,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                       <span>
                         广告助手/客户工作台
                         {/* <ExternalLink href="https://ad.qq.com/"> */}
-                          小程序
+                        小程序
                         {/* </ExternalLink> */}
                       </span>
                     </InfoItem>
@@ -187,7 +187,7 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                       <InfoItem>
                         <MousePointerClickIcon size={16} />
                         {/* <ExternalLink href="https://e.qq.com/technology"> */}
-                          广告投放设计团队
+                        广告投放设计团队
                         {/* </ExternalLink> */}
                       </InfoItem>
                       <InfoItem>2019 - 至今</InfoItem>
@@ -223,13 +223,12 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                   <div className="flex flex-wrap gap-1.5">
                     {[
                       "React",
-                      "TypeScript",
                       "Next.js",
                       "Tailwind CSS",
                       "微信小程序",
-                      "CocosCreator",
+                      "推荐系统",
+                      "大模型",
                       "Figma design",
-                      "PHP Laravel",
                       "Vibe coding",
                       "产品设计",
                     ].map((skill) => (

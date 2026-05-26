@@ -39,7 +39,6 @@ export const postsMeta: PostMeta[] = [
   { slug: "minimal-recommender", title: "从零搭一个推荐系统", tag: "推荐系统", date: "2026-05-20" },
   { slug: "polar-starry-resources", title: "极地星空 / 宇宙主题资源清单", tag: "资源", date: "2026-05-18" },
   { slug: "cs-paper-guide", title: "计算机学术论文：从哪找、怎么看、哪些值得看", tag: "资源", date: "2026-05-25" },
-  { slug: "better-habit", title: "培养良好习惯", tag: "生活", date: "2026-05-18" },
   { slug: "blog-recommender", title: "纯前端博客推荐系统：TF-IDF + 阅读历史", tag: "建站", date: "2026-05-26" },
   { slug: "craft-oriensx", title: "搭建这个网站", tag: "建站", date: "2026-03-02" },
 ];

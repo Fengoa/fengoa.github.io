@@ -183,23 +183,17 @@ function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): numbe
 // ==============================================================================
 
 const MANUAL_OVERRIDES: Record<string, string[]> = {
-  "better-habit": [
-    "ml-core-concepts",    // 学习方法相关
-    "craft-oriensx",       // 同属"生活/个人"类
-    "minimal-llm",         // 从零开始做一件事
-    "minimal-recommender", // 从零开始做一件事
-  ],
   "craft-oriensx": [
+    "blog-recommender",       // 同属建站类
     "engineering-recommender", // 都是工程化/搭建
     "llm-deploy",             // 部署上线
-    "better-habit",           // 同属生活类
     "polar-starry-resources", // 非技术内容
   ],
   "polar-starry-resources": [
     "cs-paper-guide",      // 同属资源类
     "craft-oriensx",       // 非技术内容
-    "better-habit",        // 非技术内容
     "llm-landscape",       // 全景图/总览类
+    "recommender-landscape",
   ],
 };
 

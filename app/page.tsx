@@ -39,14 +39,40 @@ import {
 import { LinearAlgebraCover } from "@/app/blog/linear-algebra-for-dl/cover";
 import { MLConceptsCover } from "@/app/blog/ml-core-concepts/cover";
 import { PaperGuideCover } from "@/app/blog/cs-paper-guide/cover";
-import { BetterHabitCover } from "@/app/blog/better-habit/cover";
 import { BlogRecommenderCover } from "@/app/blog/blog-recommender/cover";
 import similarityData from "@/public/similarity.json";
 import { getReadSlugs } from "@/lib/reading-history";
 
-const ALL_TAG = "全部";
-const REC_TAG = "推荐";
-const TAGS = [ALL_TAG, REC_TAG, "大模型", "推荐系统", "机器学习", "数学", "资源", "建站", "生活"];
+const ALL_TAG = "all";
+const REC_TAG = "picks";
+
+/** 标签配置：英文 slug → 中文显示名 */
+const TAG_CONFIG: { id: string; label: string }[] = [
+  { id: "all", label: "全部" },
+  { id: "picks", label: "推荐" },
+  { id: "llm", label: "大模型" },
+  { id: "recsys", label: "推荐系统" },
+  { id: "ml", label: "机器学习" },
+  { id: "math", label: "数学" },
+  { id: "resources", label: "资源" },
+  { id: "dev", label: "建站" },
+];
+
+const TAGS = TAG_CONFIG.map((t) => t.id);
+/** 中文 tag → 英文 id */
+const TAG_CN_TO_ID: Record<string, string> = Object.fromEntries(
+  TAG_CONFIG.map((t) => [t.label, t.id])
+);
+/** 英文 id → 中文 label */
+const TAG_ID_TO_LABEL: Record<string, string> = Object.fromEntries(
+  TAG_CONFIG.map((t) => [t.id, t.label])
+);
+
+/** 把文章的中文 tag 转成英文 id */
+function postTagToId(tag: string | undefined): string {
+  if (!tag) return "";
+  return TAG_CN_TO_ID[tag] || tag;
+}
 
 const similarity = similarityData as Record<string, string[]>;
 
@@ -310,15 +336,6 @@ const posts: PostData[] = [
     cover: <PaperGuideCover />,
   },
   {
-    slug: "better-habit",
-    title: "培养良好习惯",
-    date: "2026-05-18",
-    tag: "生活",
-    summary:
-      "用桑代克的猫、习惯循环、行为转变四定律理解习惯的本质。提示、渴求、反应、奖励——四步反馈回路。",
-    cover: <BetterHabitCover />,
-  },
-  {
     slug: "blog-recommender",
     title: "纯前端博客推荐系统：TF-IDF + 阅读历史",
     date: "2026-05-26",
@@ -380,7 +397,7 @@ function HomeContent() {
     counts[REC_TAG] = posts.length; // 推荐显示全部数量
     for (const tag of TAGS) {
       if (tag !== ALL_TAG && tag !== REC_TAG) {
-        counts[tag] = posts.filter((p) => p.tag === tag).length;
+        counts[tag] = posts.filter((p) => postTagToId(p.tag) === tag).length;
       }
     }
     return counts;
@@ -417,7 +434,7 @@ function HomeContent() {
       return scored.map((s) => s.post);
     }
 
-    return posts.filter((p) => p.tag === activeTag);
+    return posts.filter((p) => postTagToId(p.tag) === activeTag);
   }, [activeTag]);
 
   // 分页
@@ -444,7 +461,7 @@ function HomeContent() {
     <main className="py-20">
       <Grid.System>
         <BlogHero
-          tags={TAGS}
+          tags={TAG_CONFIG}
           activeTag={activeTag}
           onTagChange={handleTagChange}
           tagCounts={tagCounts}
