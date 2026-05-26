@@ -103,7 +103,7 @@ function Card({ name, theme, wide, children }: { name: string; theme: ThemeKey; 
   return (
     <div className={cn("rounded-lg p-2.5 border", t.cardBg, t.cardBorder, wide ? "min-w-[200px] flex-[2]" : "min-w-[118px] flex-1")}>
       <div className={cn("text-xs font-semibold mb-1", t.name)}>{name}</div>
-      <div className={cn("text-[10.5px] leading-[1.8]", t.desc)}>{children}</div>
+      <div className={cn("text-xs leading-[1.8]", t.desc)}>{children}</div>
     </div>
   );
 }
@@ -130,7 +130,7 @@ function RankPanel({ title, theme, children }: { title: string; theme: ThemeKey;
   return (
     <div className={cn("flex-1 rounded-lg p-3 border", t.cardBg, t.cardBorder)}>
       <div className={cn("text-xs font-semibold mb-1.5", t.name)}>{title}</div>
-      <div className={cn("text-[10.5px] leading-[1.8]", t.desc)}>{children}</div>
+      <div className={cn("text-xs leading-[1.8]", t.desc)}>{children}</div>
     </div>
   );
 }

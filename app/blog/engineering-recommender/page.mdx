@@ -4,6 +4,8 @@ export const metadata = {
 
 # 把推荐系统工程化
 
+<SeriesNav series="recsys" />
+
 前八个版本做完了推荐系统的算法主线：5 路召回 → 精排（DeepFM/DIN/MMoE）→ 重排。跑通了整条链路，用户 5 输入进去能出来 20 部排好序的电影。
 
 但这个"跑通"有很多前提：
@@ -84,9 +86,13 @@ model_versions       -- 模型注册表（名字、版本、路径、AUC、是�
 
 ```bash
 # 查看所有注册的模型
+
+<SeriesNav series="recsys" />
 curl http://localhost:8000/api/admin/models
 
 # 切换到 DIN（不需要重启）
+
+<SeriesNav series="recsys" />
 curl -X POST http://localhost:8000/api/admin/models/activate \
   -H "Content-Type: application/json" \
   -d '{"name":"din","version":"v1"}'

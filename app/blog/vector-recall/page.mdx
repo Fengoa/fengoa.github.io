@@ -4,6 +4,8 @@ export const metadata = {
 
 # 给推荐系统加上向量召回
 
+<SeriesNav series="recsys" />
+
 有一种推荐你能理解，有一种你理解不了。
 
 能理解的那种：你看了三部诺兰的电影，系统推第四部诺兰的电影。逻辑清晰，你看过的和推给你的之间有明确的共同标签。
@@ -105,9 +107,13 @@ V2：Fantasia 被 genre+itemcf+vector 三路命中，进了推荐列表
 
 ```bash
 # 训练 Embedding（矩阵分解，0.2 秒）
+
+<SeriesNav series="recsys" />
 uv run python scripts/build_embeddings.py
 
 # 构建 FAISS 索引
+
+<SeriesNav series="recsys" />
 uv run python scripts/build_faiss_index.py
 ```
 

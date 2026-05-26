@@ -1,8 +1,9 @@
 /**
- * 阅读历史管理（localStorage）
+ * 阅读历史 + 不感兴趣管理（localStorage）
  */
 
 const STORAGE_KEY = "oriensx_reading_history";
+const DISLIKE_KEY = "oriensx_disliked";
 const MAX_HISTORY = 50;
 
 export interface ReadRecord {
@@ -40,4 +41,36 @@ export function getHistory(): ReadRecord[] {
 
 export function getReadSlugs(): string[] {
   return getHistory().map((r) => r.slug);
+}
+
+/** 标记不感兴趣 */
+export function dislikePost(slug: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const set = getDislikedSlugs();
+    set.add(slug);
+    localStorage.setItem(DISLIKE_KEY, JSON.stringify([...set]));
+  } catch {}
+}
+
+/** 取消不感兴趣 */
+export function undislikePost(slug: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const set = getDislikedSlugs();
+    set.delete(slug);
+    localStorage.setItem(DISLIKE_KEY, JSON.stringify([...set]));
+  } catch {}
+}
+
+/** 获取不感兴趣的 slug 集合 */
+export function getDislikedSlugs(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(DISLIKE_KEY);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw) as string[]);
+  } catch {
+    return new Set();
+  }
 }

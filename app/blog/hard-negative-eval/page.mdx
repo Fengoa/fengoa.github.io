@@ -4,6 +4,8 @@ export const metadata = {
 
 # 负样本策略和离线评估
 
+<SeriesNav series="recsys" />
+
 之前每次改完模型，验证效果的方式是肉眼看几个用户的推荐列表。看着看着就会有一种感觉：好像变好了？又好像没什么变化？说不清楚。
 
 没有数字就没法判断。所以这次做了两件事：建一套离线评估跑分，然后改负样本策略看分数怎么变。
@@ -93,12 +95,18 @@ Hard negative 模型：
 
 ```bash
 # 构造 hard negative 训练数据
+
+<SeriesNav series="recsys" />
 uv run python scripts/build_train_data.py
 
 # 训练
+
+<SeriesNav series="recsys" />
 uv run python scripts/train_deepfm.py
 
 # 评估
+
+<SeriesNav series="recsys" />
 uv run python scripts/evaluate.py
 ```
 

@@ -4,6 +4,8 @@ export const metadata = {
 
 # 用双塔模型做向量召回
 
+<SeriesNav series="recsys" />
+
 之前用 SVD 做向量召回有一个问题。它只看评分矩阵，用户的性别、年龄、职业不用，电影的类型、评分、年份也不用。新用户没有评分记录的话 SVD 直接没辙，矩阵里没这一行就算不出向量。
 
 双塔模型换了个做法，两个神经网络分别编码用户和电影，每个网络能吃进任意多的特征。只要知道用户性别和年龄，即使没评过分也能算出向量。
@@ -139,14 +141,22 @@ vector_recall      ─┘
 
 ```bash
 # 构造三元组训练数据
+
+<SeriesNav series="recsys" />
 uv run python scripts/build_twotower_data.py
 
 # 训练双塔
+
+<SeriesNav series="recsys" />
 uv run python scripts/train_twotower.py
 
 # 导出电影向量 + 用户向量 + 建 FAISS 索引
+
+<SeriesNav series="recsys" />
 KMP_DUPLICATE_LIB_OK=TRUE uv run python scripts/export_twotower_embeddings.py
 
 # 启动 API（自动使用双塔向量）
+
+<SeriesNav series="recsys" />
 uv run python main.py
 ```
