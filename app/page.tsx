@@ -394,7 +394,7 @@ function HomeContent() {
   const tagCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     counts[ALL_TAG] = posts.length;
-    counts[REC_TAG] = posts.length; // 推荐显示全部数量
+    counts[REC_TAG] = 10;
     for (const tag of TAGS) {
       if (tag !== ALL_TAG && tag !== REC_TAG) {
         counts[tag] = posts.filter((p) => postTagToId(p.tag) === tag).length;
