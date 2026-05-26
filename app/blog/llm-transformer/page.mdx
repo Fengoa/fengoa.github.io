@@ -4,6 +4,8 @@ export const metadata = {
 
 # 搭一个完整的 Transformer
 
+<SeriesNav series="llm" />
+
 上一篇讲了 Self-Attention——让每个位置动态决定看前面哪些位置。但只有 Attention 不够。试过去掉其他组件，模型效果会明显崩掉。
 
 完整的 Transformer Block 长这样：
@@ -59,9 +61,13 @@ GPT-2 用 **Pre-Norm**（先 Norm 再 Attention/FFN），而不是原论文的 P
 
 ```python
 # Pre-Norm (我们用的)
+
+<SeriesNav series="llm" />
 x = x + attn(layer_norm(x))
 
 # Post-Norm (原始论文，已淘汰)
+
+<SeriesNav series="llm" />
 x = layer_norm(x + attn(x))
 ```
 

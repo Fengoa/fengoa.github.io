@@ -4,6 +4,8 @@ export const metadata = {
 
 # 推理优化：让模型跑得更快
 
+<SeriesNav series="llm" />
+
 一个 7B 模型推理一次，FP16 精度需要 14GB 显存。生成 100 个 token 需要几秒。如果要服务 100 个并发用户？1400GB 显存 + 几分钟延迟。不可接受。
 
 这篇讲三个核心优化：量化（减小模型体积）、Speculative Decoding（加速生成）、Continuous Batching（提升吞吐）。
@@ -94,11 +96,17 @@ vLLM 的 PagedAttention 进一步优化：KV Cache 不再连续存储，而是�
 
 ```python
 # 量化（用 bitsandbytes）
+
+<SeriesNav series="llm" />
 from transformers import AutoModelForCausalLM
 model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3-8B", load_in_4bit=True)
 
 # 推理服务（用 vLLM）
+
+<SeriesNav series="llm" />
 # vllm serve meta-llama/Llama-3-8B --quantization awq
+
+<SeriesNav series="llm" />
 ```
 
 ---

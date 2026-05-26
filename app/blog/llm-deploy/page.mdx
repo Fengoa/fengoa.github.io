@@ -4,6 +4,8 @@ export const metadata = {
 
 # 部署上线
 
+<SeriesNav series="llm" />
+
 模型训好了、量化了、推理优化了。现在要让别人能用——发一个 HTTP 请求就能拿到回答。
 
 这篇讲怎么用 vLLM 把模型包成 API 服务：Docker 部署、OpenAI 兼容格式、Streaming 输出、负载监控。和推荐系统工程化那篇思路一样——把"能跑"变成"能用"。
@@ -27,9 +29,13 @@ export const metadata = {
 
 ```bash
 # 安装
+
+<SeriesNav series="llm" />
 pip install vllm
 
 # 启动服务（OpenAI 兼容 API）
+
+<SeriesNav series="llm" />
 vllm serve meta-llama/Llama-3-8B-Instruct \
   --quantization awq \
   --max-model-len 4096 \
@@ -80,6 +86,8 @@ CMD ["--model", "${MODEL_NAME}", "--quantization", "awq", "--port", "8000"]
 
 ```yaml
 # docker-compose.yml
+
+<SeriesNav series="llm" />
 services:
   llm:
     image: vllm/vllm-openai:latest
@@ -140,9 +148,13 @@ minimal-llm/src/
 
 ```bash
 # 本地测试（用 Ollama，最简单）
+
+<SeriesNav series="llm" />
 ollama run llama3
 
 # 生产部署（用 vLLM + Docker）
+
+<SeriesNav series="llm" />
 docker compose up -d
 curl http://localhost:8000/v1/chat/completions \
   -d '{"model":"llama3","messages":[{"role":"user","content":"hello"}]}'

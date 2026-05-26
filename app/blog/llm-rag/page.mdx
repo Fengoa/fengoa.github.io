@@ -4,6 +4,8 @@ export const metadata = {
 
 # RAG：给模型外接知识
 
+<SeriesNav series="llm" />
+
 模型的知识截止到训练那一刻。问它"今天天气怎样"？不知道。问它你公司内部的文档？不知道。
 
 RAG（Retrieval-Augmented Generation）的思路很简单：先检索相关信息，拼到 prompt 里，再让模型基于这些信息回答。相当于给模型开了"开卷考试"。
@@ -124,10 +126,14 @@ embeddings = model.encode(["hello world", "hi there"])
 
 ```python
 # 最简 RAG pipeline（伪代码）
+
+<SeriesNav series="llm" />
 from chromadb import Client
 from openai import OpenAI
 
 # 1. 索引文档
+
+<SeriesNav series="llm" />
 db = Client()
 collection = db.create_collection("docs")
 for chunk in split_documents("my_docs/"):
@@ -135,6 +141,8 @@ for chunk in split_documents("my_docs/"):
     collection.add(documents=[chunk], embeddings=[embedding])
 
 # 2. 检索 + 生成
+
+<SeriesNav series="llm" />
 query = "LLaMA 3 有什么新特性?"
 results = collection.query(query_embeddings=[embed(query)], n_results=3)
 context = "\n".join(results["documents"][0])

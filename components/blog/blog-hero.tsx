@@ -57,7 +57,7 @@ export function BlogHero({ tags, activeTag, onTagChange, tagCounts }: BlogHeroPr
 
       {/* 第 3 行：标签筛选 */}
       {/* 移动端：横向滚动 flex */}
-      <div className="md:hidden overflow-x-auto scrollbar-hide border-y border-l border-r border-border">
+      <div className="md:hidden overflow-x-auto scrollbar-hide border-x border-b border-border">
         <div className="flex items-center gap-0 min-w-max">
           {tags?.map((tag) => (
             <button
@@ -85,7 +85,7 @@ export function BlogHero({ tags, activeTag, onTagChange, tagCounts }: BlogHeroPr
 
       {/* 桌面端：Grid 格子 */}
       <div className="hidden md:block">
-        <Grid rows={1} columns={12}>
+        <Grid rows={1} columns={12} hideTopBorder>
           {tags && tags.length > 0 ? (
             <>
               {/* 左侧空格子 */}

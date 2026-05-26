@@ -4,6 +4,8 @@ export const metadata = {
 
 # 位置编码：RoPE
 
+<SeriesNav series="llm" />
+
 Attention 的计算里没有任何"位置"的概念——`score = Q·K` 只看内容匹配度，不管 token 在第 1 个位置还是第 100 个位置。但 "dog bites man" 和 "man bites dog" 意思完全不同。模型需要知道顺序。
 
 GPT-2 的做法是学一个位置 embedding 表，加到 token embedding 上。简单有效，但有个致命问题：**训练时 ctx=1024，推理时就只能处理 1024 以内的序列**。超过就崩。

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Calendar } from "lucide-react";
+import { ArrowRight, Calendar, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useRef, type ReactNode } from "react";
@@ -25,7 +25,7 @@ function formatDate(dateStr: string) {
   return dateStr;
 }
 
-export function PostCard({ post, index }: { post: PostData; index: number }) {
+export function PostCard({ post, index, onDislike }: { post: PostData; index: number; onDislike?: (slug: string) => void }) {
   const isEven = index % 2 === 0;
   const router = useRouter();
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
@@ -52,6 +52,15 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
       onMouseDown={handleMouseDown}
       onClick={handleClick}
     >
+      {onDislike && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDislike(post.slug); }}
+          className="absolute top-4 right-4 z-10 p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-accent border border-transparent hover:border-border transition-all"
+          title="不感兴趣"
+        >
+          <X className="size-3.5 text-muted-foreground" />
+        </button>
+      )}
       <div
         className={cn(
           "grid grid-cols-1 md:grid-cols-2 md:gap-8 overflow-hidden p-6 sm:p-8 lg:p-10"

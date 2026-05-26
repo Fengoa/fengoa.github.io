@@ -4,6 +4,8 @@ export const metadata = {
 
 # Tokenizer：把文字变成数字
 
+<SeriesNav series="llm" />
+
 上一篇用字符级 tokenizer——每个字母一个 token。"the king said" 要 13 个 token。模型看 64 个 token 的上下文，实际只看了 64 个字母，大约 10 个单词。
 
 问题是：人读一段话能看几百个词，模型只能看 10 个。上下文太短，生成的文本缺乏连贯性。

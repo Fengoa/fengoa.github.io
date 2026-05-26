@@ -49,6 +49,8 @@ interface GridProps {
   children?: ReactNode;
   className?: string;
   guideWidth?: number;
+  /** 隐藏顶部参考线，用于避免相邻 Grid 边框重复 */
+  hideTopBorder?: boolean;
   /** 合并区域列表，参考线层会自动隐藏这些区域内部的边框线 */
   mergedAreas?: MergedArea[];
 }
@@ -105,6 +107,7 @@ export function Grid({
   children,
   className,
   guideWidth,
+  hideTopBorder = false,
   mergedAreas,
 }: GridProps) {
   const gw = guideWidth != null ? `${guideWidth}px` : "var(--guide-width, 1px)";
@@ -124,7 +127,7 @@ export function Grid({
         {
           gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${rows}, auto)`,
-          borderTop: `${gw} solid var(--border)`,
+          borderTop: hideTopBorder ? "none" : `${gw} solid var(--border)`,
           borderLeft: `${gw} solid var(--border)`,
           "--gw": gw,
           ...(hasResponsive

@@ -4,6 +4,8 @@ export const metadata = {
 
 # 高效注意力：GQA + KV Cache
 
+<SeriesNav series="llm" />
+
 标准 Self-Attention 的复杂度是 O(n²)——序列长度翻倍，计算量翻 4 倍。训练 1024 token 的序列还行，推理时自回归生成 4096 个 token，每生成一个都要重新算前面所有 token 的 K/V，太慢了。
 
 这篇讲三个关键优化：KV Cache（不重复计算）、GQA（减少 KV 头数）、Flash Attention（IO 优化）。它们组合起来让推理速度提升 10-50 倍。
@@ -114,6 +116,8 @@ PyTorch 2.0+ 内置：
 
 ```python
 # 自动使用 Flash Attention（需要 CUDA）
+
+<SeriesNav series="llm" />
 y = F.scaled_dot_product_attention(q, k, v, is_causal=True)
 ```
 

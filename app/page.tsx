@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, Suspense } from "react";
+import { useState, useMemo, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { PostList } from "@/components/blog/post-list";
 import { BlogHero } from "@/components/blog/blog-hero";
@@ -41,7 +41,7 @@ import { MLConceptsCover } from "@/app/blog/ml-core-concepts/cover";
 import { PaperGuideCover } from "@/app/blog/cs-paper-guide/cover";
 import { BlogRecommenderCover } from "@/app/blog/blog-recommender/cover";
 import similarityData from "@/public/similarity.json";
-import { getReadSlugs } from "@/lib/reading-history";
+import { getReadSlugs, getDislikedSlugs, dislikePost } from "@/lib/reading-history";
 
 const ALL_TAG = "all";
 const REC_TAG = "picks";
@@ -403,16 +403,37 @@ function HomeContent() {
     return counts;
   }, []);
 
+  // 客户端挂载标志（避免 hydration mismatch）
+  const [mounted, setMounted] = useState(false);
+  const [dislikedSlugs, setDislikedSlugs] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    setMounted(true);
+    setDislikedSlugs(getDislikedSlugs());
+  }, []);
+
+  const handleDislike = useCallback((slug: string) => {
+    dislikePost(slug);
+    setDislikedSlugs((prev) => new Set([...prev, slug]));
+  }, []);
+
+  const isRecMode = activeTag === REC_TAG && mounted;
+
   const filteredPosts = useMemo(() => {
     if (activeTag === ALL_TAG) return posts;
 
     if (activeTag === REC_TAG) {
+      // SSR 或未挂载时显示全部（与服务端一致）
+      if (!mounted) return posts;
+
+      // 过滤不感兴趣的
+      const available = posts.filter((p) => !dislikedSlugs.has(p.slug));
+
       // 基于阅读历史的个性化推荐
       const readSlugs = getReadSlugs();
-      if (readSlugs.length === 0) return posts; // 无历史则显示全部
+      if (readSlugs.length === 0) return available.slice(0, 10);
 
       // 对每篇未读文章，计算和已读文章的平均相似度
-      const scored = posts
+      const scored = available
         .filter((p) => !readSlugs.includes(p.slug))
         .map((post) => {
           let totalSim = 0;
@@ -431,11 +452,11 @@ function HomeContent() {
         });
 
       scored.sort((a, b) => b.score - a.score);
-      return scored.map((s) => s.post);
+      return scored.map((s) => s.post).slice(0, 10);
     }
 
     return posts.filter((p) => postTagToId(p.tag) === activeTag);
-  }, [activeTag]);
+  }, [activeTag, mounted, dislikedSlugs]);
 
   // 分页
   const totalPages = Math.ceil(filteredPosts.length / PAGE_SIZE);
@@ -466,7 +487,7 @@ function HomeContent() {
           onTagChange={handleTagChange}
           tagCounts={tagCounts}
         />
-        <PostList posts={paginatedPosts} />
+        <PostList posts={paginatedPosts} hideTopBorder onDislike={isRecMode ? handleDislike : undefined} />
 
         {/* 分页 */}
         {totalPages > 1 && (

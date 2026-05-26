@@ -4,6 +4,8 @@ export const metadata = {
 
 # SFT：教模型听话
 
+<SeriesNav series="llm" />
+
 预训练完的模型会"续写"，但不会"回答"。给它 "What is 2+2?"，它不会回答 "4"，而是续写成 "What is 2+2? What is 3+3? What is..."——因为训练数据里问题后面通常跟着更多问题。
 
 SFT（Supervised Fine-Tuning）的目标：用指令-回复对继续训练，让模型学会"看到问题就回答"的模式。
