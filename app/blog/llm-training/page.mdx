@@ -221,3 +221,13 @@ python train_full.py --n_layer 2 --n_embd 128  # 小模型（适配小数据）
 ---
 
 Phase 1 到此完结。5 篇文章从 Bigram 走到了完整的 Transformer 训练，核心链路跑通了。接下来的 Phase 2 会进入进阶主题：Scaling Law、RoPE、SFT、RLHF、推理优化、部署。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Scaling Laws for Neural Language Models · Kaplan, OpenAI 2020](https://arxiv.org/abs/2001.08361) | 训练 loss 与模型/数据/算力的幂律关系 |
+| [Decoupled Weight Decay Regularization · Loshchilov & Hutter, ICLR 2019](https://arxiv.org/abs/1711.05101) | AdamW 优化器，现代 LLM 训练标配 |
+| [A Recipe for Training Neural Networks · Karpathy, Blog 2019](https://karpathy.github.io/2019/04/25/recipe/) | 训练调参的实践指南 |

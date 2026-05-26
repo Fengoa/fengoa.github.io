@@ -121,3 +121,14 @@ model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3-8B", load_in_4b
 | 批处理 | 理解概念 | vLLM / TGI 开箱即用 |
 
 下一篇把这些全串起来——实际部署一个能对话的模型服务。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [SmoothQuant: Accurate and Efficient Post-Training Quantization · Xiao, ICML 2023](https://arxiv.org/abs/2211.10438) | W8A8 量化，把激活值的难度转移给权重 |
+| [AWQ: Activation-aware Weight Quantization · Lin, MLSys 2024](https://arxiv.org/abs/2306.00978) | 保护重要权重通道的 INT4 量化 |
+| [Fast Inference from Transformers via Speculative Decoding · Leviathan, ICML 2023](https://arxiv.org/abs/2211.17192) | 小模型先猜、大模型验证的加速方法 |
+| [Efficient Memory Management for LLM Serving with PagedAttention · vLLM, Kwon, SOSP 2023](https://arxiv.org/abs/2309.06180) | Continuous Batching + PagedAttention |

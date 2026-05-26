@@ -174,3 +174,13 @@ curl http://localhost:8000/v1/chat/completions \
 | 成本 | 单卡 ~$500/月 | 数千卡 ~$数百万/月 |
 
 下一篇讲 RAG——模型知识截止到训练时，怎么让它回答最新的问题。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Efficient Memory Management for LLM Serving with PagedAttention · vLLM, Kwon, SOSP 2023](https://arxiv.org/abs/2309.06180) | vLLM 核心论文，生产级 LLM serving |
+| [Orca: A Distributed Serving System for Transformer-Based Generative Models · Yu, OSDI 2022](https://www.usenix.org/conference/osdi22/presentation/yu) | Iteration-level scheduling，Continuous Batching 的前身 |
+| [TensorRT-LLM · NVIDIA 2023](https://github.com/NVIDIA/TensorRT-LLM) | 工业级推理引擎，FP8 + 张量并行 |

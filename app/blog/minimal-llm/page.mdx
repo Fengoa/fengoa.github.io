@@ -292,3 +292,13 @@ python generate.py --model minigpt --prompt "KING RICHARD:"  # 生成
 结构完全相同——都是 Token Embedding + Transformer Blocks + LM Head。区别只在规模。
 
 下一篇把字符级词表换成 BPE 子词——一个"token"不再是单个字母，而是 "the"、"ing"、"tion" 这样的片段。同样的模型，同样的训练方式，但每一步能看到更多信息。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [A Neural Probabilistic Language Model · Bengio, JMLR 2003](https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf) | 第一个神经语言模型，就是我们 MLP 模型的原型 |
+| [Language Models are Unsupervised Multitask Learners · GPT-2, OpenAI 2019](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) | Decoder-only Transformer 做语言模型，证明 scale up 有效 |
+| [Attention Is All You Need · Vaswani, NeurIPS 2017](https://arxiv.org/abs/1706.03762) | Transformer 架构原始论文，MiniGPT 的理论基础 |

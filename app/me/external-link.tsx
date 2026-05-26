@@ -78,7 +78,7 @@ export function ExternalLink({
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "inline-flex items-center text-muted-foreground gap-0.5 hover:text-blue-600 transition-colors",
+        "inline text-muted-foreground hover:text-blue-600 transition-colors",
         className
       )}
       onMouseEnter={handleEnter}
@@ -88,7 +88,7 @@ export function ExternalLink({
       {isShimmering ? (
         <TextShimmer
           as="span"
-          className="text-sm [--base-color:var(--color-blue-600)]"
+          className="text-sm inline [--base-color:var(--color-blue-600)]"
         >
           {children as string}
         </TextShimmer>
@@ -100,7 +100,7 @@ export function ExternalLink({
           ref={iconRef}
           size={14}
           isAnimated={false}
-          className="opacity-70 group-hover:opacity-100"
+          className="inline-block align-text-top ml-0.5 mt-0.5 opacity-70"
         />
       )}
     </a>

@@ -111,3 +111,14 @@ python sft.py   # 演示 LoRA + SFT 流程
 | 框架 | 手写 | HuggingFace TRL / Axolotl |
 
 下一篇讲 DPO——SFT 让模型学会"回答问题"，DPO 让模型学会"回答得更好"。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Training language models to follow instructions with human feedback · InstructGPT, Ouyang, NeurIPS 2022](https://arxiv.org/abs/2203.02155) | SFT + RLHF 的完整流程，ChatGPT 前身 |
+| [LoRA: Low-Rank Adaptation of Large Language Models · Hu, ICLR 2022](https://arxiv.org/abs/2106.09685) | 只训 1% 参数的高效微调方法 |
+| [Stanford Alpaca · Taori, Stanford 2023](https://github.com/tatsu-lab/stanford_alpaca) | 用 GPT-4 生成指令数据微调 LLaMA |
+| [LIMA: Less Is More for Alignment · Zhou, NeurIPS 2023](https://arxiv.org/abs/2305.11206) | 1000 条高质量数据 > 100K 低质量数据 |

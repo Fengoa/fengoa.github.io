@@ -224,3 +224,13 @@ python ablation.py   # 跑完约 2 分钟，输出对比表
 核心架构一模一样：残差 + Norm + Attention + FFN。工业界的改进是把每个组件换成更好的变体——RMSNorm 比 LayerNorm 快、SwiGLU 比 GELU 效果好、RoPE 比绝对位置能外推。但骨架不变。
 
 下一篇开始训练一个"真正有用"的模型——加大数据量、调整超参数、观察 loss 曲线和生成质量的关系。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Attention Is All You Need · Vaswani, NeurIPS 2017](https://arxiv.org/abs/1706.03762) | 完整 Transformer 架构：残差 + LayerNorm + MHA + FFN |
+| [On Layer Normalization in the Transformer Architecture · Xiong, ICML 2020](https://arxiv.org/abs/2002.04745) | Pre-Norm vs Post-Norm 的理论分析 |
+| [LLaMA: Open and Efficient Foundation Language Models · Touvron, Meta 2023](https://arxiv.org/abs/2302.13971) | 现代 Transformer 变体：RMSNorm + SwiGLU + RoPE |

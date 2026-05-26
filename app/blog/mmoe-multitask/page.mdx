@@ -124,3 +124,13 @@ uv run python scripts/train_mmoe.py
 | 权重调整 | 手动设系数 | 在线 A/B 测试 + 自动调权 |
 
 工业界从 MMoE 演化出了 PLE（让不同目标有各自的私有 Expert，不完全共享），和 ESMM（用目标之间的因果关系做约束，比如"点击"是"购买"的前提）。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Modeling Task Relationships in Multi-task Learning with Multi-gate MoE · Ma, KDD 2018](https://dl.acm.org/doi/10.1145/3219819.3220007) | MMoE 原始论文 |
+| [Progressive Layered Extraction · PLE, Tang, RecSys 2020](https://dl.acm.org/doi/10.1145/3383313.3412236) | 腾讯的改进版，解决 MMoE 的跷跷板问题 |
+| [An Overview of Multi-Task Learning in Deep Neural Networks · Ruder, 2017](https://arxiv.org/abs/1706.05098) | 多任务学习综述 |

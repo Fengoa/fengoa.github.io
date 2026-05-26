@@ -148,3 +148,13 @@ uv run python scripts/train_din.py
 | 时间信号 | 没用 | 加入 time decay（越近的行为权重越大） |
 
 工业界的 DIN 后续演化出了 DIEN（加 GRU 建模兴趣演化）和 SIM（长序列检索），处理更长的行为序列和更复杂的兴趣变化模式。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Deep Interest Network for Click-Through Rate Prediction · Zhou, KDD 2018](https://arxiv.org/abs/1706.06978) | DIN 原始论文，用 Attention 建模用户兴趣 |
+| [Deep Interest Evolution Network for Click-Through Rate Prediction · Zhou, AAAI 2019](https://arxiv.org/abs/1809.03672) | DIEN，用 GRU + Attention 建模兴趣演化 |
+| [Self-Attentive Sequential Recommendation · SASRec, Kang & McAuley, ICDM 2018](https://arxiv.org/abs/1808.09781) | 用 Transformer 做序列推荐，和 GPT 同构 |

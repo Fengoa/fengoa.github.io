@@ -118,3 +118,14 @@ python dpo.py   # DPO loss 计算演示 + RLHF/DPO 对比
 核心数学完全相同。工业界的复杂度在数据质量（高质量偏好标注非常贵）和多轮迭代（DPO → 采样 → 再标注 → 再 DPO）。
 
 下一篇讲推理优化——模型对齐完了，怎么让它跑得更快、更便宜。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Direct Preference Optimization · Rafailov, NeurIPS 2023](https://arxiv.org/abs/2305.18290) | DPO 原始论文，把 RLHF 简化为分类 loss |
+| [Training language models to follow instructions · InstructGPT, Ouyang, NeurIPS 2022](https://arxiv.org/abs/2203.02155) | RLHF 完整流程（DPO 要替代的方法） |
+| [KTO: Model Alignment as Prospect Theoretic Optimization · Ethayarajh, ICML 2024](https://arxiv.org/abs/2402.01306) | 不需要成对偏好数据的对齐方法 |
+| [ORPO: Monolithic Preference Optimization without Reference Model · Hong, 2024](https://arxiv.org/abs/2403.07691) | 去掉 reference model 的简化版 |

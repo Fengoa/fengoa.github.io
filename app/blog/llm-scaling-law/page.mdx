@@ -200,3 +200,13 @@ python scaling_law.py   # 约 5-8 分钟（GPU），输出对比表
 规律是一样的。OpenAI 决定 GPT-4 用多大模型、训多少数据，就是用 scaling law 在小模型上预测出来的。我们的实验也能看到同样的趋势——只是规模差了 14 个数量级。
 
 下一篇讲位置编码——模型怎么知道"第 3 个字"和"第 100 个字"的区别。从 GPT-2 的绝对位置编码到 LLaMA 的 RoPE，看一个优雅的数学技巧如何解决"模型看不了更长文本"的问题。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Scaling Laws for Neural Language Models · Kaplan, OpenAI 2020](https://arxiv.org/abs/2001.08361) | 第一个系统性的 LLM scaling law 研究 |
+| [Training Compute-Optimal Large Language Models · Chinchilla, Hoffmann, NeurIPS 2022](https://arxiv.org/abs/2203.15556) | 推翻 Kaplan 结论：同等算力下应该用更小模型+更多数据 |
+| [Scaling Data-Constrained Language Models · Muennighoff, NeurIPS 2023](https://arxiv.org/abs/2305.16264) | 数据量有限时的 scaling 策略 |

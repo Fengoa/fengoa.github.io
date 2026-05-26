@@ -147,3 +147,13 @@ uv run python scripts/demo_rerank.py --user 5 --lambda 0.3   # 更强的多样�
 | 新鲜度 | 统一 boost | 时间衰减函数 + 冷启动流量池 |
 | 业务规则 | 手动强插 | 规则引擎 + A/B 实验 + 合规审核层 |
 | 执行速度 | 几十毫秒够了 | 要求 < 10ms（40 个候选 MMR 就够快） |
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [The Use of MMR, Diversity-Based Reranking for Reordering Documents · Carbonell & Goldstein, SIGIR 1998](https://dl.acm.org/doi/10.1145/290941.291025) | MMR 原始论文，兼顾相关性和多样性 |
+| [DPP-Net: Approximating Determinantal Point Processes with Deep Networks · Gartrell, NeurIPS 2019](https://arxiv.org/abs/1901.02015) | 用 DPP 做推荐列表多样性 |
+| [Controllable Multi-Objective Re-ranking with Policy Hypernetworks · Pei, KDD 2021](https://arxiv.org/abs/2102.04850) | 可控多目标重排 |

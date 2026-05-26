@@ -125,3 +125,13 @@ torch 和 faiss 在 macOS ARM 上同进程会 segfault。评估脚本没法跑�
 有了评估 pipeline 之后，后面做任何改动都能出一组数字。不用再靠肉眼判断"好像变好了"。改一版负样本策略跑一次 evaluate.py，数字涨了就是涨了，跌了就是跌了。
 
 这也是工业界做推荐系统实验的基本循环：改动 → 训练 → 离线评估 → 看数字 → 决定要不要上线 A/B 测试。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Mixed Negative Sampling for Learning Two-tower Neural Networks in Recommendations · Yang, WWW 2020](https://dl.acm.org/doi/10.1145/3366423.3380023) | 混合负样本策略（随机+热门+hard） |
+| [Debiased Contrastive Learning of Unsupervised Sentence Representations · Gao, ACL 2021](https://arxiv.org/abs/2109.05649) | 负样本去偏的理论分析 |
+| [Are We Evaluating Rigorously? Disentangling Approaches for Offline RecSys Evaluation · Krichene & Rendle, RecSys 2020](https://dl.acm.org/doi/10.1145/3383313.3412489) | 离线评估方法论的严格对比 |

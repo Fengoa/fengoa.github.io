@@ -170,3 +170,13 @@ python rope.py --extrapolate  # 外推能力测试
 核心数学一模一样。工业界的改进是让 RoPE 能外推到更长的序列（128K+），方法是动态调整旋转频率的底数 θ。
 
 下一篇讲推理效率——当模型变大后，标准 Attention 的 O(n²) 复杂度让推理变得极慢。KV Cache、GQA、Flash Attention 是三个关键优化。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [RoFormer: Enhanced Transformer with Rotary Position Embedding · Su, 2021](https://arxiv.org/abs/2104.09864) | RoPE 原始论文，用旋转矩阵编码相对位置 |
+| [YaRN: Efficient Context Window Extension · Peng, ICLR 2024](https://arxiv.org/abs/2309.00071) | 让 RoPE 外推到训练时没见过的长度 |
+| [Extending Context Window of Large Language Models via Positional Interpolation · Chen, 2023](https://arxiv.org/abs/2306.15595) | PI 方法：线性插值频率实现长度外推 |

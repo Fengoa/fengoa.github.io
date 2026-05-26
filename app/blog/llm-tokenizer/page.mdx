@@ -225,3 +225,13 @@ python train.py --model minigpt --tokenizer bpe   # 用 BPE 训练模型
 这个实现的瓶颈在速度——纯 Python 的 `_count_pairs` 每次要扫整个序列。工业级实现（tiktoken/sentencepiece）用 C++/Rust 写核心循环，还有正则预分词（先按空格/标点切开再做 BPE），避免跨词合并。
 
 下一篇不做 tokenizer 的优化了，而是回到模型本身——详细拆解 Self-Attention 的每一步，可视化注意力矩阵，看它到底在"看"什么。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Neural Machine Translation of Rare Words with Subword Units · Sennrich, ACL 2016](https://arxiv.org/abs/1508.07909) | BPE 用于 NLP 的开创性工作 |
+| [SentencePiece: A simple and language independent subword tokenizer · Kudo & Richardson, EMNLP 2018](https://arxiv.org/abs/1808.06226) | 语言无关的分词工具，LLaMA 等模型使用 |
+| [Language Models are Unsupervised Multitask Learners · GPT-2, OpenAI 2019](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) | 提出 byte-level BPE，tiktoken 的前身 |

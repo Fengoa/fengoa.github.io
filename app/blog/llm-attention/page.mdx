@@ -249,3 +249,13 @@ python visualize_attention.py --text "To be or not"  # 换一段文本试试
 核心原理完全相同：Q×K 算权重，权重×V 得输出。工业界的改进都是在效率上——怎么算得更快、存得更少、看得更远。
 
 下一篇把这些组件组装成完整的 Transformer——加上 FFN、LayerNorm、残差连接，解释为什么每个组件都不可或缺。
+
+---
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Attention Is All You Need · Vaswani, NeurIPS 2017](https://arxiv.org/abs/1706.03762) | Multi-Head Self-Attention 的原始提出 |
+| [Deep Interest Network for Click-Through Rate Prediction · Zhou, KDD 2018](https://arxiv.org/abs/1706.06978) | Target-Attention 在推荐系统中的应用，和 Self-Attention 原理相同 |
+| [An Image is Worth 16x16 Words · Dosovitskiy, ICLR 2021](https://arxiv.org/abs/2010.11929) | ViT，证明 Attention 不局限于文本 |
