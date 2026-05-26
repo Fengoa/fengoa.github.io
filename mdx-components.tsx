@@ -12,6 +12,7 @@ import { RecSystemLandscape } from "@/components/blog/rec-system-landscape";
 import { LLMSystemLandscape } from "@/components/blog/llm-system-landscape";
 import { RecLLMBridge } from "@/components/blog/rec-llm-bridge";
 import { PostMetaInfo } from "@/components/blog/post-meta-info";
+import { RecommenderArchitecture } from "@/components/blog/recommender-architecture";
 
 export const H1 = (props: ComponentPropsWithoutRef<"h1">) => (
   <>
@@ -242,6 +243,7 @@ export const components = {
   RecSystemLandscape,
   LLMSystemLandscape,
   RecLLMBridge,
+  RecommenderArchitecture,
   h1: H1,
   H1: H1,
   h2: H2,
