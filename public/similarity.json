@@ -1,0 +1,322 @@
+{
+  "better-habit": [
+    "ml-core-concepts",
+    "craft-oriensx",
+    "minimal-llm",
+    "minimal-recommender",
+    "cs-paper-guide",
+    "llm-scaling-law",
+    "din-sequence",
+    "blog-recommender"
+  ],
+  "blog-recommender": [
+    "craft-oriensx",
+    "rec-llm-bridge",
+    "llm-attention",
+    "llm-rag",
+    "linear-algebra-for-dl",
+    "minimal-recommender",
+    "recommender-landscape",
+    "cs-paper-guide"
+  ],
+  "craft-oriensx": [
+    "engineering-recommender",
+    "llm-deploy",
+    "better-habit",
+    "polar-starry-resources",
+    "blog-recommender",
+    "ml-core-concepts",
+    "llm-attention",
+    "llm-transformer"
+  ],
+  "cs-paper-guide": [
+    "polar-starry-resources",
+    "llm-landscape",
+    "llm-rag",
+    "llm-scaling-law",
+    "rec-llm-bridge",
+    "ml-core-concepts",
+    "blog-recommender",
+    "recommender-landscape"
+  ],
+  "deepfm-ranking": [
+    "hard-negative-eval",
+    "two-tower-recall",
+    "din-sequence",
+    "minimal-recommender",
+    "vector-recall",
+    "reranking-diversity",
+    "recommender-landscape",
+    "mmoe-multitask"
+  ],
+  "din-sequence": [
+    "vector-recall",
+    "deepfm-ranking",
+    "two-tower-recall",
+    "minimal-recommender",
+    "reranking-diversity",
+    "mmoe-multitask",
+    "hard-negative-eval",
+    "recommender-landscape"
+  ],
+  "engineering-recommender": [
+    "llm-deploy",
+    "minimal-recommender",
+    "deepfm-ranking",
+    "recommender-landscape",
+    "hard-negative-eval",
+    "reranking-diversity",
+    "rec-llm-bridge",
+    "vector-recall"
+  ],
+  "hard-negative-eval": [
+    "deepfm-ranking",
+    "two-tower-recall",
+    "reranking-diversity",
+    "minimal-recommender",
+    "vector-recall",
+    "recommender-landscape",
+    "din-sequence",
+    "engineering-recommender"
+  ],
+  "linear-algebra-for-dl": [
+    "llm-rope",
+    "vector-recall",
+    "two-tower-recall",
+    "llm-attention",
+    "ml-core-concepts",
+    "llm-transformer",
+    "recommender-landscape",
+    "blog-recommender"
+  ],
+  "llm-attention": [
+    "minimal-llm",
+    "llm-transformer",
+    "llm-rope",
+    "llm-tokenizer",
+    "llm-efficient-attention",
+    "llm-training",
+    "llm-scaling-law",
+    "llm-landscape"
+  ],
+  "llm-deploy": [
+    "llm-inference",
+    "llm-landscape",
+    "engineering-recommender",
+    "llm-sft",
+    "llm-rag",
+    "llm-efficient-attention",
+    "llm-scaling-law",
+    "llm-dpo"
+  ],
+  "llm-dpo": [
+    "llm-sft",
+    "llm-landscape",
+    "llm-scaling-law",
+    "llm-transformer",
+    "llm-efficient-attention",
+    "llm-training",
+    "llm-deploy",
+    "llm-rag"
+  ],
+  "llm-efficient-attention": [
+    "llm-inference",
+    "llm-attention",
+    "llm-rope",
+    "llm-landscape",
+    "llm-scaling-law",
+    "llm-transformer",
+    "llm-tokenizer",
+    "llm-sft"
+  ],
+  "llm-inference": [
+    "llm-efficient-attention",
+    "llm-deploy",
+    "llm-landscape",
+    "llm-transformer",
+    "llm-scaling-law",
+    "llm-attention",
+    "llm-sft",
+    "llm-rope"
+  ],
+  "llm-landscape": [
+    "recommender-landscape",
+    "llm-dpo",
+    "llm-rag",
+    "llm-inference",
+    "llm-efficient-attention",
+    "llm-deploy",
+    "llm-sft",
+    "llm-transformer"
+  ],
+  "llm-rag": [
+    "llm-landscape",
+    "llm-deploy",
+    "llm-transformer",
+    "minimal-llm",
+    "llm-tokenizer",
+    "llm-attention",
+    "llm-sft",
+    "llm-training"
+  ],
+  "llm-rope": [
+    "llm-transformer",
+    "linear-algebra-for-dl",
+    "llm-attention",
+    "llm-efficient-attention",
+    "llm-scaling-law",
+    "minimal-llm",
+    "llm-landscape",
+    "llm-tokenizer"
+  ],
+  "llm-scaling-law": [
+    "llm-training",
+    "llm-transformer",
+    "minimal-llm",
+    "llm-rope",
+    "llm-attention",
+    "llm-efficient-attention",
+    "ml-core-concepts",
+    "llm-tokenizer"
+  ],
+  "llm-sft": [
+    "llm-dpo",
+    "llm-landscape",
+    "llm-training",
+    "llm-scaling-law",
+    "llm-deploy",
+    "minimal-llm",
+    "llm-efficient-attention",
+    "llm-inference"
+  ],
+  "llm-tokenizer": [
+    "minimal-llm",
+    "llm-attention",
+    "llm-training",
+    "llm-efficient-attention",
+    "llm-landscape",
+    "llm-scaling-law",
+    "llm-rag",
+    "llm-rope"
+  ],
+  "llm-training": [
+    "llm-scaling-law",
+    "minimal-llm",
+    "llm-transformer",
+    "ml-core-concepts",
+    "llm-attention",
+    "llm-tokenizer",
+    "llm-sft",
+    "llm-landscape"
+  ],
+  "llm-transformer": [
+    "llm-rope",
+    "llm-attention",
+    "minimal-llm",
+    "llm-scaling-law",
+    "llm-training",
+    "llm-efficient-attention",
+    "llm-landscape",
+    "llm-rag"
+  ],
+  "minimal-llm": [
+    "llm-attention",
+    "llm-tokenizer",
+    "llm-transformer",
+    "llm-training",
+    "llm-scaling-law",
+    "llm-rope",
+    "llm-landscape",
+    "llm-rag"
+  ],
+  "minimal-recommender": [
+    "vector-recall",
+    "recommender-landscape",
+    "deepfm-ranking",
+    "reranking-diversity",
+    "din-sequence",
+    "two-tower-recall",
+    "hard-negative-eval",
+    "rec-llm-bridge"
+  ],
+  "ml-core-concepts": [
+    "llm-training",
+    "llm-scaling-law",
+    "linear-algebra-for-dl",
+    "llm-transformer",
+    "deepfm-ranking",
+    "minimal-llm",
+    "llm-attention",
+    "two-tower-recall"
+  ],
+  "mmoe-multitask": [
+    "din-sequence",
+    "deepfm-ranking",
+    "recommender-landscape",
+    "rec-llm-bridge",
+    "minimal-recommender",
+    "reranking-diversity",
+    "two-tower-recall",
+    "vector-recall"
+  ],
+  "polar-starry-resources": [
+    "cs-paper-guide",
+    "craft-oriensx",
+    "better-habit",
+    "llm-landscape",
+    "din-sequence",
+    "vector-recall",
+    "recommender-landscape",
+    "llm-tokenizer"
+  ],
+  "rec-llm-bridge": [
+    "recommender-landscape",
+    "minimal-recommender",
+    "vector-recall",
+    "reranking-diversity",
+    "mmoe-multitask",
+    "engineering-recommender",
+    "din-sequence",
+    "llm-landscape"
+  ],
+  "recommender-landscape": [
+    "llm-landscape",
+    "minimal-recommender",
+    "rec-llm-bridge",
+    "reranking-diversity",
+    "two-tower-recall",
+    "vector-recall",
+    "hard-negative-eval",
+    "din-sequence"
+  ],
+  "reranking-diversity": [
+    "recommender-landscape",
+    "minimal-recommender",
+    "deepfm-ranking",
+    "din-sequence",
+    "vector-recall",
+    "hard-negative-eval",
+    "two-tower-recall",
+    "rec-llm-bridge"
+  ],
+  "two-tower-recall": [
+    "vector-recall",
+    "deepfm-ranking",
+    "hard-negative-eval",
+    "din-sequence",
+    "recommender-landscape",
+    "minimal-recommender",
+    "reranking-diversity",
+    "mmoe-multitask"
+  ],
+  "vector-recall": [
+    "two-tower-recall",
+    "minimal-recommender",
+    "din-sequence",
+    "deepfm-ranking",
+    "linear-algebra-for-dl",
+    "reranking-diversity",
+    "recommender-landscape",
+    "hard-negative-eval"
+  ]
+}

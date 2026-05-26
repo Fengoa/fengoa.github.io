@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3333",
-    "prebuild": "tsx scripts/generate-search-index.ts",
+    "prebuild": "tsx scripts/generate-search-index.ts && tsx scripts/build-similarity.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

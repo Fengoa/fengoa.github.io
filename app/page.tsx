@@ -38,9 +38,17 @@ import {
 } from "@/app/blog/llm-scaling-law/cover";
 import { LinearAlgebraCover } from "@/app/blog/linear-algebra-for-dl/cover";
 import { MLConceptsCover } from "@/app/blog/ml-core-concepts/cover";
+import { PaperGuideCover } from "@/app/blog/cs-paper-guide/cover";
+import { BetterHabitCover } from "@/app/blog/better-habit/cover";
+import { BlogRecommenderCover } from "@/app/blog/blog-recommender/cover";
+import similarityData from "@/public/similarity.json";
+import { getReadSlugs } from "@/lib/reading-history";
 
 const ALL_TAG = "全部";
-const TAGS = [ALL_TAG, "大模型", "推荐系统", "机器学习", "数学", "资源", "建站"];
+const REC_TAG = "推荐";
+const TAGS = [ALL_TAG, REC_TAG, "大模型", "推荐系统", "机器学习", "数学", "资源", "建站", "生活"];
+
+const similarity = similarityData as Record<string, string[]>;
 
 const posts: PostData[] = [
   {
@@ -293,6 +301,34 @@ const posts: PostData[] = [
     cover: <AstralResourcesCover />,
   },
   {
+    slug: "cs-paper-guide",
+    title: "计算机学术论文：从哪找、怎么看、哪些值得看",
+    date: "2026-05-26",
+    tag: "资源",
+    summary:
+      "arXiv 是什么、顶会有哪些、怎么判断论文质量、三遍阅读法。附我们引用过的关键论文清单。",
+    cover: <PaperGuideCover />,
+  },
+  {
+    slug: "better-habit",
+    title: "培养良好习惯",
+    date: "2026-05-18",
+    tag: "生活",
+    summary:
+      "用桑代克的猫、习惯循环、行为转变四定律理解习惯的本质。提示、渴求、反应、奖励——四步反馈回路。",
+    cover: <BetterHabitCover />,
+  },
+  {
+    slug: "blog-recommender",
+    title: "纯前端博客推荐系统：TF-IDF + 阅读历史",
+    date: "2026-05-26",
+    tag: "建站",
+    summary:
+      "构建时计算 TF-IDF 余弦相似度矩阵，运行时读 localStorage 做个性化。零后端、零依赖、31 篇文章 100ms 搞定。",
+    cover: <BlogRecommenderCover />,
+    coverShape: "square",
+  },
+  {
     slug: "craft-oriensx",
     title: "搭建这个网站",
     date: "2026-03-02",
@@ -341,8 +377,9 @@ function HomeContent() {
   const tagCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     counts[ALL_TAG] = posts.length;
+    counts[REC_TAG] = posts.length; // 推荐显示全部数量
     for (const tag of TAGS) {
-      if (tag !== ALL_TAG) {
+      if (tag !== ALL_TAG && tag !== REC_TAG) {
         counts[tag] = posts.filter((p) => p.tag === tag).length;
       }
     }
@@ -351,6 +388,35 @@ function HomeContent() {
 
   const filteredPosts = useMemo(() => {
     if (activeTag === ALL_TAG) return posts;
+
+    if (activeTag === REC_TAG) {
+      // 基于阅读历史的个性化推荐
+      const readSlugs = getReadSlugs();
+      if (readSlugs.length === 0) return posts; // 无历史则显示全部
+
+      // 对每篇未读文章，计算和已读文章的平均相似度
+      const scored = posts
+        .filter((p) => !readSlugs.includes(p.slug))
+        .map((post) => {
+          let totalSim = 0;
+          let count = 0;
+          for (const readSlug of readSlugs.slice(0, 10)) {
+            const simList = similarity[readSlug];
+            if (simList) {
+              const rank = simList.indexOf(post.slug);
+              if (rank >= 0) {
+                totalSim += 1 / (rank + 1); // rank 越靠前分越高
+                count++;
+              }
+            }
+          }
+          return { post, score: count > 0 ? totalSim / count : 0 };
+        });
+
+      scored.sort((a, b) => b.score - a.score);
+      return scored.map((s) => s.post);
+    }
+
     return posts.filter((p) => p.tag === activeTag);
   }, [activeTag]);
 

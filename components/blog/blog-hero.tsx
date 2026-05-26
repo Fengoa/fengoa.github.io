@@ -4,11 +4,14 @@ import { cn } from "@/lib/utils";
 // 每个标签选中时的颜色
 const TAG_COLORS: Record<string, string> = {
   "全部": "bg-neutral-100 dark:bg-neutral-800/60",
+  "推荐": "bg-orange-100 dark:bg-orange-900/40",
   "大模型": "bg-violet-100 dark:bg-violet-900/40",
   "推荐系统": "bg-cyan-100 dark:bg-cyan-900/40",
+  "机器学习": "bg-sky-100 dark:bg-sky-900/40",
   "数学": "bg-amber-100 dark:bg-amber-900/40",
   "资源": "bg-emerald-100 dark:bg-emerald-900/40",
   "建站": "bg-rose-100 dark:bg-rose-900/40",
+  "生活": "bg-pink-100 dark:bg-pink-900/40",
 };
 
 interface BlogHeroProps {

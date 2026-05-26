@@ -1,0 +1,214 @@
+export const metadata = {
+  title: "计算机学术论文：从哪找、怎么看、哪些值得看",
+}
+
+# 计算机学术论文：从哪找、怎么看、哪些值得看
+
+做推荐系统和大模型的过程中，越往深走越绕不开论文。整理一份实用指南：论文在哪里、怎么判断质量、怎么高效阅读。
+
+---
+
+## 论文从哪来
+
+### arXiv — 预印本仓库
+
+地址：[arxiv.org](https://arxiv.org)
+
+**不是期刊**，是预印本平台。任何人都可以上传，没有同行评审。但计算机领域（尤其 AI）的惯例是：**先发 arXiv 占坑，再投会议**。所以最新的工作几乎都在这里第一时间出现。
+
+常用分类：
+- `cs.LG` — 机器学习
+- `cs.CL` — 自然语言处理（LLM 相关）
+- `cs.IR` — 信息检索（推荐系统相关）
+- `cs.CV` — 计算机视觉
+- `cs.AI` — 人工智能（综合）
+
+**怎么用**：
+- 直接搜关键词：`arxiv.org/search`
+- 按分类浏览最新：`arxiv.org/list/cs.CL/recent`
+- 看引用和被引：配合 Semantic Scholar 或 Google Scholar
+
+### Semantic Scholar — 论文搜索引擎
+
+地址：[semanticscholar.org](https://www.semanticscholar.org)
+
+比 Google Scholar 好用的地方：
+- 显示**影响力指标**（高被引、近期热度）
+- AI 生成摘要（TLDR）
+- 引用图谱可视化
+- 支持按年份、领域、会议筛选
+
+### Google Scholar
+
+地址：[scholar.google.com](https://scholar.google.com)
+
+最全的学术搜索引擎。适合查特定论文的被引数、找某作者的所有发表。
+
+### Papers With Code
+
+地址：[paperswithcode.com](https://paperswithcode.com)
+
+论文 + 代码 + 排行榜。找一个方向的 SOTA 方法非常方便。比如搜 "Sequential Recommendation" 就能看到当前最好的方法及其代码实现。
+
+### Hugging Face Papers
+
+地址：[huggingface.co/papers](https://huggingface.co/papers)
+
+每日精选 AI 论文，社区投票排序。偏 NLP / LLM 方向，是追前沿的好入口。
+
+---
+
+## 顶级会议（计算机科学以会议为主）
+
+计算机科学和其他学科不同：**顶会 > 顶刊**。最重要的成果首发在会议上，不是期刊。
+
+### AI / 机器学习
+
+| 会议 | 全称 | 周期 | 说明 |
+|------|------|------|------|
+| **NeurIPS** | Neural Information Processing Systems | 每年12月 | ML 最顶，录取率 ~25% |
+| **ICML** | International Conference on Machine Learning | 每年7月 | 和 NeurIPS 并列 |
+| **ICLR** | International Conference on Learning Representations | 每年5月 | 深度学习为主，开放评审 |
+
+### NLP / 大模型
+
+| 会议 | 全称 | 说明 |
+|------|------|------|
+| **ACL** | Association for Computational Linguistics | NLP 最顶 |
+| **EMNLP** | Empirical Methods in NLP | ACL 系列，略低一档 |
+| **NAACL** | North American Chapter of ACL | ACL 北美分会 |
+
+### 推荐系统 / 信息检索
+
+| 会议 | 全称 | 说明 |
+|------|------|------|
+| **RecSys** | ACM Conference on Recommender Systems | 推荐系统专会 |
+| **SIGIR** | Special Interest Group on Information Retrieval | 信息检索最顶 |
+| **KDD** | Knowledge Discovery and Data Mining | 数据挖掘最顶，工业界论文多 |
+| **WWW** | The Web Conference | Web 相关，含推荐 |
+| **WSDM** | Web Search and Data Mining | 搜索+推荐+数据挖掘 |
+| **CIKM** | Conference on Information and Knowledge Management | 略低一档但量大 |
+
+### 计算机视觉
+
+| 会议 | 说明 |
+|------|------|
+| **CVPR** | 视觉最顶 |
+| **ICCV** | 两年一次，和 CVPR 并列 |
+| **ECCV** | 欧洲视觉会议 |
+
+### 系统 / 工程
+
+| 会议 | 说明 |
+|------|------|
+| **OSDI / SOSP** | 操作系统，含分布式训练 |
+| **MLSys** | ML 系统专会 |
+
+---
+
+## 顶级期刊（了解即可）
+
+| 期刊 | 说明 |
+|------|------|
+| JMLR | 机器学习理论 |
+| TOIS | 信息检索/推荐 |
+| TKDE | 数据工程/知识发现 |
+| TPAMI | 模式识别/视觉（影响因子最高之一） |
+
+大部分 AI 方向的人日常只看会议，期刊的时效性太差（审稿周期 6-18 个月）。
+
+---
+
+## 怎么判断一篇论文的质量
+
+快速判断清单：
+
+| 信号 | 怎么看 |
+|------|--------|
+| 发表venue | NeurIPS/ICML/ACL > arXiv 无评审 |
+| 被引数 | 同年份比：>100 是高被引，>500 是经典 |
+| 作者/机构 | Google Brain, DeepMind, Meta AI, OpenAI, 清华, 阿里达摩院 |
+| 代码开源 | 有 GitHub 链接 > 没有 |
+| 引用质量 | 引的是顶会论文 > 引的全是自己的 |
+
+**注意**：arXiv 上没被任何会议接收的论文要多留心，可能是被拒了或者还在审。不代表一定差，但需要更批判地看。
+
+---
+
+## 怎么高效读论文
+
+### 三遍法
+
+**第一遍（5 分钟）** — 决定要不要读：
+- 标题 + 摘要
+- 看图表（尤其第一张架构图和最后的实验表格）
+- 看结论
+
+能回答：这篇在解决什么问题？用了什么方法？效果如何？
+
+**第二遍（30 分钟）** — 理解方法：
+- 看 Introduction（问题动机和贡献点）
+- 看 Method 部分（跳过证明，看架构图和公式的直觉解释）
+- 看实验设置和结果表格
+- 标记没看懂的地方
+
+能回答：具体怎么做的？和 baseline 比好了多少？为什么 work？
+
+**第三遍（2-4 小时）** — 复现级理解：
+- 逐行读 Method 和公式推导
+- 对着代码看实现
+- 想：如果让我从零实现，哪里会卡住？
+
+只有真正要用的论文才需要第三遍。
+
+### 读论文的工具
+
+| 工具 | 用途 |
+|------|------|
+| [Zotero](https://www.zotero.org) | 论文管理，浏览器一键保存 PDF + 元数据 |
+| [Connected Papers](https://www.connectedpapers.com) | 可视化一篇论文的引用网络，找相关工作 |
+| [Scholar GPT](https://chatgpt.com) | 让 AI 帮忙解释论文中看不懂的段落 |
+| [AR5IV](https://ar5iv.labs.arxiv.org) | arXiv 论文的 HTML 版本，比 PDF 好读 |
+| [Readpaper](https://readpaper.com) | 翻译 + 解释 + 笔记一体化 |
+
+---
+
+## 我们引用过的关键论文
+
+按主题整理，方便回溯：
+
+### 推荐系统
+
+| 论文 | 年份 | 对应我们的哪篇 |
+|------|------|--------------|
+| DeepFM | KDD 2017 | 用模型替代手写公式做排序 |
+| DIN (Deep Interest Network) | KDD 2018 | 用 DIN 建模用户兴趣序列 |
+| MMoE | KDD 2018 | 多目标排序 |
+| Two-Tower (DSSM) | CIKM 2013 | 用双塔模型做向量召回 |
+| SASRec | ICDM 2018 | 序列推荐（和 GPT 是同一个架构） |
+
+### 大模型
+
+| 论文 | 年份 | 对应我们的哪篇 |
+|------|------|--------------|
+| Attention Is All You Need | NeurIPS 2017 | Attention / Transformer |
+| GPT-2 | 2019 | 从零搭一个语言模型 |
+| Scaling Laws (Kaplan) | 2020 | Scaling Law |
+| Chinchilla | 2022 | Scaling Law |
+| LoRA | ICLR 2022 | SFT：教模型听话 |
+| DPO | NeurIPS 2023 | DPO：让模型对齐人类偏好 |
+| RoPE (RoFormer) | 2021 | 位置编码：RoPE |
+| Flash Attention | NeurIPS 2022 | 高效注意力 |
+| GQA | EMNLP 2023 | 高效注意力 |
+| RAG | NeurIPS 2020 | RAG：给模型外接知识 |
+
+---
+
+## 追前沿的习惯
+
+1. **每天 5 分钟**：刷 Hugging Face Papers 或 Twitter/X 上的 AI 学者
+2. **每周 30 分钟**：精读 1 篇和当前方向相关的论文
+3. **遇到不懂的概念**：先查 survey 论文（综述），再看原始论文
+4. **建自己的论文库**：用 Zotero + 标签分类，写一句话总结
+
+不用追求读完所有论文。关键是：**知道某个方向的 2-3 篇核心论文是什么**，遇到需要深入的时候能找到。

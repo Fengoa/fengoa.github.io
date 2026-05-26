@@ -1,0 +1,329 @@
+export const metadata = {
+  title: "纯前端博客推荐系统：TF-IDF + 阅读历史",
+}
+
+# 纯前端博客推荐系统：TF-IDF + 阅读历史
+
+30 篇博客，不想接后端，不想上向量数据库，能不能做一个真实有效的推荐系统？
+
+答案是可以。本文记录我在这个博客上实现的纯前端推荐方案：**构建时计算 TF-IDF 相似度矩阵** + **运行时读 localStorage 阅读历史做个性化排序**。
+
+---
+
+## 整体架构
+
+```
+构建时 (prebuild)                     运行时 (client)
+┌─────────────────┐                 ┌─────────────────────┐
+│ 读取 31 篇 MDX   │                 │ 文章详情页           │
+│ ↓                │                 │ → similarity[slug]  │
+│ 清洗 + 分词      │                 │ → 展示推荐列表       │
+│ ↓                │                 └─────────────────────┘
+│ TF-IDF 向量      │
+│ ↓                │                 ┌─────────────────────┐
+│ 余弦相似度矩阵   │  → similarity   │ 首页「推荐」tab      │
+│ ↓                │     .json       │ → 读 localStorage   │
+│ top-8 + tag boost│ ───────────────→│ → 已读×相似度 排序   │
+│ + 手动覆盖       │                 │ → 个性化列表         │
+└─────────────────┘                 └─────────────────────┘
+```
+
+零运行时成本。相似度在 `npm run build` 之前就算好了，客户端只做一次 JSON 查表。
+
+---
+
+## 第一步：文本清洗
+
+MDX 文件里混着 import、JSX 标签、代码块、Markdown 语法，直接拿来算相似度会被噪声淹没。清洗规则：
+
+```typescript
+function cleanMDX(raw: string): string {
+  let text = raw;
+  // 去掉 export metadata 块
+  text = text.replace(/^export\s+const\s+metadata[\s\S]*?}\s*\n/m, "");
+  // 去掉 import
+  text = text.replace(/^import\s+.*$/gm, "");
+  // 去掉代码块（这是技术博客最大的噪声源）
+  text = text.replace(/```[\s\S]*?```/g, "");
+  // 去掉行内代码
+  text = text.replace(/`[^`]+`/g, "");
+  // 去掉 JSX/HTML 标签
+  text = text.replace(/<[^>]+>/g, "");
+  // 去掉 Markdown 语法符号
+  text = text.replace(/^#+\s+/gm, "");
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  text = text.replace(/[*_~|]/g, "");
+  return text.trim();
+}
+```
+
+关键决策：**去掉代码块**。技术文章的代码段里充满了 `model`、`loss`、`train` 这类通用变量名，留着会让所有技术文章看起来都很像。去掉后，相似度更多地反映自然语言描述中的概念相似性。
+
+---
+
+## 第二步：分词
+
+中英文混排的博客，不能只用空格切。但又不想引入 jieba 这类大依赖。方案：
+
+```typescript
+function tokenize(text: string): string[] {
+  const tokens: string[] = [];
+  const segments = text.split(/([a-zA-Z0-9]+|[一-鿿]+)/g);
+
+  for (const seg of segments) {
+    if (/[一-鿿]/.test(seg)) {
+      // 中文：bigram + unigram
+      for (let i = 0; i < seg.length - 1; i++) {
+        tokens.push(seg.slice(i, i + 2));  // "推荐系统" → "推荐","荐系","系统"
+      }
+      for (const ch of seg) {
+        tokens.push(ch);  // 单字兜底
+      }
+    } else if (/[a-zA-Z]/.test(seg)) {
+      // 英文：整词小写
+      const word = seg.toLowerCase();
+      if (word.length >= 2) tokens.push(word);
+    }
+  }
+  return tokens;
+}
+```
+
+为什么用 bigram 而不是单字？单字区分度太低——"的"、"是"、"一" 出现在每篇文章里。Bigram 能捕捉"推荐"、"模型"、"注意力"这种语义单元，同时不需要词典。
+
+---
+
+## 第三步：TF-IDF
+
+经典的信息检索方法。核心思想：一个词在**当前文档**出现频率高（TF 高），同时在**所有文档**中出现少（IDF 高），它就是这篇文章的特征词。
+
+```typescript
+function computeTFIDF(docs: string[][]): Map<string, number>[] {
+  const N = docs.length;
+
+  // DF: 每个词出现在多少篇文章中
+  const df = new Map<string, number>();
+  for (const doc of docs) {
+    const seen = new Set(doc);
+    for (const token of seen) {
+      df.set(token, (df.get(token) || 0) + 1);
+    }
+  }
+
+  // 每篇文章的 TF-IDF 向量
+  return docs.map((doc) => {
+    const tf = new Map<string, number>();
+    for (const token of doc) {
+      tf.set(token, (tf.get(token) || 0) + 1);
+    }
+
+    const maxTf = Math.max(...tf.values());
+    const tfidf = new Map<string, number>();
+
+    for (const [token, count] of tf) {
+      const tfNorm = count / maxTf;         // 归一化 TF，消除文章长度差异
+      const idf = Math.log(N / (df.get(token) || 1));
+      tfidf.set(token, tfNorm * idf);
+    }
+
+    return tfidf;
+  });
+}
+```
+
+TF 用了**最大值归一化**（除以该文档中最高的词频），避免长文章天然占优。
+
+---
+
+## 第四步：余弦相似度
+
+两篇文章的 TF-IDF 向量做点积，除以各自模长：
+
+```typescript
+function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): number {
+  let dot = 0, normA = 0, normB = 0;
+
+  for (const [key, val] of a) {
+    normA += val * val;
+    if (b.has(key)) dot += val * b.get(key)!;
+  }
+  for (const [, val] of b) {
+    normB += val * val;
+  }
+
+  if (normA === 0 || normB === 0) return 0;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+```
+
+用 Map 做稀疏向量，只遍历非零项。31 篇文章的 31×31 矩阵瞬间算完。
+
+---
+
+## 第五步：Tag Boost + 手动覆盖
+
+纯 TF-IDF 有两个问题：
+
+1. **同主题但用词差异大的文章相似度低**——比如"推荐系统全景图"和"用 DIN 建模用户兴趣序列"，前者是综述，后者是具体方法，词汇重叠少
+2. **孤立文章推荐质量差**——"培养良好习惯"是唯一的生活类文章，TF-IDF 只能推出不相关的技术文章
+
+解决方案：
+
+### Tag Boost
+
+同一个 tag 下的文章，相似度加 0.08：
+
+```typescript
+const TAG_BOOST = 0.08;
+
+// 在计算相似度时
+if (posts[i].tag === posts[j].tag) {
+  score += TAG_BOOST;
+}
+```
+
+0.08 是实验出来的值——足够让同 tag 文章排名靠前，但不会完全压过跨 tag 的真正强相关文章（比如"推荐系统 × 大模型"和 LLM 系列文章）。
+
+### 手动覆盖
+
+对确定推荐质量差的文章，直接指定推荐列表：
+
+```typescript
+const MANUAL_OVERRIDES: Record<string, string[]> = {
+  "better-habit": [
+    "ml-core-concepts",    // 学习方法相关
+    "craft-oriensx",       // 同属生活/个人类
+    "minimal-llm",         // 从零开始做一件事
+    "minimal-recommender", // 从零开始做一件事
+  ],
+  "craft-oriensx": [
+    "engineering-recommender", // 都是工程化搭建
+    "llm-deploy",             // 部署上线
+    "better-habit",           // 同属生活类
+    "polar-starry-resources", // 非技术内容
+  ],
+  "polar-starry-resources": [
+    "cs-paper-guide",      // 同属资源类
+    "craft-oriensx",       // 非技术内容
+    "better-habit",        // 非技术内容
+    "llm-landscape",       // 全景图/总览类
+  ],
+};
+```
+
+融合逻辑：手动列表优先占据前几位，剩余位置由 TF-IDF 结果填充到 top-8。
+
+---
+
+## 第六步：阅读历史个性化（首页）
+
+文章详情页的推荐是 **content-based**（基于内容相似度），首页的「推荐」tab 则加入了 **collaborative** 思想（基于你的行为）：
+
+```typescript
+// lib/reading-history.ts
+const STORAGE_KEY = "oriensx-read-history";
+
+export function recordRead(slug: string) {
+  const history = getHistory();
+  // 去重 + 最新的放前面
+  const updated = [slug, ...history.filter((s) => s !== slug)].slice(0, 50);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+}
+
+export function getReadSlugs(): Set<string> {
+  return new Set(getHistory());
+}
+```
+
+首页排序逻辑：
+
+```typescript
+// 对每篇未读文章，计算"和所有已读文章的平均相似度"
+const readSlugs = getReadSlugs();
+const unreadPosts = allPosts.filter(p => !readSlugs.has(p.slug));
+
+const scored = unreadPosts.map(post => {
+  const simList = similarity[post.slug] || [];
+  // 和已读文章的重叠越多 → 分越高
+  const readOverlap = simList.filter(s => readSlugs.has(s)).length;
+  return { post, score: readOverlap };
+});
+
+scored.sort((a, b) => b.score - a.score);
+```
+
+简化版的协同过滤：如果一篇文章的"相似文章列表"里有很多你读过的，说明它和你的阅读偏好接近。
+
+---
+
+## 输出与集成
+
+### similarity.json
+
+```json
+{
+  "minimal-llm": ["llm-attention", "llm-tokenizer", "llm-transformer", ...],
+  "deepfm-ranking": ["hard-negative-eval", "two-tower-recall", "din-sequence", ...],
+  ...
+}
+```
+
+每篇文章 → top-8 最相关文章的 slug 列表。整个文件约 3KB，gzip 后更小。
+
+### 构建集成
+
+```json
+{
+  "scripts": {
+    "prebuild": "tsx scripts/generate-search-index.ts && tsx scripts/build-similarity.ts",
+    "build": "npm run prebuild && next build"
+  }
+}
+```
+
+每次 build 自动重算。新增文章只需要写好 MDX，推荐关系自动更新。
+
+### 前端消费
+
+```typescript
+// components/blog/related-posts.tsx
+import similarityData from "@/public/similarity.json";
+
+const relatedSlugs = similarity[currentSlug];
+// fallback: 如果 similarity 没数据，按同 tag 过滤
+```
+
+Static import，Next.js 会自动 tree-shake 到对应的客户端 bundle 中。
+
+---
+
+## 效果评估
+
+对 31 篇文章跑了一轮人工检查：
+
+| 文章 | 改进前 top-3 | 改进后 top-3 |
+|------|-------------|-------------|
+| better-habit | ml-core, din-sequence, craft-oriensx | ml-core, craft-oriensx, minimal-llm |
+| craft-oriensx | ml-core, llm-attention, llm-transformer | engineering-rec, llm-deploy, better-habit |
+| polar-starry | cs-paper-guide, craft-oriensx, din-sequence | cs-paper-guide, craft-oriensx, better-habit |
+| minimal-llm | llm-attention, llm-tokenizer, llm-transformer | llm-attention, llm-tokenizer, llm-transformer |
+| deepfm-ranking | hard-negative, two-tower, din-sequence | hard-negative, two-tower, din-sequence |
+
+技术文章（大模型系列、推荐系统系列）TF-IDF 原生效果就很好。改进主要针对非技术/跨领域的孤立文章。
+
+---
+
+## 总结：什么时候用这个方案
+
+适用场景：
+- 文章数 < 200（矩阵 O(n^2) 没问题）
+- 纯静态部署，不想要后端
+- 中英文混排内容
+- 需要在构建时就确定推荐结果
+
+不适用：
+- 实时更新的内容（需要每次重新 build）
+- 千篇以上（考虑 ANN 索引 + embedding）
+- 需要用户反馈闭环（点击率优化、A/B 测试）
+
+对于个人博客来说，这是性价比最高的方案——零依赖、零成本、构建时 100ms 搞定，推荐质量对得起读者。

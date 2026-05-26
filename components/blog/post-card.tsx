@@ -94,6 +94,11 @@ export function PostCard({ post, index }: { post: PostData; index: number }) {
                 <Calendar className="size-3 -mt-px" />
                 {formatDate(post.date)}
               </span>
+              {post.tag && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-border text-[10px]">
+                  {post.tag}
+                </span>
+              )}
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-bold leading-tight text-foreground">

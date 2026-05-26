@@ -11,9 +11,13 @@ import { RecommenderPipeline } from "@/components/blog/recommender-pipeline";
 import { RecSystemLandscape } from "@/components/blog/rec-system-landscape";
 import { LLMSystemLandscape } from "@/components/blog/llm-system-landscape";
 import { RecLLMBridge } from "@/components/blog/rec-llm-bridge";
+import { PostMetaInfo } from "@/components/blog/post-meta-info";
 
 export const H1 = (props: ComponentPropsWithoutRef<"h1">) => (
-  <h1 className="mb-8 font-semibold text-2xl md:text-4xl" {...props} />
+  <>
+    <h1 className="mb-4 font-semibold text-2xl md:text-4xl" {...props} />
+    <PostMetaInfo />
+  </>
 );
 
 export const H2 = ({ children, ...props }: ComponentPropsWithoutRef<"h2">) => {
