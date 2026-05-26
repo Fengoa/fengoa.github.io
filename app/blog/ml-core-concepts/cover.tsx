@@ -16,11 +16,11 @@ export function MLConceptsCover({ className }: { className?: string }) {
   const ballX = 0.1 + (step / 39) * 0.8;
   const ballY = getY(ballX);
 
-  // 曲线路径点
+  // 曲线路径点（Y 轴：上=大 loss，下=小 loss）
   const curvePoints = Array.from({ length: 50 }, (_, i) => {
     const x = i / 49;
     const px = 15 + x * 70;
-    const py = 20 + getY(x) * 55;
+    const py = 15 + (1 - getY(x)) * 55 + 10;
     return `${i === 0 ? "M" : "L"}${px},${py}`;
   }).join(" ");
 
@@ -45,7 +45,7 @@ export function MLConceptsCover({ className }: { className?: string }) {
         {/* 小球 */}
         <circle
           cx={15 + ballX * 70}
-          cy={20 + ballY * 55}
+          cy={15 + (1 - ballY) * 55 + 10}
           r="3"
           fill="#f59e0b"
         >
@@ -56,9 +56,9 @@ export function MLConceptsCover({ className }: { className?: string }) {
         {step > 2 && step < 38 && (
           <line
             x1={15 + ballX * 70}
-            y1={20 + ballY * 55}
+            y1={15 + (1 - ballY) * 55 + 10}
             x2={15 + ballX * 70 + 6}
-            y2={20 + ballY * 55 + (ballX < 0.5 ? -4 : 4)}
+            y2={15 + (1 - ballY) * 55 + 10 + (ballX < 0.5 ? 4 : -4)}
             stroke="#f59e0b"
             strokeWidth="1"
             strokeLinecap="round"
@@ -72,8 +72,8 @@ export function MLConceptsCover({ className }: { className?: string }) {
         <text x="8" y="50" textAnchor="middle" className="text-[6px] font-mono" fill="#64748b" transform="rotate(-90,8,50)">loss</text>
 
         {/* 最低点标记 */}
-        <circle cx={15 + 0.5 * 70} cy={20 + getY(0.5) * 55} r="1.5" fill="none" stroke="#10b981" strokeWidth="0.8" strokeDasharray="2 1" />
-        <text x={15 + 0.5 * 70} y={20 + getY(0.5) * 55 + 7} textAnchor="middle" className="text-[5px] font-mono" fill="#10b981">min</text>
+        <circle cx={15 + 0.5 * 70} cy={15 + (1 - getY(0.5)) * 55 + 10} r="1.5" fill="none" stroke="#10b981" strokeWidth="0.8" strokeDasharray="2 1" />
+        <text x={15 + 0.5 * 70} y={15 + (1 - getY(0.5)) * 55 + 10 + 7} textAnchor="middle" className="text-[5px] font-mono" fill="#10b981">min</text>
 
         <defs>
           <linearGradient id="mlGrad" x1="0%" y1="0%" x2="100%" y2="0%">
