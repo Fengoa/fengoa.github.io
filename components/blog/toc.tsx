@@ -84,8 +84,9 @@ export function TableOfContents() {
             <a
               key={heading.id}
               href={`#${heading.id}`}
+              title={heading.text}
               className={cn(
-                "text-xs transition-all hover:text-foreground line-clamp-2",
+                "text-xs transition-all hover:text-foreground truncate",
                 heading.level === 3
                   ? "pl-3 text-muted-foreground"
                   : "font-medium",
