@@ -165,7 +165,7 @@ function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): numbe
 纯 TF-IDF 有两个问题：
 
 1. **同主题但用词差异大的文章相似度低**——比如"推荐系统全景图"和"用 DIN 建模用户兴趣序列"，前者是综述，后者是具体方法，词汇重叠少
-2. **孤立文章推荐质量差**——"培养良好习惯"是唯一的生活类文章，TF-IDF 只能推出不相关的技术文章
+2. **非技术类孤立文章推荐质量差**——比如"搭建这个网站"和纯技术文章词汇几乎不重叠，TF-IDF 无法给出有意义的推荐
 
 解决方案：
 
@@ -190,23 +190,17 @@ if (posts[i].tag === posts[j].tag) {
 
 ```typescript
 const MANUAL_OVERRIDES: Record<string, string[]> = {
-  "better-habit": [
-    "ml-core-concepts",    // 学习方法相关
-    "craft-oriensx",       // 同属生活/个人类
-    "minimal-llm",         // 从零开始做一件事
-    "minimal-recommender", // 从零开始做一件事
-  ],
   "craft-oriensx": [
+    "blog-recommender",       // 同属建站类
     "engineering-recommender", // 都是工程化搭建
     "llm-deploy",             // 部署上线
-    "better-habit",           // 同属生活类
     "polar-starry-resources", // 非技术内容
   ],
   "polar-starry-resources": [
     "cs-paper-guide",      // 同属资源类
     "craft-oriensx",       // 非技术内容
-    "better-habit",        // 非技术内容
     "llm-landscape",       // 全景图/总览类
+    "recommender-landscape",
   ],
 };
 ```
@@ -303,9 +297,8 @@ Static import，Next.js 会自动 tree-shake 到对应的客户端 bundle 中。
 
 | 文章 | 改进前 top-3 | 改进后 top-3 |
 |------|-------------|-------------|
-| better-habit | ml-core, din-sequence, craft-oriensx | ml-core, craft-oriensx, minimal-llm |
-| craft-oriensx | ml-core, llm-attention, llm-transformer | engineering-rec, llm-deploy, better-habit |
-| polar-starry | cs-paper-guide, craft-oriensx, din-sequence | cs-paper-guide, craft-oriensx, better-habit |
+| craft-oriensx | ml-core, llm-attention, llm-transformer | blog-recommender, engineering-rec, llm-deploy |
+| polar-starry | cs-paper-guide, craft-oriensx, din-sequence | cs-paper-guide, craft-oriensx, llm-landscape |
 | minimal-llm | llm-attention, llm-tokenizer, llm-transformer | llm-attention, llm-tokenizer, llm-transformer |
 | deepfm-ranking | hard-negative, two-tower, din-sequence | hard-negative, two-tower, din-sequence |
 
