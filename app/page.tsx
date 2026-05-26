@@ -37,11 +37,21 @@ import {
   LandscapeLLMCover,
 } from "@/app/blog/llm-scaling-law/cover";
 import { LinearAlgebraCover } from "@/app/blog/linear-algebra-for-dl/cover";
+import { MLConceptsCover } from "@/app/blog/ml-core-concepts/cover";
 
 const ALL_TAG = "全部";
-const TAGS = [ALL_TAG, "大模型", "推荐系统", "数学", "资源", "建站"];
+const TAGS = [ALL_TAG, "大模型", "推荐系统", "机器学习", "数学", "资源", "建站"];
 
 const posts: PostData[] = [
+  {
+    slug: "ml-core-concepts",
+    title: "机器学习的 7 个核心概念",
+    date: "2026-05-25",
+    tag: "机器学习",
+    summary: "不讲证明，只讲直觉。Loss、梯度下降、反向传播、神经网络、Embedding、过拟合——每个概念一句话说清楚，对应到代码的哪一行。",
+    cover: <MLConceptsCover />,
+    coverShape: "square",
+  },
   {
     slug: "linear-algebra-for-dl",
     title: "线性代数：深度学习用到的那些",
