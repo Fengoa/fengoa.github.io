@@ -49,82 +49,101 @@ export function BlogHero({ tags, activeTag, onTagChange, tagCounts }: BlogHeroPr
         mergedAreas={[{ row: 1, column: 2, colSpan: 10 }]}
       >
         <Grid.Cell row={1} column={1} />
-        {/* <Grid.Cell row={1} column={2} colSpan={10}>
-          <div className="flex flex-col items-center justify-center py-8">
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight text-foreground text-center">
-              好的故事
-            </h1>
-            <p className="text-secondary-foreground text-center max-w-md mt-4">
-              沙漠中融化的雪，加快了春暖花开。
-            </p>
-          </div>
-        </Grid.Cell> */}
         <Grid.Cell row={1} column={12} />
       </Grid>
 
-      {/* 第 3 行：标签筛选格子，居中排列 */}
-      <Grid rows={1} columns={12}>
-        {tags && tags.length > 0 ? (
-          <>
-            {/* 左侧空格子 */}
-            {Array.from({ length: startCol - 1 }, (_, i) => (
+      {/* 第 3 行：标签筛选 */}
+      {/* 移动端：横向滚动 flex */}
+      <div className="md:hidden overflow-x-auto scrollbar-hide border-y border-border/40">
+        <div className="flex items-center gap-0 min-w-max">
+          {tags?.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => onTagChange?.(tag)}
+              className={cn(
+                "flex flex-col items-center justify-center gap-0.5 px-4 py-3",
+                "text-xs font-mono transition-colors duration-200 whitespace-nowrap",
+                activeTag === tag
+                  ? cn(TAG_COLORS[tag] || "bg-neutral-100 dark:bg-neutral-800/60", "text-foreground")
+                  : "text-muted-foreground"
+              )}
+            >
+              <span>{tag}</span>
+              {tagCounts && (
+                <span className="text-[10px] opacity-60">
+                  {tagCounts[tag] ?? 0}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 桌面端：Grid 格子 */}
+      <div className="hidden md:block">
+        <Grid rows={1} columns={12}>
+          {tags && tags.length > 0 ? (
+            <>
+              {/* 左侧空格子 */}
+              {Array.from({ length: startCol - 1 }, (_, i) => (
+                <Grid.Cell
+                  key={`r3-left-${i}`}
+                  row={1}
+                  column={i + 1}
+                  className="aspect-square"
+                />
+              ))}
+              {/* 标签格子 */}
+              {tags.map((tag, i) => (
+                <Grid.Cell
+                  key={tag}
+                  row={1}
+                  column={startCol + i}
+                  className="aspect-square"
+                >
+                  <button
+                    onClick={() => onTagChange?.(tag)}
+                    className={cn(
+                      "size-full flex flex-col items-center justify-center gap-1",
+                      "text-xs font-mono transition-colors duration-200",
+                      "hover:bg-foreground/[0.03] dark:hover:bg-foreground/[0.05]",
+                      activeTag === tag
+                        ? cn(TAG_COLORS[tag] || "bg-neutral-100 dark:bg-neutral-800/60", "text-foreground")
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <span>{tag}</span>
+                    {tagCounts && (
+                      <span className="text-[10px] opacity-60">
+                        {tagCounts[tag] ?? 0}
+                      </span>
+                    )}
+                  </button>
+                </Grid.Cell>
+              ))}
+              {/* 右侧空格子 */}
+              {Array.from({ length: 12 - (startCol - 1) - tagCount }, (_, i) => (
+                <Grid.Cell
+                  key={`r3-right-${i}`}
+                  row={1}
+                  column={startCol + tagCount + i}
+                  className="aspect-square"
+                />
+              ))}
+            </>
+          ) : (
+            Array.from({ length: 12 }, (_, i) => (
               <Grid.Cell
-                key={`r3-left-${i}`}
+                key={`r3-${i}`}
                 row={1}
                 column={i + 1}
                 className="aspect-square"
               />
-            ))}
-            {/* 标签格子 */}
-            {tags.map((tag, i) => (
-              <Grid.Cell
-                key={tag}
-                row={1}
-                column={startCol + i}
-                className="aspect-square"
-              >
-                <button
-                  onClick={() => onTagChange?.(tag)}
-                  className={cn(
-                    "size-full flex flex-col items-center justify-center gap-1",
-                    "text-xs font-mono transition-colors duration-200",
-                    "hover:bg-foreground/[0.03] dark:hover:bg-foreground/[0.05]",
-                    activeTag === tag
-                      ? cn(TAG_COLORS[tag] || "bg-neutral-100 dark:bg-neutral-800/60", "text-foreground")
-                      : "text-muted-foreground"
-                  )}
-                >
-                  <span>{tag}</span>
-                  {tagCounts && (
-                    <span className="text-[10px] opacity-60">
-                      {tagCounts[tag] ?? 0}
-                    </span>
-                  )}
-                </button>
-              </Grid.Cell>
-            ))}
-            {/* 右侧空格子 */}
-            {Array.from({ length: 12 - (startCol - 1) - tagCount }, (_, i) => (
-              <Grid.Cell
-                key={`r3-right-${i}`}
-                row={1}
-                column={startCol + tagCount + i}
-                className="aspect-square"
-              />
-            ))}
-          </>
-        ) : (
-          Array.from({ length: 12 }, (_, i) => (
-            <Grid.Cell
-              key={`r3-${i}`}
-              row={1}
-              column={i + 1}
-              className="aspect-square"
-            />
-          ))
-        )}
-        <Grid.Cross row={1} column={12} anchor="bottom-right" />
-      </Grid>
+            ))
+          )}
+          <Grid.Cross row={1} column={12} anchor="bottom-right" />
+        </Grid>
+      </div>
     </>
   );
 }

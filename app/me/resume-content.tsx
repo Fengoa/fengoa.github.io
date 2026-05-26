@@ -67,9 +67,9 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     <InfoItem>
                       <span className="size-1 rounded-full bg-muted-foreground/40" />
                       设计工程师
-                      <ExternalLink href="https://www.tencent.com/">
+                      {/* <ExternalLink href="https://www.tencent.com/">
                         @腾讯
-                      </ExternalLink>
+                      </ExternalLink> */}
                     </InfoItem>
                     <InfoItem>
                       <span className="size-1 rounded-full bg-muted-foreground/40" />
@@ -156,10 +156,10 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     <InfoItem>
                       <QrCodeIcon size={16} />
                       <span>
-                        腾讯广告助手/客户工作台
-                        <ExternalLink href="https://ad.qq.com/">
+                        广告助手/客户工作台
+                        {/* <ExternalLink href="https://ad.qq.com/"> */}
                           小程序
-                        </ExternalLink>
+                        {/* </ExternalLink> */}
                       </span>
                     </InfoItem>
                   </div>
@@ -186,9 +186,9 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                     <div className="flex items-start justify-between gap-2 flex-wrap">
                       <InfoItem>
                         <MousePointerClickIcon size={16} />
-                        <ExternalLink href="https://e.qq.com/technology">
-                          腾讯广告投放设计团队
-                        </ExternalLink>
+                        {/* <ExternalLink href="https://e.qq.com/technology"> */}
+                          广告投放设计团队
+                        {/* </ExternalLink> */}
                       </InfoItem>
                       <InfoItem>2019 - 至今</InfoItem>
                     </div>
