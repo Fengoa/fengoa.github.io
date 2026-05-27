@@ -1,3 +1,11 @@
+import {
+  NextTokenPrediction,
+  BigramTable,
+  MLPWindow,
+  AttentionFlow,
+  ModelComparison,
+} from "./visuals";
+
 export const metadata = {
   title: "从零搭一个语言模型",
 }
@@ -22,6 +30,8 @@ export const metadata = {
 给定前面的 token，预测下一个 token 的概率分布。
 P(next | context)
 ```
+
+<NextTokenPrediction />
 
 "token"可以是字符、子词、或整个词。这篇用最简单的字符级——每个字母/标点/换行就是一个 token。
 
@@ -69,6 +79,8 @@ You are all resolved rather to die than to famish?
 
 实现上就是一张 65×65 的查找表。第 i 行表示"当前字符是 i 时，下一个字符的概率分布"。模型从数据里学这 4225 个数字。
 
+<BigramTable />
+
 ```python
 class BigramModel(nn.Module):
     def __init__(self, vocab_size):
@@ -106,6 +118,8 @@ As wabel nd CKc! nos yo nor s,
 Bigram 的问题：只看 1 个字符，看不到上下文。"t" 后面跟什么取决于前面是 "tha"（→ "t"）还是 "wri"（→ "t" → "e"）。
 
 解决：看前 16 个字符，全部拼起来过全连接网络。
+
+<MLPWindow />
 
 ```text
 窗口 [B, e, f, o, r, e, ' ', w, e, ' ', p, r, o, c, e, e]
@@ -158,6 +172,8 @@ the   king   said   to   his   ???
 ```
 
 "said" 和 "king" 对预测下一个词更关键，"the" 和 "to" 没什么信息量。Attention 让模型根据当前位置的需要，动态分配对历史每个位置的关注程度。
+
+<AttentionFlow />
 
 **怎么实现这个"动态关注"？**
 
@@ -246,6 +262,8 @@ Your come bote yet for his true.
 | Bigram | 4K | 看 1 个字符 | 2.53 | 9s | 字母组合，无单词 |
 | MLP | 350K | 看 16 个字符 | 1.78 | 71s | 有单词，格式对 |
 | MiniGPT | 420K | 看 64 个字符 | 1.58 | 110s | 句子通顺，能对话 |
+
+<ModelComparison />
 
 每一步提升的核心原因：
 

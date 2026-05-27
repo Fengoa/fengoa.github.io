@@ -185,3 +185,122 @@ code .sh__line:empty {
   display: none;
 }
 
+/* =========================================================================
+ * 阅读模式：禅模式 (zen) & 演示模式 (present)
+ * 通过 <html data-mode="..."> 切换
+ * ========================================================================= */
+
+/* --- 通用：隐藏导航/页脚/侧边栏 --- */
+html[data-mode="zen"] nav,
+html[data-mode="zen"] footer,
+html[data-mode="zen"] aside,
+html[data-mode="present"] nav,
+html[data-mode="present"] footer,
+html[data-mode="present"] aside {
+  display: none !important;
+}
+
+/* --- 禅模式：放大字号 + 加宽行距，沉浸阅读 --- */
+html[data-mode="zen"] body {
+  padding-top: 0 !important;
+}
+html[data-mode="zen"] main[data-blog-main] {
+  font-size: 1.125rem;
+  line-height: 1.85;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding-top: 4rem !important;
+  padding-bottom: 6rem !important;
+}
+html[data-mode="zen"] main[data-blog-main] h1 {
+  font-size: 2.5rem !important;
+  line-height: 1.2 !important;
+}
+html[data-mode="zen"] main[data-blog-main] h2 {
+  font-size: 1.75rem !important;
+  margin-top: 3.5rem !important;
+}
+html[data-mode="zen"] main[data-blog-main] h3 {
+  font-size: 1.375rem !important;
+}
+html[data-mode="zen"] main[data-blog-main] pre,
+html[data-mode="zen"] main[data-blog-main] code {
+  font-size: 0.95rem !important;
+}
+
+/* --- 演示模式：全屏单页 --- */
+html[data-mode="present"] body {
+  overflow: hidden;
+  padding-top: 0 !important;
+}
+html[data-mode="present"] main[data-blog-main] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 300;
+  max-width: none !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 4rem 6rem 5rem !important;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--background);
+  font-size: 1.5rem;
+  line-height: 1.75;
+}
+@media (max-width: 768px) {
+  html[data-mode="present"] main[data-blog-main] {
+    padding: 3rem 1.5rem 5rem !important;
+    font-size: 1.2rem;
+  }
+}
+html[data-mode="present"] main[data-blog-main] > .presentation-slide {
+  max-width: 64rem;
+  margin: 0 auto;
+}
+/* 隐藏非当前 slide */
+html[data-mode="present"] main[data-blog-main][data-current-slide="0"] > .presentation-slide:not([data-slide-group="0"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="1"] > .presentation-slide:not([data-slide-group="1"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="2"] > .presentation-slide:not([data-slide-group="2"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="3"] > .presentation-slide:not([data-slide-group="3"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="4"] > .presentation-slide:not([data-slide-group="4"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="5"] > .presentation-slide:not([data-slide-group="5"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="6"] > .presentation-slide:not([data-slide-group="6"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="7"] > .presentation-slide:not([data-slide-group="7"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="8"] > .presentation-slide:not([data-slide-group="8"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="9"] > .presentation-slide:not([data-slide-group="9"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="10"] > .presentation-slide:not([data-slide-group="10"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="11"] > .presentation-slide:not([data-slide-group="11"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="12"] > .presentation-slide:not([data-slide-group="12"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="13"] > .presentation-slide:not([data-slide-group="13"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="14"] > .presentation-slide:not([data-slide-group="14"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="15"] > .presentation-slide:not([data-slide-group="15"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="16"] > .presentation-slide:not([data-slide-group="16"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="17"] > .presentation-slide:not([data-slide-group="17"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="18"] > .presentation-slide:not([data-slide-group="18"]),
+html[data-mode="present"] main[data-blog-main][data-current-slide="19"] > .presentation-slide:not([data-slide-group="19"]) {
+  display: none;
+}
+/* 当前 slide 入场淡入 */
+html[data-mode="present"] main[data-blog-main] > .presentation-slide {
+  animation: present-slide-in 280ms ease-out;
+}
+@keyframes present-slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* 演示模式下放大 h1/h2 */
+html[data-mode="present"] main[data-blog-main] h1 {
+  font-size: 2.75rem !important;
+  line-height: 1.15 !important;
+}
+html[data-mode="present"] main[data-blog-main] h2 {
+  font-size: 2rem !important;
+  margin-top: 0 !important;
+  margin-bottom: 1.5rem !important;
+}
+html[data-mode="present"] main[data-blog-main] h3 {
+  font-size: 1.5rem !important;
+}
+
+

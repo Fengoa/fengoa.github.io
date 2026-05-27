@@ -78,7 +78,7 @@ export function ExternalLink({
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "inline text-muted-foreground hover:text-blue-600 transition-colors",
+        "inline text-muted-foreground hover:text-blue-600 transition-colors relative -top-px",
         className
       )}
       onMouseEnter={handleEnter}
@@ -100,7 +100,7 @@ export function ExternalLink({
           ref={iconRef}
           size={14}
           isAnimated={false}
-          className="inline-block align-text-top ml-0.5 mt-0.5 opacity-70"
+          className="inline-block ml-0.5 align-middle opacity-70"
         />
       )}
     </a>

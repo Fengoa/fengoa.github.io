@@ -73,7 +73,7 @@ export const A = ({
   }
 
   return (
-    <ExternalLink href={href || "#"} className="text-blue-600 align-text-top">
+    <ExternalLink href={href || "#"} className="text-blue-600">
       {children}
     </ExternalLink>
   );
