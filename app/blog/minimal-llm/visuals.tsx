@@ -94,7 +94,7 @@ export function NextTokenPrediction() {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
         {/* 上文 */}
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-mono text-muted-foreground mb-2">
+          <div className="text-xs font-mono text-muted-foreground mb-2">
             context
           </div>
           <div className="flex flex-wrap gap-1">
@@ -135,7 +135,7 @@ export function NextTokenPrediction() {
 
         {/* 概率分布 */}
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-mono text-muted-foreground mb-2">
+          <div className="text-xs font-mono text-muted-foreground mb-2">
             P(next | context)
           </div>
           <div className="space-y-1.5">
@@ -157,7 +157,7 @@ export function NextTokenPrediction() {
                     )}
                   />
                 </div>
-                <span className="w-12 text-right font-mono text-[11px] text-muted-foreground">
+                <span className="w-12 text-right font-mono text-xs text-muted-foreground">
                   {(c.p * 100).toFixed(0)}%
                 </span>
               </div>
@@ -287,7 +287,7 @@ export function BigramTable() {
               <div
                 key={`label-${c}`}
                 className={cn(
-                  "flex-1 text-center font-mono text-[11px] transition-colors",
+                  "flex-1 text-center font-mono text-xs transition-colors",
                   rowDist[c] > 0.2
                     ? "text-violet-600 dark:text-violet-400 font-semibold"
                     : "text-muted-foreground/60"
@@ -300,7 +300,7 @@ export function BigramTable() {
         </div>
 
         {/* 分隔说明 */}
-        <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground/70 mt-2">
+        <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground/70 mt-2">
           <div className="w-8 h-px bg-border" />
           <span>整张查找表（12 × 12，意会 65 × 65）</span>
           <div className="w-8 h-px bg-border" />
@@ -318,7 +318,7 @@ export function BigramTable() {
                 <div
                   key={`col-${i}`}
                   className={cn(
-                    "text-[10px] font-mono text-center transition-colors",
+                    "text-xs font-mono text-center transition-colors",
                     topNext[0]?.ch === ch
                       ? "text-violet-600 dark:text-violet-400 font-semibold"
                       : "text-muted-foreground/60"
@@ -334,7 +334,7 @@ export function BigramTable() {
             <div key={`row-${r}`} className="flex items-center mt-px">
               <div
                 className={cn(
-                  "w-7 text-[10px] font-mono text-right pr-1.5 transition-colors",
+                  "w-7 text-xs font-mono text-right pr-1.5 transition-colors",
                   r === activeRow
                     ? "text-violet-600 dark:text-violet-400 font-semibold"
                     : "text-muted-foreground/60"
@@ -379,7 +379,7 @@ export function BigramTable() {
               )}
             >
               <span className="font-semibold">{showChar(t.ch)}</span>
-              <span className="text-[10px] opacity-70">
+              <span className="text-xs opacity-70">
                 {(t.p * 100).toFixed(0)}%
               </span>
             </div>
@@ -443,14 +443,14 @@ export function MLPWindow() {
       <div className="flex items-center gap-3 flex-wrap justify-center">
         {/* 窗口 token */}
         <div className="flex flex-col items-center">
-          <div className="text-[10px] font-mono text-muted-foreground mb-1">
+          <div className="text-xs font-mono text-muted-foreground mb-1">
             16 chars
           </div>
           <div className="grid grid-cols-8 gap-0.5 max-w-[180px]">
             {window.map((ch, i) => (
               <span
                 key={`${start}-${i}`}
-                className="inline-flex items-center justify-center w-5 h-5 rounded-sm bg-violet-100 dark:bg-violet-950/50 font-mono text-[10px] text-violet-700 dark:text-violet-300"
+                className="inline-flex items-center justify-center w-5 h-5 rounded-sm bg-violet-100 dark:bg-violet-950/50 font-mono text-xs text-violet-700 dark:text-violet-300"
               >
                 {ch === " " ? "␣" : ch}
               </span>
@@ -462,7 +462,7 @@ export function MLPWindow() {
 
         {/* embedding 拼接 */}
         <div className="flex flex-col items-center">
-          <div className="text-[10px] font-mono text-muted-foreground mb-1">
+          <div className="text-xs font-mono text-muted-foreground mb-1">
             concat (16×64=1024)
           </div>
           <div className="flex h-5 w-32 rounded-sm overflow-hidden">
@@ -485,7 +485,7 @@ export function MLPWindow() {
 
         {/* MLP 层 */}
         <div className="flex flex-col items-center">
-          <div className="text-[10px] font-mono text-muted-foreground mb-1">
+          <div className="text-xs font-mono text-muted-foreground mb-1">
             MLP
           </div>
           <div className="flex gap-1">
@@ -509,7 +509,7 @@ export function MLPWindow() {
 
         {/* 预测结果 */}
         <div className="flex flex-col items-center">
-          <div className="text-[10px] font-mono text-muted-foreground mb-1">
+          <div className="text-xs font-mono text-muted-foreground mb-1">
             next
           </div>
           <motion.span
@@ -556,7 +556,7 @@ export function AttentionFlow() {
     <VisualFrame title="Self-Attention：动态决定关注历史每个位置的程度">
       <div className="flex flex-col items-center">
         {/* Key 行 */}
-        <div className="text-[10px] font-mono text-muted-foreground mb-2">
+        <div className="text-xs font-mono text-muted-foreground mb-2">
           Keys（历史 token）
         </div>
         <div className="flex gap-3 mb-2">
@@ -589,7 +589,7 @@ export function AttentionFlow() {
                   )}
                 />
               </div>
-              <div className="text-[9px] font-mono text-muted-foreground">
+              <div className="text-xs font-mono text-muted-foreground">
                 {(w[i] * 100).toFixed(0)}%
               </div>
             </div>
@@ -641,7 +641,7 @@ export function AttentionFlow() {
             </div>
           ))}
         </div>
-        <div className="text-[10px] font-mono text-muted-foreground mt-2">
+        <div className="text-xs font-mono text-muted-foreground mt-2">
           Query（当前预测位置）
         </div>
       </div>
@@ -853,10 +853,10 @@ export function ModelComparison() {
               />
               <div className="flex-1 min-w-0">
                 <div className="font-mono text-sm font-medium">{m.name}</div>
-                <div className="text-[10px] font-mono text-muted-foreground">
+                <div className="text-xs font-mono text-muted-foreground">
                   {m.params} · ctx {m.ctx}
                 </div>
-                <div className="text-[10px] font-mono text-muted-foreground">
+                <div className="text-xs font-mono text-muted-foreground">
                   val loss → {m.finalLoss}
                 </div>
               </div>

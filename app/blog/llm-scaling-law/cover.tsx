@@ -110,16 +110,16 @@ export function EfficientAttentionCover({ className }: { className?: string }) {
             <motion.div key={`q-${i}`} className="w-3 h-3 rounded-sm bg-emerald-500" animate={{ scale: [1, 1.1, 1] }} transition={{ delay: i * 0.05, duration: 0.5 }} />
           ))}
         </div>
-        <div className="text-[8px] font-mono text-emerald-700 dark:text-emerald-300">Q heads: 8</div>
+        <div className="text-xs font-mono text-emerald-700 dark:text-emerald-300">Q heads: 8</div>
         {/* KV 行 */}
         <div className="flex gap-1">
           {Array.from({ length: blocks[phase][1] }, (_, i) => (
             <motion.div key={`kv-${phase}-${i}`} initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.08 }} className="w-3 h-3 rounded-sm bg-teal-500" />
           ))}
         </div>
-        <div className="text-[8px] font-mono text-teal-700 dark:text-teal-300">KV heads: {blocks[phase][1]}</div>
+        <div className="text-xs font-mono text-teal-700 dark:text-teal-300">KV heads: {blocks[phase][1]}</div>
         {/* 标签 */}
-        <div className="text-[10px] font-mono font-semibold text-foreground/80 mt-1">{labels[phase]}</div>
+        <div className="text-xs font-mono font-semibold text-foreground/80 mt-1">{labels[phase]}</div>
       </div>
     </div>
   );
@@ -141,15 +141,15 @@ export function SFTCover({ className }: { className?: string }) {
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-12">
         {/* Instruction */}
         <div className="w-full rounded-lg border border-amber-300 dark:border-amber-600 bg-white dark:bg-neutral-900 px-3 py-2 shadow-sm">
-          <div className="text-[8px] font-mono text-amber-600 dark:text-amber-400 font-semibold mb-0.5">Instruction</div>
-          <div className="text-[11px] text-foreground">What is 2+2?</div>
+          <div className="text-xs font-mono text-amber-600 dark:text-amber-400 font-semibold mb-0.5">Instruction</div>
+          <div className="text-xs text-foreground">What is 2+2?</div>
         </div>
         {/* Arrow */}
         <motion.div animate={{ opacity: show ? 1 : 0.4 }} className="text-amber-500 dark:text-amber-400 text-sm font-bold">↓</motion.div>
         {/* Response */}
         <motion.div animate={{ opacity: show ? 1 : 0.4, y: show ? 0 : 4 }} transition={{ duration: 0.4 }} className="w-full rounded-lg border border-emerald-300 dark:border-emerald-600 bg-white dark:bg-neutral-900 px-3 py-2 shadow-sm">
-          <div className="text-[8px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold mb-0.5">Response</div>
-          <div className="text-[11px] text-foreground">{show ? "4" : "..."}</div>
+          <div className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-semibold mb-0.5">Response</div>
+          <div className="text-xs text-foreground">{show ? "4" : "..."}</div>
         </motion.div>
       </div>
     </div>
@@ -172,15 +172,15 @@ export function DPOCover({ className }: { className?: string }) {
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-14">
         {/* Chosen */}
         <motion.div animate={{ scale: pulse ? 1.05 : 1, opacity: pulse ? 1 : 0.8 }} className="w-full rounded-lg border-2 border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/40 px-3 py-2.5 text-center shadow-sm">
-          <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">chosen</div>
-          <div className="text-[9px] text-emerald-600 dark:text-emerald-400 mt-0.5">detailed, helpful</div>
+          <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">chosen</div>
+          <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">detailed, helpful</div>
         </motion.div>
         {/* VS */}
-        <div className="text-[10px] font-mono font-bold text-foreground/60">vs</div>
+        <div className="text-xs font-mono font-bold text-foreground/60">vs</div>
         {/* Rejected */}
         <motion.div animate={{ scale: pulse ? 0.95 : 1, opacity: pulse ? 0.5 : 0.8 }} className="w-full rounded-lg border-2 border-red-300 dark:border-red-500 bg-red-50 dark:bg-red-900/30 px-3 py-2.5 text-center shadow-sm">
-          <div className="text-[11px] font-semibold text-red-600 dark:text-red-300 line-through">rejected</div>
-          <div className="text-[9px] text-red-500 dark:text-red-400 mt-0.5">lazy, unhelpful</div>
+          <div className="text-xs font-semibold text-red-600 dark:text-red-300 line-through">rejected</div>
+          <div className="text-xs text-red-500 dark:text-red-400 mt-0.5">lazy, unhelpful</div>
         </motion.div>
       </div>
     </div>
@@ -246,18 +246,18 @@ export function DeployCover({ className }: { className?: string }) {
     <div className={cn("relative aspect-square w-full overflow-hidden rounded-2xl", "bg-[#1e293b] dark:bg-[#0f172a]", className)}>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-12">
         {/* 标题 */}
-        <div className="text-[9px] font-mono text-slate-400 mb-1 self-start">$ docker compose up</div>
+        <div className="text-xs font-mono text-slate-400 mb-1 self-start">$ docker compose up</div>
         {/* 服务方块 */}
         {services.map((svc, i) => (
-          <motion.div key={svc.label} animate={{ opacity: active === i ? 1 : 0.6, scale: active === i ? 1.03 : 1 }} className={cn("w-full rounded-lg border px-4 py-2 flex items-center justify-between font-mono text-[11px]", svc.color)}>
+          <motion.div key={svc.label} animate={{ opacity: active === i ? 1 : 0.6, scale: active === i ? 1.03 : 1 }} className={cn("w-full rounded-lg border px-4 py-2 flex items-center justify-between font-mono text-xs", svc.color)}>
             <span className="font-semibold">{svc.label}</span>
-            <span className="text-[9px] opacity-70">:{svc.port}</span>
+            <span className="text-xs opacity-70">:{svc.port}</span>
           </motion.div>
         ))}
         {/* 状态 */}
         <div className="flex items-center gap-1.5 mt-1">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[9px] font-mono text-emerald-400">healthy</span>
+          <span className="text-xs font-mono text-emerald-400">healthy</span>
         </div>
       </div>
     </div>
@@ -321,13 +321,13 @@ export function LandscapeLLMCover({ className }: { className?: string }) {
         {layers.map((layer, i) => (
           <motion.div key={layer.label} className="flex items-center gap-2" initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }} transition={{ delay: i * 0.08, duration: 0.4 }}>
             <div className={cn("h-4 rounded-sm flex-1 origin-left", layer.color)} style={{ opacity: 0.85 }} />
-            <span className="text-[8px] font-mono text-slate-400 w-16 text-right">{layer.label}</span>
+            <span className="text-xs font-mono text-slate-400 w-16 text-right">{layer.label}</span>
           </motion.div>
         ))}
       </div>
       {/* 标题 */}
       <div className="absolute bottom-5 left-0 right-0 text-center">
-        <span className="text-[10px] font-mono text-slate-500 tracking-widest">FULL STACK</span>
+        <span className="text-xs font-mono text-slate-500 tracking-widest">FULL STACK</span>
       </div>
     </div>
   );

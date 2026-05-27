@@ -106,7 +106,7 @@ export function TokenizerCover({ className }: { className?: string }) {
       </div>
       {/* 底部标注 */}
       <div className="absolute bottom-[25%] left-0 right-0 text-center">
-        <span className="text-[10px] font-mono text-muted-foreground/60">
+        <span className="text-xs font-mono text-muted-foreground/60">
           {phase === 0 ? "char" : phase === 1 ? "subword" : "token"}
         </span>
       </div>
@@ -240,7 +240,7 @@ export function TransformerCover({ className }: { className?: string }) {
           <motion.div
             key={layer.label}
             className={cn(
-              "w-full rounded border px-3 py-1.5 text-center font-mono text-[10px] transition-all",
+              "w-full rounded border px-3 py-1.5 text-center font-mono text-xs transition-all",
               layer.color,
               pulse === i && "ring-2 ring-offset-1 ring-foreground/20"
             )}
@@ -258,7 +258,7 @@ export function TransformerCover({ className }: { className?: string }) {
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="text-muted-foreground/40 text-[10px]"
+              className="text-muted-foreground/40 text-xs"
               animate={{ opacity: pulse > i ? 1 : 0.3 }}
             >
               ↓

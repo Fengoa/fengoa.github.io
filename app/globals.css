@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* =========================================================================
+ * 排版规则
+ * -------------------------------------------------------------------------
+ * 字号下限：HTML 元素最小 text-xs (12px)。
+ *   - 禁止使用 text-[8px]/[9px]/[10px]/[11px] 等小于 12px 的字号
+ *   - 例外：SVG 内 <text> 元素（按 viewBox 单位渲染，由 SVG 缩放控制视觉大小）
+ *   - 如需"次要文字"层次，用 text-muted-foreground / opacity 而非缩小字号
+ * ========================================================================= */
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -291,16 +300,16 @@ html[data-mode="present"] main[data-blog-main] > .presentation-slide {
 }
 /* 演示模式下放大 h1/h2 */
 html[data-mode="present"] main[data-blog-main] h1 {
-  font-size: 2.75rem !important;
+  font-size: 3.5rem !important;
   line-height: 1.15 !important;
 }
 html[data-mode="present"] main[data-blog-main] h2 {
-  font-size: 2rem !important;
+  font-size: 2.5rem !important;
   margin-top: 0 !important;
-  margin-bottom: 1.5rem !important;
+  margin-bottom: 2rem !important;
 }
 html[data-mode="present"] main[data-blog-main] h3 {
-  font-size: 1.5rem !important;
+  font-size: 1.875rem !important;
 }
 
 

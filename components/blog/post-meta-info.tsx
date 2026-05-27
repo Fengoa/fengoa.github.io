@@ -17,7 +17,7 @@ export function PostMetaInfo() {
         <Calendar className="size-3 -mt-px" />
         {post.date}
       </span>
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-border text-[10px]">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-border text-xs">
         {post.tag}
       </span>
     </div>

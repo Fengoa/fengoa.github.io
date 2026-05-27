@@ -104,7 +104,7 @@ export function PostCard({ post, index, onDislike }: { post: PostData; index: nu
                 {formatDate(post.date)}
               </span>
               {post.tag && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-border text-[10px]">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full border border-border text-xs">
                   {post.tag}
                 </span>
               )}

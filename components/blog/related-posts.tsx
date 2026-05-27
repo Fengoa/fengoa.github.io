@@ -48,7 +48,7 @@ function RelatedPostsInner({ currentSlug, currentTag }: { currentSlug: string; c
 
   return (
     <div className="flex flex-col gap-2.5 mt-8 pt-6 border-t border-border/50">
-      <span className="text-[10px] font-mono text-muted-foreground/60 tracking-wider uppercase">
+      <span className="text-xs font-mono text-muted-foreground/60 tracking-wider uppercase">
         推荐阅读
       </span>
       <div className="flex flex-col gap-1">

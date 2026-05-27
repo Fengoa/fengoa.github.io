@@ -297,7 +297,7 @@ export function CommandPalette() {
           }
           className="flex-1 bg-transparent border-none outline-none text-[15px] text-foreground placeholder:text-muted-foreground"
         />
-        <kbd className="hidden sm:inline-flex font-mono text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+        <kbd className="hidden sm:inline-flex font-mono text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
           ESC
         </kbd>
       </div>
@@ -315,7 +315,7 @@ export function CommandPalette() {
               <Command.Group
                 key={group}
                 heading={group}
-                className="**:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-[10px] **:[[cmdk-group-heading]]:font-mono **:[[cmdk-group-heading]]:uppercase **:[[cmdk-group-heading]]:tracking-wider **:[[cmdk-group-heading]]:text-muted-foreground"
+                className="**:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-mono **:[[cmdk-group-heading]]:uppercase **:[[cmdk-group-heading]]:tracking-wider **:[[cmdk-group-heading]]:text-muted-foreground"
               >
                 {cmds.map((cmd) => (
                   <Command.Item
@@ -370,7 +370,7 @@ export function CommandPalette() {
                       <Highlight text={hit.title} query={query} />
                     </span>
                     {hit.tag && (
-                      <span className="shrink-0 text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                      <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                         {hit.tag}
                       </span>
                     )}
@@ -387,7 +387,7 @@ export function CommandPalette() {
       </Command.List>
 
       {/* 底部提示栏 */}
-      <div className="flex items-center justify-between gap-3 px-4 py-2 border-t border-border text-[11px] font-mono text-muted-foreground">
+      <div className="flex items-center justify-between gap-3 px-4 py-2 border-t border-border text-xs font-mono text-muted-foreground">
         <div className="flex items-center gap-3">
           <span>
             <kbd className="inline-flex items-center justify-center min-w-4 h-4 px-1 rounded bg-muted border border-border">

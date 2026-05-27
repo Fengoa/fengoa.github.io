@@ -83,7 +83,7 @@ function Connector({ label, theme }: { label: string; theme: ThemeKey }) {
       <div className="w-px h-3 bg-[#ccc] dark:bg-[#444]" />
       <span
         className={cn(
-          "text-[10px] font-semibold px-3 py-0.5 rounded-full",
+          "text-xs font-semibold px-3 py-0.5 rounded-full",
           t.chip
         )}
       >
@@ -115,10 +115,10 @@ function Card({
         frontier && "border-l-2 border-l-[#7F77DD]"
       )}
     >
-      <div className={cn("text-[11px] font-semibold mb-1", t.name)}>
+      <div className={cn("text-xs font-semibold mb-1", t.name)}>
         {name}
       </div>
-      <div className={cn("text-[10px] leading-[1.7]", t.desc)}>{children}</div>
+      <div className={cn("text-xs leading-[1.7]", t.desc)}>{children}</div>
     </div>
   );
 }
@@ -140,12 +140,12 @@ function Layer({
       <div className={cn("text-[13px] font-semibold mb-3 flex items-center gap-2", t.title)}>
         {title}
         {tag === "new" && (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#d85a30] text-white">
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-[#d85a30] text-white">
             NEW
           </span>
         )}
         {tag === "frontier" && (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#7F77DD] text-white">
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-[#7F77DD] text-white">
             前沿
           </span>
         )}
@@ -290,10 +290,10 @@ export function RecSystemLandscape({ className }: { className?: string }) {
               themes.rank.cardBorder
             )}
           >
-            <div className={cn("text-[11px] font-semibold mb-1", themes.rank.name)}>
+            <div className={cn("text-xs font-semibold mb-1", themes.rank.name)}>
               粗排
             </div>
-            <div className={cn("text-[10px] leading-[1.7]", themes.rank.desc)}>
+            <div className={cn("text-xs leading-[1.7]", themes.rank.desc)}>
               向量点积（轻量双塔）
               <br />
               LR / GBDT / 简单 MLP
@@ -308,10 +308,10 @@ export function RecSystemLandscape({ className }: { className?: string }) {
               themes.rank.cardBorder
             )}
           >
-            <div className={cn("text-[11px] font-semibold mb-1", themes.rank.name)}>
+            <div className={cn("text-xs font-semibold mb-1", themes.rank.name)}>
               精排
             </div>
-            <div className={cn("text-[10px] leading-[1.7]", themes.rank.desc)}>
+            <div className={cn("text-xs leading-[1.7]", themes.rank.desc)}>
               Wide & Deep / DeepFM / xDeepFM
               <br />
               DIN / DIEN（用户兴趣建模）
@@ -429,10 +429,10 @@ export function RecSystemLandscape({ className }: { className?: string }) {
         <div className="rounded-lg p-3 border border-[#d3d1c7] dark:border-[#3a3835] bg-[#f1efe8] dark:bg-[#1c1b1a] flex gap-3">
           <span className="text-lg shrink-0 text-[#666]">↺</span>
           <div>
-            <div className="text-[11px] font-semibold text-[#444441] dark:text-[#ccc] mb-1">
+            <div className="text-xs font-semibold text-[#444441] dark:text-[#ccc] mb-1">
               数据飞轮（反馈闭环）
             </div>
-            <div className="text-[10px] text-[#6b6b66] dark:text-[#999] leading-[1.7]">
+            <div className="text-xs text-[#6b6b66] dark:text-[#999] leading-[1.7]">
               用户行为 → 训练样本实时回流 → 特征/模型持续迭代 → 更好的推荐 → 更多高质量行为数据
             </div>
           </div>
@@ -441,7 +441,7 @@ export function RecSystemLandscape({ className }: { className?: string }) {
         <div className="rounded-lg p-3 border border-[#d3d1c7] dark:border-[#3a3835] bg-[#f1efe8] dark:bg-[#1c1b1a] flex gap-3">
           <span className="text-base shrink-0 pt-0.5 text-[#666]">⚙</span>
           <div>
-            <div className="text-[11px] font-semibold text-[#444441] dark:text-[#ccc] mb-1.5">
+            <div className="text-xs font-semibold text-[#444441] dark:text-[#ccc] mb-1.5">
               模型服务 / 工程层（横跨全链路）
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -455,7 +455,7 @@ export function RecSystemLandscape({ className }: { className?: string }) {
               ].map((tag) => (
                 <span
                   key={tag}
-                  className="text-[9px] px-2 py-0.5 rounded-full bg-[#e6e4dc] dark:bg-[#333] text-[#5f5e5a] dark:text-[#aaa] font-medium"
+                  className="text-xs px-2 py-0.5 rounded-full bg-[#e6e4dc] dark:bg-[#333] text-[#5f5e5a] dark:text-[#aaa] font-medium"
                 >
                   {tag}
                 </span>
@@ -466,7 +466,7 @@ export function RecSystemLandscape({ className }: { className?: string }) {
 
         <div className="rounded-lg p-3 border border-[#d3d1c7] dark:border-[#3a3835] bg-[#f8f7f4] dark:bg-[#181818] flex gap-3 items-center">
           <span className="text-xs text-[#888] shrink-0">▶</span>
-          <div className="flex items-center gap-1.5 flex-wrap text-[9px] font-semibold">
+          <div className="flex items-center gap-1.5 flex-wrap text-xs font-semibold">
             <span className={cn("px-2 py-0.5 rounded-full", themes.data.chip)}>全量亿级</span>
             <span className="text-[#ccc] dark:text-[#555]">→</span>
             <span className={cn("px-2 py-0.5 rounded-full", themes.recall.chip)}>千级（召回）</span>

@@ -74,7 +74,7 @@ export function BlogHero({ tags, activeTag, onTagChange, tagCounts }: BlogHeroPr
             >
               <span>{tag.label}</span>
               {tagCounts && (
-                <span className="text-[10px] opacity-60">
+                <span className="text-xs opacity-60">
                   {tagCounts[tag.id] ?? 0}
                 </span>
               )}
@@ -118,7 +118,7 @@ export function BlogHero({ tags, activeTag, onTagChange, tagCounts }: BlogHeroPr
                   >
                     <span>{tag.label}</span>
                     {tagCounts && (
-                      <span className="text-[10px] opacity-60">
+                      <span className="text-xs opacity-60">
                         {tagCounts[tag.id] ?? 0}
                       </span>
                     )}

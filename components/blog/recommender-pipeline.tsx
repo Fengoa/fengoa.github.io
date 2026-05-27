@@ -51,7 +51,7 @@ export function RecommenderPipeline() {
                 {stage.count}
               </div>
               {stage.detail && (
-                <div className="text-[10px] mt-1 text-neutral-500">
+                <div className="text-xs mt-1 text-neutral-500">
                   {stage.detail}
                 </div>
               )}
@@ -111,7 +111,7 @@ export function RecommenderPipeline() {
                 </span>
               </div>
               {stage.detail && (
-                <div className="text-[10px] mt-1 text-neutral-500">
+                <div className="text-xs mt-1 text-neutral-500">
                   {stage.detail}
                 </div>
               )}

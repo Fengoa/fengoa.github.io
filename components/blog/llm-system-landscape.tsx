@@ -114,7 +114,7 @@ function Connector({ label, theme }: { label: string; theme: ThemeKey }) {
     <div className="flex items-center justify-center py-1">
       <div className="flex flex-col items-center gap-0.5">
         <div className="w-[1.5px] h-3 bg-neutral-300 dark:bg-neutral-600" />
-        <span className={cn("text-[10px] font-semibold px-3 py-0.5 rounded-full", t.chip)}>{label}</span>
+        <span className={cn("text-xs font-semibold px-3 py-0.5 rounded-full", t.chip)}>{label}</span>
         <div className="w-[1.5px] h-3 bg-neutral-300 dark:bg-neutral-600" />
       </div>
     </div>
