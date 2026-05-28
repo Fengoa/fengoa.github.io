@@ -5,10 +5,20 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X, Maximize2, Minimize2 } from "lucide-react";
 import { useMode } from "@/components/mode-provider";
 
+/** 当前页面的 sessionStorage key，按 pathname 区分 */
+function slideStorageKey() {
+  if (typeof window === "undefined") return "";
+  return `present:slide:${window.location.pathname}`;
+}
+
 /**
  * 演示模式：把博客 main 内的内容按 <h2> 切片，全屏一次显示一页。
  * 实现方式：DOM 操作 —— 启动时遍历 main 的直接子节点，按 h2 包成
  * <div data-slide-group="N">，CSS 控制只显示当前 slide。退出时还原。
+ *
+ * 持久化：
+ *   - mode 同步到 URL hash（由 ModeProvider 负责），刷新后从 hash 恢复
+ *   - 当前 slide 号同步到 sessionStorage（按 pathname 区分），刷新后从中恢复
  */
 export function PresentationMode() {
   const { mode, setMode } = useMode();
@@ -62,9 +72,17 @@ export function PresentationMode() {
       main.appendChild(wrapper);
     });
 
+    // 从 sessionStorage 恢复上次的 slide 索引（刷新页面时）
+    const stored = sessionStorage.getItem(slideStorageKey());
+    const restored = stored ? parseInt(stored, 10) : 0;
+    const initial =
+      Number.isFinite(restored) && restored >= 0 && restored < groups.length
+        ? restored
+        : 0;
+
     setSlideCount(groups.length);
-    setCurrent(0);
-    main.setAttribute("data-current-slide", "0");
+    setCurrent(initial);
+    main.setAttribute("data-current-slide", String(initial));
 
     return () => {
       // 还原：清空 main，把原始 children 一一放回
@@ -73,13 +91,16 @@ export function PresentationMode() {
       originalChildrenRef.current.forEach((n) => main.appendChild(n));
       main.removeAttribute("data-current-slide");
       originalChildrenRef.current = null;
+      // 退出时清掉 slide 存储，下次重新进入从 0 开始
+      sessionStorage.removeItem(slideStorageKey());
     };
   }, [mode, setMode]);
 
-  // 同步当前页到 DOM
+  // 同步当前页到 DOM + sessionStorage
   useEffect(() => {
     if (mode !== "present" || !mainRef.current) return;
     mainRef.current.setAttribute("data-current-slide", String(current));
+    sessionStorage.setItem(slideStorageKey(), String(current));
     // 滚动到顶部
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [current, mode]);
@@ -89,7 +110,7 @@ export function PresentationMode() {
     if (mode !== "present") return;
     const onKey = (e: KeyboardEvent) => {
       // 命令面板打开时让位
-      if (document.querySelector('[cmdk-root]')) return;
+      if (document.querySelector("[cmdk-root]")) return;
 
       switch (e.key) {
         case "ArrowRight":
@@ -176,9 +197,7 @@ export function PresentationMode() {
         </div>
         <button
           type="button"
-          onClick={() =>
-            setCurrent((c) => Math.min(slideCount - 1, c + 1))
-          }
+          onClick={() => setCurrent((c) => Math.min(slideCount - 1, c + 1))}
           disabled={current === slideCount - 1}
           className="inline-flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           title="下一页 → / Space / j"

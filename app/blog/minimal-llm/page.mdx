@@ -24,12 +24,9 @@ export const metadata = {
 
 ## 语言模型在做什么
 
-一句话：
+用一句话讲，就是给定前面的 token，预测下一个 token 的概率分布。
 
-```text
-给定前面的 token，预测下一个 token 的概率分布。
-P(next | context)
-```
+<Math block>{`P(\\text{next} \\mid \\text{context})`}</Math>
 
 <NextTokenPrediction />
 
@@ -193,11 +190,9 @@ the   king   said   to   his   ???
 
 写成公式就一行：
 
-```text
-输出 = softmax(Q × K^T / √d) × V
-```
+<Math block>{`\\text{Attention}(Q, K, V) = \\text{softmax}\\!\\left(\\frac{Q K^\\top}{\\sqrt{d_k}}\\right) V`}</Math>
 
-除以 √d 是为了稳定数值（点积会随维度变大）。
+除以 <Math>{`\\sqrt{d_k}`}</Math> 是为了稳定数值（点积会随维度变大）。
 
 **从 Attention 到完整模型**
 

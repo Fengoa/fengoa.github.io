@@ -275,8 +275,8 @@ export function CommandPalette() {
       onOpenChange={setOpen}
       label={isCommandMode ? "运行命令" : "搜索文章"}
       shouldFilter={false}
-      overlayClassName="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm animate-in fade-in-0 duration-150"
-      contentClassName="fixed z-[201] top-[20%] left-1/2 -translate-x-1/2 w-[90%] max-w-[640px] rounded-xl border border-border bg-background shadow-2xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150"
+      overlayClassName="fixed inset-0 z-500 bg-black/50 backdrop-blur-sm animate-in fade-in-0 duration-150"
+      contentClassName="fixed z-501 top-[20%] left-1/2 -translate-x-1/2 w-[90%] max-w-[640px] rounded-xl border border-border bg-background shadow-2xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150"
     >
       <VisuallyHidden.Root>
         <Dialog.Title>{isCommandMode ? "运行命令" : "搜索文章"}</Dialog.Title>

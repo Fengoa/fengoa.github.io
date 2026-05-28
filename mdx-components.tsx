@@ -14,6 +14,7 @@ import { RecLLMBridge } from "@/components/blog/rec-llm-bridge";
 import { PostMetaInfo } from "@/components/blog/post-meta-info";
 import { RecommenderArchitecture } from "@/components/blog/recommender-architecture";
 import { SeriesNav } from "@/components/blog/series-nav";
+import { Math } from "@/components/ui/math";
 
 export const H1 = (props: ComponentPropsWithoutRef<"h1">) => (
   <>
@@ -246,6 +247,7 @@ export const components = {
   RecLLMBridge,
   RecommenderArchitecture,
   SeriesNav,
+  Math,
   h1: H1,
   H1: H1,
   h2: H2,
