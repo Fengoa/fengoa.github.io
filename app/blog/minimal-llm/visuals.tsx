@@ -269,12 +269,12 @@ export function BigramTable() {
                   transition={{ duration: 0.5, delay: c * 0.02 }}
                   className={cn(
                     "w-full rounded-t transition-colors",
-                    p > 0.3
-                      ? "bg-violet-500 dark:bg-violet-400"
-                      : p > 0.1
-                      ? "bg-violet-300 dark:bg-violet-600"
+                    p > 0.25
+                      ? "bg-violet-600 dark:bg-violet-400"
+                      : p > 0.08
+                      ? "bg-violet-500 dark:bg-violet-500"
                       : p > 0
-                      ? "bg-violet-200 dark:bg-violet-800"
+                      ? "bg-violet-400 dark:bg-violet-700"
                       : "bg-neutral-100 dark:bg-neutral-900"
                   )}
                   style={{ minHeight: p > 0 ? "3px" : "0" }}
@@ -345,22 +345,27 @@ export function BigramTable() {
               </div>
               <div
                 className={cn(
-                  "flex-1 grid gap-px rounded-sm transition-shadow",
-                  r === activeRow && "ring-2 ring-violet-400/60 dark:ring-violet-500/60"
+                  "flex-1 grid gap-px transition-shadow",
+                  r === activeRow && "ring-2 ring-violet-500 dark:ring-violet-400"
                 )}
                 style={{ gridTemplateColumns: `repeat(${size}, 1fr)` }}
               >
-                {row.map((p, c) => (
-                  <div
-                    key={`cell-${r}-${c}`}
-                    className="aspect-square transition-colors"
-                    style={{
-                      backgroundColor: `rgba(139, 92, 246, ${(
-                        p * (r === activeRow ? 1 : 0.55)
-                      ).toFixed(3)})`,
-                    }}
-                  />
-                ))}
+                {row.map((p, c) => {
+                  // 用 gamma 提升小值的可见度，否则大量 0.05~0.15 的格子看着像白板
+                  const isActive = r === activeRow;
+                  const dim = isActive ? 1 : 0.85;
+                  // p^0.55 把分布往高位拉，最终 alpha 范围更靠近 0.2~1.0
+                  const alpha = p > 0 ? Math.min(1, Math.pow(p, 0.55) * dim) : 0;
+                  return (
+                    <div
+                      key={`cell-${r}-${c}`}
+                      className="aspect-square transition-colors"
+                      style={{
+                        backgroundColor: `rgba(139, 92, 246, ${alpha.toFixed(3)})`,
+                      }}
+                    />
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -562,52 +567,57 @@ export function AttentionFlow() {
           Keys（历史 token）
         </div>
 
-        {/* Keys 行：等宽 grid，确保 token / 柱 / 百分比三者同列居中 */}
+        {/* Keys 行：token 框 + 下方百分比，颜色随权重高亮 */}
         <div
           className="grid w-full max-w-md gap-2"
           style={{ gridTemplateColumns: `repeat(${N}, minmax(0, 1fr))` }}
         >
-          {tokens.map((tok, i) => (
-            <div key={`k-${i}`} className="flex flex-col items-center">
-              <div
-                className={cn(
-                  "w-full text-center px-2 py-1 rounded border font-mono text-xs transition-all",
-                  i <= queryIdx
-                    ? "border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 text-foreground"
-                    : "border-neutral-200 dark:border-neutral-800 bg-transparent text-muted-foreground/40"
-                )}
-              >
-                {tok}
-              </div>
-              {/* 权重柱（固定高度容器，柱体在其内对齐底部） */}
-              <div className="h-12 w-full mt-2 flex items-end justify-center">
-                <motion.div
-                  key={`bar-${queryIdx}-${i}`}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${w[i] * 100}%` }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
+          {tokens.map((tok, i) => {
+            const visible = i <= queryIdx;
+            const strong = w[i] > 0.4;
+            const medium = w[i] > 0.15;
+            return (
+              <div key={`k-${i}`} className="flex flex-col items-center">
+                <div
                   className={cn(
-                    "w-3 rounded-t",
-                    w[i] > 0.4
-                      ? "bg-violet-500 dark:bg-violet-400"
-                      : w[i] > 0.15
-                        ? "bg-violet-300 dark:bg-violet-600"
-                        : "bg-neutral-200 dark:bg-neutral-800"
+                    "w-full text-center px-2 py-1 rounded border font-mono text-xs transition-all",
+                    !visible
+                      ? "border-neutral-200 dark:border-neutral-800 bg-transparent text-muted-foreground/40"
+                      : strong
+                        ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300"
+                        : medium
+                          ? "border-violet-300/70 dark:border-violet-700 bg-violet-50/50 dark:bg-violet-950/20 text-violet-700/80 dark:text-violet-300/80"
+                          : "border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 text-foreground"
                   )}
-                />
+                >
+                  {tok}
+                </div>
+                <motion.div
+                  key={`pct-${queryIdx}-${i}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: visible ? 1 : 0.3 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  className={cn(
+                    "text-[11px] font-mono mt-1 tabular-nums transition-colors",
+                    strong
+                      ? "text-violet-600 dark:text-violet-400 font-medium"
+                      : medium
+                        ? "text-violet-500/80 dark:text-violet-400/80"
+                        : "text-muted-foreground/60"
+                  )}
+                >
+                  {(w[i] * 100).toFixed(0)}%
+                </motion.div>
               </div>
-              <div className="text-xs font-mono text-muted-foreground mt-1 tabular-nums">
-                {(w[i] * 100).toFixed(0)}%
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* 连接区：用百分比定位，与上面的 grid 列严格对齐 */}
+        {/* 连接区：从 Keys 百分比下方，连到 Query 框上方，整段无遮挡 */}
         <svg
-          className="my-2 w-full max-w-md"
-          height="50"
-          viewBox="0 0 100 50"
+          className="my-1 w-full max-w-md"
+          height="64"
+          viewBox="0 0 100 64"
           preserveAspectRatio="none"
         >
           {tokens.map((_, i) => {
@@ -619,22 +629,23 @@ export function AttentionFlow() {
             return (
               <motion.path
                 key={`p-${queryIdx}-${i}`}
-                d={`M ${x1} 0 Q ${(x1 + x2) / 2} 25 ${x2} 50`}
+                d={`M ${x1} 0 C ${x1} 32, ${x2} 32, ${x2} 64`}
                 stroke="currentColor"
                 className="text-violet-500 dark:text-violet-400"
-                strokeWidth={Math.max(0.3, w[i] * 1.2)}
+                strokeWidth={Math.max(0.5, w[i] * 2.5)}
                 fill="none"
-                strokeOpacity={Math.min(1, w[i] * 1.5)}
+                strokeOpacity={Math.min(1, 0.3 + w[i] * 0.8)}
+                strokeLinecap="round"
                 vectorEffect="non-scaling-stroke"
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
               />
             );
           })}
         </svg>
 
-        {/* Query 行：同一个 grid 模板，保证与 Keys 列对齐 */}
+        {/* Query 行 */}
         <div
           className="grid w-full max-w-md gap-2"
           style={{ gridTemplateColumns: `repeat(${N}, minmax(0, 1fr))` }}
@@ -735,8 +746,8 @@ export function ModelComparison() {
 
   return (
     <VisualFrame title="三个模型的训练曲线：上下文越长、动态关注 → loss 越低">
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="flex-1">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
+        <div className="flex-1 min-w-0">
           <svg
             viewBox={`0 0 ${W} ${H}`}
             className="w-full h-auto"
@@ -856,20 +867,23 @@ export function ModelComparison() {
         </div>
 
         {/* 图例 */}
-        <div className="lg:w-44 space-y-3">
+        <div className="lg:w-56 lg:shrink-0 space-y-5">
           {models.map((m) => (
-            <div key={m.name} className="flex items-start gap-2">
+            <div key={m.name} className="flex items-start gap-3">
               <div
-                className="w-3 h-3 rounded-sm mt-1 shrink-0"
+                className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0"
                 style={{ backgroundColor: m.color }}
               />
               <div className="flex-1 min-w-0">
-                <div className="font-mono text-sm font-medium">{m.name}</div>
-                <div className="text-xs font-mono text-muted-foreground">
-                  {m.params} · ctx {m.ctx}
+                <div className="font-mono text-sm font-medium leading-snug">
+                  {m.name}
                 </div>
-                <div className="text-xs font-mono text-muted-foreground">
-                  val loss → {m.finalLoss}
+                <div className="mt-1 text-xs font-mono text-muted-foreground/80 leading-relaxed">
+                  <div>{m.params} 参数</div>
+                  <div>上下文 {m.ctx}</div>
+                  <div>
+                    val loss <span className="text-foreground/70">{m.finalLoss}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -886,13 +900,15 @@ export function ModelComparison() {
 // =============================================================================
 
 export function Tokenize() {
-  // 演示用的小词表（按字符出现的字典序 / 频度选了一组常见字符）
+  // Tiny Shakespeare 真实词表，65 个字符按 ASCII 升序排列
+  // 来源：karpathy/char-rnn 数据集中 stoi 的实际顺序
   const vocab = useMemo(
     () => [
-      " ", "!", ",", ".", ":", "?",
-      "A", "B", "C", "F", "H", "I", "K", "L", "N", "O", "R", "S", "T", "Y",
-      "a", "b", "c", "d", "e", "f", "g", "h", "i", "k", "l",
-      "m", "n", "o", "p", "r", "s", "t", "u", "v", "w", "y",
+      "\n", " ", "!", "$", "&", "'", ",", "-", ".", "3", ":", ";", "?",
+      "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+      "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+      "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+      "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
     ],
     []
   );
@@ -922,16 +938,20 @@ export function Tokenize() {
   const chars = text.split("");
   const ids = chars.map((ch) => charToId.get(ch) ?? 0);
 
-  // 显示空格用 ␣ 占位
-  const showChar = (ch: string) => (ch === " " ? "␣" : ch);
+  // 空格 → ␣，换行 → ↵，方便在格子里可视化
+  const showChar = (ch: string) => {
+    if (ch === " ") return "␣";
+    if (ch === "\n") return "↵";
+    return ch;
+  };
 
   return (
     <VisualFrame title="字符级 tokenize：每个字符按词表查到一个整数 ID">
       <div className="flex flex-col items-center gap-6">
         {/* 顶部：词表预览 */}
-        <div className="w-full max-w-xl">
+        <div className="w-full max-w-2xl">
           <div className="text-xs font-mono text-muted-foreground mb-2 text-center">
-            vocab（节选 41 个，全词表共 65 个）
+            vocab（共 65 个字符）
           </div>
           <div className="flex flex-wrap gap-1 justify-center">
             {vocab.map((ch, i) => {

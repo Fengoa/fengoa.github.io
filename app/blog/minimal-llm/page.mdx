@@ -15,27 +15,25 @@ export const metadata = {
 
 <SeriesNav series="llm" />
 
-在 ChatGPT 里输入"帮我写一首七言绝句"，两秒钟之后它就给你写好一首。这件事到底是怎么发生的？
+在 ChatGPT 里输入“帮我写一首七言绝句”，两秒钟之后它就给你写好一首。这件事到底是怎么发生的？
 
-说穿了，背后就一件事：给定前面的字，预测下一个字。"床前"后面大概率是"明月"，"明月"后面大概率是"光"。当一个模型把这件事预测得足够准，它就是 GPT。
+说穿了，背后就一件事：给定前面的字，预测下一个字。“床前”后面大概率是“明月”，“明月”后面大概率是“光”。当一个模型把这件事预测得足够准，它就是 GPT。
 
 这篇文章会从最简单的模型开始，一步步搭到能写出几句莎士比亚风格台词的 mini Transformer。一共三个模型，用的都是同一份数据。
 
----
 
 ## 语言模型在做什么
 
-写成数学只有一行：
+把这件事写成数学，其实只有一行：
 
 <Math block>{`P(\\text{next} \\mid \\text{context})`}</Math>
 
-给定一段前文，模型输出下一个 token 在词表上的概率分布。token 的粒度可以很灵活，可以是单个字母，也可以是 "ing" 这样的片段，或者干脆是一个完整的词。这篇文章用最简单的字符级方案，每个字母、标点和换行都算作一个 token。
+给定一段前文，模型输出下一个 token 在词表上的概率分布。token 的粒度可以很灵活，可以是单个字母，也可以是 “ing” 这样的片段，或者干脆是一个完整的词。这篇文章用最简单的字符级方案，每个字母、标点和换行都算作一个 token。
 
 <NextTokenPrediction />
 
 模型要学的就是这个分布。前文看得越多，分布估得越准，生成出来的文本也就越通顺。
 
----
 
 ## 数据
 
@@ -43,7 +41,7 @@ export const metadata = {
 
 整个文件里只出现了 65 种不同字符，包括大小写字母、常见标点、空格和换行。所以词表大小 `vocab_size = 65`，模型在生成时只需要在这 65 个字符里做选择。
 
-数据长这样：
+数据片段大概长这样：
 
 ```text
 First Citizen:
@@ -56,17 +54,16 @@ First Citizen:
 You are all resolved rather to die than to famish?
 ```
 
-通篇都是"角色名 + 冒号 + 台词"的格式，结构非常规整。模型如果学到位了，生成出来的文本也应该是这个样子。
+通篇都是“角色名 + 冒号 + 台词”的格式，结构非常规整。模型如果学到位了，生成出来的文本也应该是这个样子。
 
 把文本喂给模型之前，要先把字符变成数字。给 65 个字符各编一个号（0 到 64），把整个文件按这张表查一遍，`"Hello"` 就成了 `[20, 43, 50, 50, 53]`。前 90% 用来训练，后 10% 留作验证。最后存成二进制文件，下次加载更快。
 
 <Tokenize />
 
----
 
 ## 模型 1：Bigram，只看前一个字符
 
-最简单的做法：只看当前字符，预测下一个。
+最简单的做法是只看当前字符，预测下一个，比如：
 
 ```text
 看到 'H' → 下一个大概率是 'e'（He/His/Her...）
@@ -74,9 +71,11 @@ You are all resolved rather to die than to famish?
 看到 ':' → 下一个大概率是换行（台词开始）
 ```
 
-实现上就是一张 65×65 的查找表，第 i 行存的是"当前字符是 i 时，下一个字符的概率分布"。模型要做的，就是把这 4225 个数字调到合适的值。
+实现上就是一张 65×65 的查找表，第 i 行存的是“当前字符是 i 时，下一个字符的概率分布”。模型要做的，就是把这 4225 个数字调到合适的值。
 
 <BigramTable />
+
+写成 PyTorch 大概是这样：
 
 ```python
 class BigramModel(nn.Module):
@@ -91,7 +90,7 @@ class BigramModel(nn.Module):
         return logits, loss
 ```
 
-训练 5000 步，9 秒：
+在我的 Mac 上跑 5000 步只要 9 秒，loss 很快就收敛了：
 
 ```text
 step     0 | val loss 4.53  ← 随机猜（ln(65)=4.17，还没开始学）
@@ -99,7 +98,7 @@ step  2500 | val loss 2.82
 step  5000 | val loss 2.53  ← 收敛了
 ```
 
-生成效果：
+让训练好的模型吐一段文本，得到的是这个样子：
 
 ```text
 NG ce'ig yosthe th hoo, phey,
@@ -108,15 +107,16 @@ As wabel nd CKc! nos yo nor s,
 
 能拼出 th、he、ng 这种常见的字母搭配，但凑不出完整的单词。一个字符的信息量就这么多，能学到这一步已经不错了。
 
----
 
 ## 模型 2：MLP，看前 16 个字符
 
-Bigram 的问题很明显：一次只看 1 个字符。"t" 后面跟什么，得看前面是 "tha"（→ "t"）还是 "wri"（→ "t" → "e"），单看一个字符根本判断不了。
+Bigram 的问题很明显：一次只看 1 个字符。“t” 后面跟什么，得看前面是 “tha”（→ “t”）还是 “wri”（→ “t” → “e”），单看一个字符根本判断不了。
 
 那就把窗口拉大，一次看前 16 个字符，把它们拼起来过一个全连接网络。
 
 <MLPWindow />
+
+整个流程像这样：
 
 ```text
 窗口 [B, e, f, o, r, e, ' ', w, e, ' ', p, r, o, c, e, e]
@@ -128,15 +128,15 @@ Bigram 的问题很明显：一次只看 1 个字符。"t" 后面跟什么，得
 
 这就是 Bengio 在 2003 年提出的方法，是神经语言模型的雏形，二十多年过去仍然是教科书里的标准写法。
 
-训练 10000 步，71 秒：
+训练 10000 步用了 71 秒，loss 比 Bigram 直接好了一个量级：
 
 ```text
 step     0 | val loss 4.10
 step  3000 | val loss 1.83
-step 10000 | val loss 1.78  ← 比 Bigram 好了一个量级
+step 10000 | val loss 1.78
 ```
 
-生成效果：
+生成的文本明显比上一个模型像话了：
 
 ```text
 GLOUCESTER:
@@ -146,9 +146,8 @@ CLIFFORD:
 Has hees soney not have kind so thity where is you
 ```
 
-这次能看到完整的单词了，"角色名 + 冒号"的格式也学会了。但句子经常读到一半就断掉，因为窗口固定只有 16 个字符，更远处的内容它看不到。
+这次能看到完整的单词了，“角色名 + 冒号”的格式也学会了。但句子经常读到一半就断掉，因为窗口固定只有 16 个字符，更远处的内容它看不到。
 
----
 
 ## 模型 3：MiniGPT，Self-Attention
 
@@ -158,9 +157,9 @@ MLP 还有几个问题：
 2. 拼接的方式权重太多，窗口一大参数量就爆炸
 3. 每个位置一视同仁，分不清哪些更重要
 
-我们希望模型能自己决定"看哪里"，而不是一直死板地看前 N 个字符。
+想要的效果是让模型能自己决定“看哪里”，而不是一直死板地看前 N 个字符。
 
-举个例子，要预测 `"the king said to his ___"` 的下一个词：
+举个例子，假设要预测 `"the king said to his ___"` 的下一个词，每个历史位置的“重要性”大概是这样：
 
 ```text
 the   king   said   to   his   ???
@@ -168,13 +167,13 @@ the   king   said   to   his   ???
 低关注  高关注  最关注  低关注 高关注
 ```
 
-直觉上，"said" 和 "king" 决定了下一个词是什么，"the" 和 "to" 几乎没有信息量。Attention 做的就是这件事：根据当前位置的需要，在历史里临时分配权重，重要的位置多看一点，不重要的就忽略。
+直觉上，“said” 和 “king” 决定了下一个词是什么，“the” 和 “to” 几乎没有信息量。Attention 做的就是这件事：根据当前位置的需要，在历史里临时分配权重，重要的位置多看一点，不重要的就忽略。
 
 <AttentionFlow />
 
 具体怎么分配？做法是给每个位置发三样东西：Query 表示它当前在找什么，Key 表示它对外暴露的标签，Value 是它实际携带的信息。
 
-计算的时候，当前位置拿自己的 Query，和历史里每个位置的 Key 一一做点积。点积大说明对方的内容正好对得上，权重就高；点积小则基本无关。把这些权重过一遍 softmax 归一，再去加权求和所有位置的 Value，就得到了当前位置的输出。
+计算的时候，当前位置拿自己的 Query，和历史里每个位置的 Key 一一做点积。点积大说明对方的内容正好对得上，权重就高；点积小则基本无关。把这些权重过一遍 softmax 归一，再去加权求和所有位置的 Value，就得到了当前位置的输出。整个过程串起来就是：
 
 ```text
 当前位置的 Query 和所有历史位置的 Key 做点积
@@ -183,13 +182,13 @@ the   king   said   to   his   ???
 → 得到当前位置的输出
 ```
 
-写成公式：
+写成公式只有一行：
 
 <Math block>{`\\text{Attention}(Q, K, V) = \\text{softmax}\\!\\left(\\frac{Q K^\\top}{\\sqrt{d_k}}\\right) V`}</Math>
 
 公式里的 <Math>{`\\sqrt{d_k}`}</Math> 是用来缩放数值的。维度一大，点积也跟着变大，softmax 容易落到饱和区，梯度就传不回去了。
 
-一个 Attention 只能学到一种关注模式，不太够用。语言里要照顾的关系很多，所以一般会并行开 4 个 Attention Head，各自学各自的，最后把结果拼起来。再叠上 FFN 做非线性变换、LayerNorm 稳住训练、残差连接防止梯度消失，就构成了一个 Transformer Block。把它堆 2 层，就是这里要训练的 MiniGPT：
+一个 Attention 只能学到一种关注模式，不太够用。语言里要照顾的关系很多，所以一般会并行开 4 个 Attention Head，各自学各自的，最后把结果拼起来。再叠上 FFN 做非线性变换、LayerNorm 稳住训练、残差连接防止梯度消失，就构成了一个 Transformer Block。把它堆 2 层，再前后加上 embedding 和输出层，就是这里要训练的 MiniGPT：
 
 ```text
 Token Embedding + Position Embedding
@@ -202,16 +201,16 @@ Token Embedding + Position Embedding
 
 总共 42 万参数，能看到 64 个字符的上下文。
 
-训练 10000 步，110 秒：
+训练 10000 步用了 110 秒，loss 又往下降了一截：
 
 ```text
 step     0 | val loss 3.97
 step  3000 | val loss 1.71
 step  7000 | val loss 1.60
-step 10000 | val loss 1.58  ← 又往下降了一截
+step 10000 | val loss 1.58
 ```
 
-生成效果：
+这次生成出来的文本已经能读了：
 
 ```text
 WARWICK:
@@ -226,7 +225,7 @@ KING EDWARD IV:
 Your come bote yet for his true.
 ```
 
-句子已经能读了。角色名拼写正确、冒号换行格式对、标点也大致到位，偶尔甚至能看到一点语义上的连贯。给它一个 prompt 也能接得下去：
+角色名拼写正确、冒号换行格式对、标点也大致到位，偶尔甚至能看到一点语义上的连贯。给它一个 prompt 也能接得下去，比如喂一个 “KING RICHARD:”，它会自己续出整段对话：
 
 ```text
 输入: "KING RICHARD:"
@@ -239,7 +238,6 @@ Your come bote yet for his true.
 
 它甚至自己续写了一段 ROMEO 的台词。
 
----
 
 ## 三个模型对比
 
@@ -256,9 +254,10 @@ Your come bote yet for his true.
 - Bigram → MLP：能看到的字符从 1 个变成 16 个，看到的更多
 - MLP → MiniGPT：从平均看 16 个，变成自己挑哪几个该多看，看得更准
 
----
 
 ## 代码结构
+
+整个项目的目录组织如下：
 
 ```text
 minimal-llm/src/
@@ -270,7 +269,7 @@ minimal-llm/src/
   checkpoints/        # 模型权重
 ```
 
-运行：
+按下面的顺序跑一遍，就能得到三个训练好的模型：
 
 ```bash
 python prepare_data.py                    # 下载数据
@@ -280,7 +279,6 @@ python train.py --model minigpt           # 训练 MiniGPT（110秒）
 python generate.py --model minigpt --prompt "KING RICHARD:"  # 生成
 ```
 
----
 
 ## 和工业界的距离
 
@@ -295,9 +293,8 @@ python generate.py --model minigpt --prompt "KING RICHARD:"  # 生成
 
 骨架其实没什么差别，都是 Token Embedding + 若干层 Transformer Block + 输出头。差的全是规模。
 
-下一篇会把字符级换成 BPE 子词。一个 token 不再只是单个字母，而是 "the"、"ing"、"tion" 这样有语义的片段，模型每跨一步能拿到的信息就多得多。
+下一篇会把字符级换成 BPE 子词。一个 token 不再只是单个字母，而是 “the”、“ing”、“tion” 这样有语义的片段，模型每跨一步能拿到的信息就多得多。
 
----
 
 ## 参考论文
 
