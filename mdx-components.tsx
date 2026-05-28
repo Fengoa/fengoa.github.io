@@ -129,7 +129,7 @@ export const Blockquote = (props: ComponentPropsWithoutRef<"blockquote">) => (
 
 export const Pre = (props: ComponentPropsWithoutRef<"pre">) => (
   <pre
-    className="mb-8 py-4 px-4 border bg-card rounded overflow-auto font-mono text-sm leading-relaxed"
+    className="mb-8 py-4 px-4 border border-stone-200/80 dark:border-stone-800/80 bg-stone-50 dark:bg-stone-900/60 text-stone-700 dark:text-stone-300 rounded-md overflow-auto font-mono text-sm leading-relaxed"
     {...props}
   />
 );
@@ -152,6 +152,20 @@ export const Code = ({
   }
 
   const codeString = typeof children === "string" ? children : "";
+
+  // 纯文本类语言不做语法高亮，避免把行首大写词错染成"变量名"
+  const isPlainText = /\blanguage-(text|plain|plaintext|txt|none|log)\b/.test(
+    className ?? ""
+  );
+
+  if (isPlainText) {
+    return (
+      <code className="grid min-w-full whitespace-pre" {...props}>
+        {codeString}
+      </code>
+    );
+  }
+
   const html = highlight(codeString);
 
   return (

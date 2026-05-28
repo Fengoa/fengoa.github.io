@@ -420,9 +420,9 @@ export function MLPWindow() {
 
   return (
     <VisualFrame title="MLP 模型：固定 16 字符窗口 → 拼接 embedding → 预测下一字符">
-      {/* 文本流 */}
-      <div className="mb-6 overflow-x-auto">
-        <div className="flex font-mono text-sm leading-none pb-1">
+      {/* 文本流（外层 overflow-x-auto 用于横向滚动；纵向加 py-1 防止 ring 顶/底被裁） */}
+      <div className="mb-6 overflow-x-auto overflow-y-visible">
+        <div className="flex font-mono text-sm leading-none py-1.5">
           {text.map((ch, i) => {
             const inWindow = i >= start && i < start + winSize;
             const isTarget = i === start + winSize;

@@ -19,6 +19,8 @@ export const metadata = {
 
 说穿了，背后就一件事：给定前面的字，预测下一个字。“床前”后面大概率是“明月”，“明月”后面大概率是“光”。当一个模型把这件事预测得足够准，它就是 GPT。
 
+<NextTokenPrediction />
+
 这篇文章会从最简单的模型开始，一步步搭到能写出几句莎士比亚风格台词的 mini Transformer。一共三个模型，用的都是同一份数据。
 
 
@@ -28,18 +30,18 @@ export const metadata = {
 
 <Math block>{`P(\\text{next} \\mid \\text{context})`}</Math>
 
-给定一段前文，模型输出下一个 token 在词表上的概率分布。token 的粒度可以很灵活，可以是单个字母，也可以是 “ing” 这样的片段，或者干脆是一个完整的词。这篇文章用最简单的字符级方案，每个字母、标点和换行都算作一个 token。
+给定一段前文，模型输出下一个 token 在词表上的概率分布。token 的粒度可以很灵活，可以是单个字母，也可以是 “ing” 这样的片段，或者干脆是一个完整的词。这篇文章用最简单的字符级方案，每个字母、标点和换行都算作一个 token，整个词表只有 65 个字符。
 
-<NextTokenPrediction />
+具体怎么把文本变成 token？做法是给 65 个字符各编一个号（0 到 64），把文章按这张表查一遍，`"Hello"` 就成了 `[20, 43, 50, 50, 53]`，模型从此只和整数打交道。
+
+<Tokenize />
 
 模型要学的就是这个分布。前文看得越多，分布估得越准，生成出来的文本也就越通顺。
 
 
 ## 数据
 
-数据用 [Tiny Shakespeare](https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt)，是从莎士比亚全集里截取的一段文本，大小 1MB，约 100 万字符。
-
-整个文件里只出现了 65 种不同字符，包括大小写字母、常见标点、空格和换行。所以词表大小 `vocab_size = 65`，模型在生成时只需要在这 65 个字符里做选择。
+数据用 [Tiny Shakespeare](https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt)，是从莎士比亚全集里截取的一段文本，大小 1MB，约 100 万字符。整个文件里只出现了 65 种不同字符，包括大小写字母、常见标点、空格和换行——前面提到的 `vocab_size = 65` 就是从这里来的。
 
 数据片段大概长这样：
 
@@ -56,9 +58,7 @@ You are all resolved rather to die than to famish?
 
 通篇都是“角色名 + 冒号 + 台词”的格式，结构非常规整。模型如果学到位了，生成出来的文本也应该是这个样子。
 
-把文本喂给模型之前，要先把字符变成数字。给 65 个字符各编一个号（0 到 64），把整个文件按这张表查一遍，`"Hello"` 就成了 `[20, 43, 50, 50, 53]`。前 90% 用来训练，后 10% 留作验证。最后存成二进制文件，下次加载更快。
-
-<Tokenize />
+把整个文件按上面那张字符表 tokenize 一遍，得到一串长长的整数序列。前 90% 用来训练，后 10% 留作验证。最后存成二进制文件，下次加载更快。
 
 
 ## 模型 1：Bigram，只看前一个字符
@@ -94,7 +94,12 @@ class BigramModel(nn.Module):
 
 ```text
 step     0 | val loss 4.53  ← 随机猜（ln(65)=4.17，还没开始学）
+step   500 | val loss 3.41
+step  1000 | val loss 3.02
+step  2000 | val loss 2.86
 step  2500 | val loss 2.82
+step  3500 | val loss 2.65
+step  4500 | val loss 2.56
 step  5000 | val loss 2.53  ← 收敛了
 ```
 
@@ -132,7 +137,11 @@ Bigram 的问题很明显：一次只看 1 个字符。“t” 后面跟什么�
 
 ```text
 step     0 | val loss 4.10
+step  1000 | val loss 2.42
+step  2000 | val loss 1.96
 step  3000 | val loss 1.83
+step  5000 | val loss 1.81
+step  7500 | val loss 1.79
 step 10000 | val loss 1.78
 ```
 
@@ -205,7 +214,9 @@ Token Embedding + Position Embedding
 
 ```text
 step     0 | val loss 3.97
+step  1000 | val loss 2.18
 step  3000 | val loss 1.71
+step  5000 | val loss 1.65
 step  7000 | val loss 1.60
 step 10000 | val loss 1.58
 ```
