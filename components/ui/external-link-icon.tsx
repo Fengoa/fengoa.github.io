@@ -11,7 +11,7 @@ export interface ExternalLinkIconHandle {
 }
 
 interface ExternalLinkIconProps extends HTMLMotionProps<"span"> {
- size?: number;
+ size?: number | string;
  duration?: number;
  isAnimated?: boolean;
 }

@@ -20,6 +20,7 @@ function VisualFrame({
   return (
     <figure className="my-10">
       <div
+        data-no-zoom
         className={cn(
           "rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-6",
           className

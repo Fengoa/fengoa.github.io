@@ -24,21 +24,23 @@ export const metadata = {
 
 ## 语言模型在做什么
 
-用一句话讲，就是给定前面的 token，预测下一个 token 的概率分布。
+刚才说的"看前面的字、预测下一个字"，写成数学就一行：
 
 <Math block>{`P(\\text{next} \\mid \\text{context})`}</Math>
 
+给定前文（context），输出下一个 token 在词表上的概率分布。所谓 token，可以是**字符、子词、或整个词**——这篇我们用最简单的字符级，每个字母 / 标点 / 换行就是一个 token。
+
 <NextTokenPrediction />
 
-"token"可以是字符、子词、或整个词。这篇用最简单的字符级——每个字母/标点/换行就是一个 token。
-
-Tiny Shakespeare 数据集有 65 个不同字符（大小写字母 + 标点 + 空格 + 换行），所以 `vocab_size = 65`。模型的任务就是：看到前面一串字符，预测第 66 种可能里哪个概率最高。
+模型要学的就是这个分布。看得越远（context 越长）、估得越准（分布的熵越低），生成的文本就越通顺。
 
 ---
 
 ## 数据
 
-用 Tiny Shakespeare——莎士比亚全集的一个子集，100 万字符，1MB。长这样：
+用 [Tiny Shakespeare](https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt)——莎士比亚全集的一个子集，100 万字符，1MB。整个文件里只出现过 65 个不同字符（大小写字母 + 标点 + 空格 + 换行），所以词表大小 `vocab_size = 65`。模型的任务就是：看到前面一串字符，从这 65 种里挑出下一个最可能是哪个。
+
+长这样：
 
 ```text
 First Citizen:

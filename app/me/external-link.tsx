@@ -88,17 +88,17 @@ export function ExternalLink({
       {isShimmering ? (
         <TextShimmer
           as="span"
-          className="text-sm inline [--base-color:var(--color-blue-600)]"
+          className="inline [--base-color:var(--color-blue-600)]"
         >
           {children as string}
         </TextShimmer>
       ) : (
-        <span className="text-sm">{children}</span>
+        <span>{children}</span>
       )}
       {showArrow && (
         <ExternalLinkIcon
           ref={iconRef}
-          size={14}
+          size="1em"
           isAnimated={false}
           className="inline-block ml-0.5 align-middle opacity-70"
         />

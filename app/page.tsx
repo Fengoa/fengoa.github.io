@@ -376,7 +376,7 @@ function HomeContent() {
     TAGS.includes(initialTag) ? initialTag : ALL_TAG
   );
   const [currentPage, setCurrentPage] = useState(initialPage);
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 20;
 
   // 同步状态到 URL
   const updateURL = useCallback(
