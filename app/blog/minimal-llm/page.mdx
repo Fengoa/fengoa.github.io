@@ -5,6 +5,7 @@ import {
   AttentionFlow,
   ModelComparison,
   Tokenize,
+  AttentionExample,
 } from "./visuals";
 
 export const metadata = {
@@ -170,11 +171,7 @@ MLP 还有几个问题：
 
 举个例子，假设要预测 `"the king said to his ___"` 的下一个词，每个历史位置的“重要性”大概是这样：
 
-```text
-the   king   said   to   his   ???
- ↑      ↑↑     ↑↑↑    ↑    ↑↑
-低关注  高关注  最关注  低关注 高关注
-```
+<AttentionExample />
 
 直觉上，“said” 和 “king” 决定了下一个词是什么，“the” 和 “to” 几乎没有信息量。Attention 做的就是这件事：根据当前位置的需要，在历史里临时分配权重，重要的位置多看一点，不重要的就忽略。
 
@@ -305,6 +302,15 @@ python generate.py --model minigpt --prompt "KING RICHARD:"  # 生成
 骨架其实没什么差别，都是 Token Embedding + 若干层 Transformer Block + 输出头。差的全是规模。
 
 下一篇会把字符级换成 BPE 子词。一个 token 不再只是单个字母，而是 “the”、“ing”、“tion” 这样有语义的片段，模型每跨一步能拿到的信息就多得多。
+
+
+## 动手跑一遍
+
+文章里的三个模型都整理成了一个自包含的 Colab notebook，从下载数据到生成莎士比亚台词全程不到 5 分钟。直接打开就能跑，不需要本地 Python 环境：
+
+[在 Google Colab 上打开 →](https://colab.research.google.com/drive/1KKxT44KjJkeFfwWjEUnBO8RncfOZRQsd?usp=sharing)
+
+打开后菜单选「代码执行程序 → 更改运行时类型 → GPU」，然后从上到下依次运行所有 cell 即可。
 
 
 ## 参考论文
