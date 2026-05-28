@@ -4,6 +4,7 @@ import {
   MLPWindow,
   AttentionFlow,
   ModelComparison,
+  Tokenize,
 } from "./visuals";
 
 export const metadata = {
@@ -14,33 +15,35 @@ export const metadata = {
 
 <SeriesNav series="llm" />
 
-你打开 ChatGPT，输入"帮我写一首七言绝句"，两秒后它给你写了一首。你开始想：它怎么做到的？
+在 ChatGPT 里输入"帮我写一首七言绝句"，两秒钟之后它就给你写好一首。这件事到底是怎么发生的？
 
-拆开来看其实就一件事：给定前面的字，预测下一个字该是什么。"床前"之后大概率是"明月"，"明月"之后大概率是"光"。把这件事做到极致——看得更远、预测得更准——就是 GPT。
+说穿了，背后就一件事：给定前面的字，预测下一个字。"床前"后面大概率是"明月"，"明月"后面大概率是"光"。当一个模型把这件事预测得足够准，它就是 GPT。
 
-这篇从最简单的模型开始，逐步升级到能生成莎士比亚风格文本的 mini Transformer。三个模型，同一份数据，效果逐级提升。
+这篇文章会从最简单的模型开始，一步步搭到能写出几句莎士比亚风格台词的 mini Transformer。一共三个模型，用的都是同一份数据。
 
 ---
 
 ## 语言模型在做什么
 
-刚才说的"看前面的字、预测下一个字"，写成数学就一行：
+写成数学只有一行：
 
 <Math block>{`P(\\text{next} \\mid \\text{context})`}</Math>
 
-给定前文（context），输出下一个 token 在词表上的概率分布。所谓 token，可以是**字符、子词、或整个词**——这篇我们用最简单的字符级，每个字母 / 标点 / 换行就是一个 token。
+给定一段前文，模型输出下一个 token 在词表上的概率分布。token 的粒度可以很灵活，可以是单个字母，也可以是 "ing" 这样的片段，或者干脆是一个完整的词。这篇文章用最简单的字符级方案，每个字母、标点和换行都算作一个 token。
 
 <NextTokenPrediction />
 
-模型要学的就是这个分布。看得越远（context 越长）、估得越准（分布的熵越低），生成的文本就越通顺。
+模型要学的就是这个分布。前文看得越多，分布估得越准，生成出来的文本也就越通顺。
 
 ---
 
 ## 数据
 
-用 [Tiny Shakespeare](https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt)——莎士比亚全集的一个子集，100 万字符，1MB。整个文件里只出现过 65 个不同字符（大小写字母 + 标点 + 空格 + 换行），所以词表大小 `vocab_size = 65`。模型的任务就是：看到前面一串字符，从这 65 种里挑出下一个最可能是哪个。
+数据用 [Tiny Shakespeare](https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt)，是从莎士比亚全集里截取的一段文本，大小 1MB，约 100 万字符。
 
-长这样：
+整个文件里只出现了 65 种不同字符，包括大小写字母、常见标点、空格和换行。所以词表大小 `vocab_size = 65`，模型在生成时只需要在这 65 个字符里做选择。
+
+数据长这样：
 
 ```text
 First Citizen:
@@ -53,22 +56,17 @@ First Citizen:
 You are all resolved rather to die than to famish?
 ```
 
-角色名 + 冒号 + 台词 + 换行。格式固定，模型如果学得好，生成的文本也应该有这个格式。
+通篇都是"角色名 + 冒号 + 台词"的格式，结构非常规整。模型如果学到位了，生成出来的文本也应该是这个样子。
 
-数据准备：
+把文本喂给模型之前，要先把字符变成数字。给 65 个字符各编一个号（0 到 64），把整个文件按这张表查一遍，`"Hello"` 就成了 `[20, 43, 50, 50, 53]`。前 90% 用来训练，后 10% 留作验证。最后存成二进制文件，下次加载更快。
 
-```text
-1. 扫一遍所有字符，排序编号 → 字符表（65 个字符）
-2. 编码："Hello" → [20, 43, 50, 50, 53]
-3. 切分：前 90% 训练，后 10% 验证
-4. 保存为二进制文件（省内存、读取快）
-```
+<Tokenize />
 
 ---
 
-## 模型 1：Bigram — 只看前一个字符
+## 模型 1：Bigram，只看前一个字符
 
-最简单的想法：只看当前字符，预测下一个。
+最简单的做法：只看当前字符，预测下一个。
 
 ```text
 看到 'H' → 下一个大概率是 'e'（He/His/Her...）
@@ -76,7 +74,7 @@ You are all resolved rather to die than to famish?
 看到 ':' → 下一个大概率是换行（台词开始）
 ```
 
-实现上就是一张 65×65 的查找表。第 i 行表示"当前字符是 i 时，下一个字符的概率分布"。模型从数据里学这 4225 个数字。
+实现上就是一张 65×65 的查找表，第 i 行存的是"当前字符是 i 时，下一个字符的概率分布"。模型要做的，就是把这 4225 个数字调到合适的值。
 
 <BigramTable />
 
@@ -108,15 +106,15 @@ NG ce'ig yosthe th hoo, phey,
 As wabel nd CKc! nos yo nor s,
 ```
 
-能拼出常见字母组合（th、he、ng），但没有完整单词。因为只看一个字符，信息太少了。
+能拼出 th、he、ng 这种常见的字母搭配，但凑不出完整的单词。一个字符的信息量就这么多，能学到这一步已经不错了。
 
 ---
 
-## 模型 2：MLP — 看前 16 个字符
+## 模型 2：MLP，看前 16 个字符
 
-Bigram 的问题：只看 1 个字符，看不到上下文。"t" 后面跟什么取决于前面是 "tha"（→ "t"）还是 "wri"（→ "t" → "e"）。
+Bigram 的问题很明显：一次只看 1 个字符。"t" 后面跟什么，得看前面是 "tha"（→ "t"）还是 "wri"（→ "t" → "e"），单看一个字符根本判断不了。
 
-解决：看前 16 个字符，全部拼起来过全连接网络。
+那就把窗口拉大，一次看前 16 个字符，把它们拼起来过一个全连接网络。
 
 <MLPWindow />
 
@@ -128,7 +126,7 @@ Bigram 的问题：只看 1 个字符，看不到上下文。"t" 后面跟什么
   → 预测下一个字符
 ```
 
-这就是 Bengio 2003 年的方法——神经语言模型的开创性工作。
+这就是 Bengio 在 2003 年提出的方法，是神经语言模型的雏形，二十多年过去仍然是教科书里的标准写法。
 
 训练 10000 步，71 秒：
 
@@ -148,21 +146,21 @@ CLIFFORD:
 Has hees soney not have kind so thity where is you
 ```
 
-有完整单词了，角色名 + 冒号的格式也学会了。但语法经常断裂——因为窗口固定 16 个字符，看不到更远的上下文。
+这次能看到完整的单词了，"角色名 + 冒号"的格式也学会了。但句子经常读到一半就断掉，因为窗口固定只有 16 个字符，更远处的内容它看不到。
 
 ---
 
-## 模型 3：MiniGPT — Self-Attention
+## 模型 3：MiniGPT，Self-Attention
 
-MLP 的问题：
+MLP 还有几个问题：
 
-1. 窗口固定，看不到 16 个字符以外的内容
-2. 拼接方式权重太多，窗口大了参数爆炸
-3. 所有位置权重相同，不管哪个字符更重要
+1. 窗口固定，超过 16 个字符的内容看不到
+2. 拼接的方式权重太多，窗口一大参数量就爆炸
+3. 每个位置一视同仁，分不清哪些更重要
 
-**核心想法**：让模型自己决定"看哪里"，而不是固定看前 N 个。
+我们希望模型能自己决定"看哪里"，而不是一直死板地看前 N 个字符。
 
-举个例子。要预测 `"the king said to his ___"` 的下一个词：
+举个例子，要预测 `"the king said to his ___"` 的下一个词：
 
 ```text
 the   king   said   to   his   ???
@@ -170,18 +168,13 @@ the   king   said   to   his   ???
 低关注  高关注  最关注  低关注 高关注
 ```
 
-"said" 和 "king" 对预测下一个词更关键，"the" 和 "to" 没什么信息量。Attention 让模型根据当前位置的需要，动态分配对历史每个位置的关注程度。
+直觉上，"said" 和 "king" 决定了下一个词是什么，"the" 和 "to" 几乎没有信息量。Attention 做的就是这件事：根据当前位置的需要，在历史里临时分配权重，重要的位置多看一点，不重要的就忽略。
 
 <AttentionFlow />
 
-**怎么实现这个"动态关注"？**
+具体怎么分配？做法是给每个位置发三样东西：Query 表示它当前在找什么，Key 表示它对外暴露的标签，Value 是它实际携带的信息。
 
-每个位置同时扮演两个角色：
-
-- 当它需要信息时，发出一个 **Query**（"我在找什么？"）
-- 当它被别人查看时，提供一个 **Key**（"我有什么？"）和一个 **Value**（"我的实际内容"）
-
-匹配过程：
+计算的时候，当前位置拿自己的 Query，和历史里每个位置的 Key 一一做点积。点积大说明对方的内容正好对得上，权重就高；点积小则基本无关。把这些权重过一遍 softmax 归一，再去加权求和所有位置的 Value，就得到了当前位置的输出。
 
 ```text
 当前位置的 Query 和所有历史位置的 Key 做点积
@@ -190,17 +183,13 @@ the   king   said   to   his   ???
 → 得到当前位置的输出
 ```
 
-写成公式就一行：
+写成公式：
 
 <Math block>{`\\text{Attention}(Q, K, V) = \\text{softmax}\\!\\left(\\frac{Q K^\\top}{\\sqrt{d_k}}\\right) V`}</Math>
 
-除以 <Math>{`\\sqrt{d_k}`}</Math> 是为了稳定数值（点积会随维度变大）。
+公式里的 <Math>{`\\sqrt{d_k}`}</Math> 是用来缩放数值的。维度一大，点积也跟着变大，softmax 容易落到饱和区，梯度就传不回去了。
 
-**从 Attention 到完整模型**
-
-单个 Attention 只能学一种"关注模式"。但语言理解需要同时关注多种东西（语法、语义、位置关系），所以用 4 个 Attention Head 并行，各学各的模式，最后拼起来。
-
-加上 FFN（前馈网络做非线性变换）、LayerNorm（稳定训练）、残差连接（防止梯度消失），就是一个 Transformer Block。堆 2 层就是我们的 MiniGPT：
+一个 Attention 只能学到一种关注模式，不太够用。语言里要照顾的关系很多，所以一般会并行开 4 个 Attention Head，各自学各自的，最后把结果拼起来。再叠上 FFN 做非线性变换、LayerNorm 稳住训练、残差连接防止梯度消失，就构成了一个 Transformer Block。把它堆 2 层，就是这里要训练的 MiniGPT：
 
 ```text
 Token Embedding + Position Embedding
@@ -211,7 +200,7 @@ Token Embedding + Position Embedding
   → Linear → 预测下一个 token
 ```
 
-总共 42 万参数，能看 64 个字符的上下文。
+总共 42 万参数，能看到 64 个字符的上下文。
 
 训练 10000 步，110 秒：
 
@@ -219,7 +208,7 @@ Token Embedding + Position Embedding
 step     0 | val loss 3.97
 step  3000 | val loss 1.71
 step  7000 | val loss 1.60
-step 10000 | val loss 1.58  ← 又好了一截
+step 10000 | val loss 1.58  ← 又往下降了一截
 ```
 
 生成效果：
@@ -237,7 +226,7 @@ KING EDWARD IV:
 Your come bote yet for his true.
 ```
 
-句子基本通顺了。角色名正确、冒号换行格式对、有标点、甚至有一些语义连贯性。给它一个 prompt：
+句子已经能读了。角色名拼写正确、冒号换行格式对、标点也大致到位，偶尔甚至能看到一点语义上的连贯。给它一个 prompt 也能接得下去：
 
 ```text
 输入: "KING RICHARD:"
@@ -248,7 +237,7 @@ Your come bote yet for his true.
        The state whitus of Rome, are his priests..."
 ```
 
-能续写多个角色的对话了。
+它甚至自己续写了一段 ROMEO 的台词。
 
 ---
 
@@ -262,10 +251,10 @@ Your come bote yet for his true.
 
 <ModelComparison />
 
-每一步提升的核心原因：
+两次提升做的其实就两件事：
 
-- Bigram → MLP：**看更多上下文**（1 → 16），知道"前面是什么"
-- MLP → MiniGPT：**动态决定看哪里**（固定权重 → attention），知道"什么更重要"
+- Bigram → MLP：能看到的字符从 1 个变成 16 个，看到的更多
+- MLP → MiniGPT：从平均看 16 个，变成自己挑哪几个该多看，看得更准
 
 ---
 
@@ -304,9 +293,9 @@ python generate.py --model minigpt --prompt "KING RICHARD:"  # 生成
 | 词表 | 65 个字符 | 10 万子词（BPE） |
 | 效果 | 能写像莎士比亚的句子 | 能写论文、写代码、做推理 |
 
-结构完全相同——都是 Token Embedding + Transformer Blocks + LM Head。区别只在规模。
+骨架其实没什么差别，都是 Token Embedding + 若干层 Transformer Block + 输出头。差的全是规模。
 
-下一篇把字符级词表换成 BPE 子词——一个"token"不再是单个字母，而是 "the"、"ing"、"tion" 这样的片段。同样的模型，同样的训练方式，但每一步能看到更多信息。
+下一篇会把字符级换成 BPE 子词。一个 token 不再只是单个字母，而是 "the"、"ing"、"tion" 这样有语义的片段，模型每跨一步能拿到的信息就多得多。
 
 ---
 
@@ -314,6 +303,6 @@ python generate.py --model minigpt --prompt "KING RICHARD:"  # 生成
 
 | 论文 | 说明 |
 |------|------|
-| [A Neural Probabilistic Language Model · Bengio, JMLR 2003](https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf) | 第一个神经语言模型，就是我们 MLP 模型的原型 |
-| [Language Models are Unsupervised Multitask Learners · GPT-2, OpenAI 2019](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) | Decoder-only Transformer 做语言模型，证明 scale up 有效 |
-| [Attention Is All You Need · Vaswani, NeurIPS 2017](https://arxiv.org/abs/1706.03762) | Transformer 架构原始论文，MiniGPT 的理论基础 |
+| [A Neural Probabilistic Language Model · Bengio, JMLR 2003](https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf) | 第一个神经语言模型，前面 MLP 那节就是它 |
+| [Language Models are Unsupervised Multitask Learners · GPT-2, OpenAI 2019](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) | Decoder-only Transformer 用作语言模型，证明继续放大规模就够 |
+| [Attention Is All You Need · Vaswani, NeurIPS 2017](https://arxiv.org/abs/1706.03762) | Transformer 原始论文，MiniGPT 这一套都来自这里 |

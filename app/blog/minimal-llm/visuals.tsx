@@ -552,20 +552,26 @@ export function AttentionFlow() {
   }, [tokens.length]);
 
   const w = weightsByQuery[queryIdx];
+  const N = tokens.length;
 
   return (
     <VisualFrame title="Self-Attention：动态决定关注历史每个位置的程度">
       <div className="flex flex-col items-center">
-        {/* Key 行 */}
+        {/* Key 标题 */}
         <div className="text-xs font-mono text-muted-foreground mb-2">
           Keys（历史 token）
         </div>
-        <div className="flex gap-3 mb-2">
+
+        {/* Keys 行：等宽 grid，确保 token / 柱 / 百分比三者同列居中 */}
+        <div
+          className="grid w-full max-w-md gap-2"
+          style={{ gridTemplateColumns: `repeat(${N}, minmax(0, 1fr))` }}
+        >
           {tokens.map((tok, i) => (
             <div key={`k-${i}`} className="flex flex-col items-center">
               <div
                 className={cn(
-                  "px-2 py-1 rounded border font-mono text-xs transition-all",
+                  "w-full text-center px-2 py-1 rounded border font-mono text-xs transition-all",
                   i <= queryIdx
                     ? "border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 text-foreground"
                     : "border-neutral-200 dark:border-neutral-800 bg-transparent text-muted-foreground/40"
@@ -573,8 +579,8 @@ export function AttentionFlow() {
               >
                 {tok}
               </div>
-              {/* 权重柱 */}
-              <div className="h-12 w-6 mt-1 flex items-end justify-center">
+              {/* 权重柱（固定高度容器，柱体在其内对齐底部） */}
+              <div className="h-12 w-full mt-2 flex items-end justify-center">
                 <motion.div
                   key={`bar-${queryIdx}-${i}`}
                   initial={{ height: 0 }}
@@ -590,24 +596,25 @@ export function AttentionFlow() {
                   )}
                 />
               </div>
-              <div className="text-xs font-mono text-muted-foreground">
+              <div className="text-xs font-mono text-muted-foreground mt-1 tabular-nums">
                 {(w[i] * 100).toFixed(0)}%
               </div>
             </div>
           ))}
         </div>
 
-        {/* 连接区 */}
+        {/* 连接区：用百分比定位，与上面的 grid 列严格对齐 */}
         <svg
-          className="my-1"
-          width="280"
+          className="my-2 w-full max-w-md"
           height="50"
-          viewBox="0 0 280 50"
+          viewBox="0 0 100 50"
           preserveAspectRatio="none"
         >
           {tokens.map((_, i) => {
-            const x1 = 18 + i * 47;
-            const x2 = 18 + queryIdx * 47;
+            // 每列中心的百分比 x 坐标
+            const colCenter = (idx: number) => ((idx + 0.5) / N) * 100;
+            const x1 = colCenter(i);
+            const x2 = colCenter(queryIdx);
             if (w[i] <= 0.05) return null;
             return (
               <motion.path
@@ -615,9 +622,10 @@ export function AttentionFlow() {
                 d={`M ${x1} 0 Q ${(x1 + x2) / 2} 25 ${x2} 50`}
                 stroke="currentColor"
                 className="text-violet-500 dark:text-violet-400"
-                strokeWidth={Math.max(0.5, w[i] * 3)}
+                strokeWidth={Math.max(0.3, w[i] * 1.2)}
                 fill="none"
                 strokeOpacity={Math.min(1, w[i] * 1.5)}
+                vectorEffect="non-scaling-stroke"
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 0.5 }}
@@ -626,13 +634,16 @@ export function AttentionFlow() {
           })}
         </svg>
 
-        {/* Query 行 */}
-        <div className="flex gap-3">
+        {/* Query 行：同一个 grid 模板，保证与 Keys 列对齐 */}
+        <div
+          className="grid w-full max-w-md gap-2"
+          style={{ gridTemplateColumns: `repeat(${N}, minmax(0, 1fr))` }}
+        >
           {tokens.map((tok, i) => (
             <div
               key={`q-${i}`}
               className={cn(
-                "px-2 py-1 rounded border font-mono text-xs transition-all",
+                "w-full text-center px-2 py-1 rounded border font-mono text-xs transition-all",
                 i === queryIdx
                   ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 ring-2 ring-violet-400/30"
                   : "border-neutral-200 dark:border-neutral-800 bg-transparent text-muted-foreground/40"
@@ -863,6 +874,155 @@ export function ModelComparison() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    </VisualFrame>
+  );
+}
+
+// =============================================================================
+// 06 — Tokenize：字符 → 整数 ID 的可视化
+// 把 "Hello" 这种文本，按一张固定的字符表查成 [20, 43, 50, 50, 53]
+// =============================================================================
+
+export function Tokenize() {
+  // 演示用的小词表（按字符出现的字典序 / 频度选了一组常见字符）
+  const vocab = useMemo(
+    () => [
+      " ", "!", ",", ".", ":", "?",
+      "A", "B", "C", "F", "H", "I", "K", "L", "N", "O", "R", "S", "T", "Y",
+      "a", "b", "c", "d", "e", "f", "g", "h", "i", "k", "l",
+      "m", "n", "o", "p", "r", "s", "t", "u", "v", "w", "y",
+    ],
+    []
+  );
+
+  // 字符 → 编号
+  const charToId = useMemo(() => {
+    const map = new Map<string, number>();
+    vocab.forEach((ch, i) => map.set(ch, i));
+    return map;
+  }, [vocab]);
+
+  // 三个轮播样本，让读者直观看到不同输入 → 不同 ID 序列
+  const samples = useMemo(
+    () => ["Hello", "Speak", "First"],
+    []
+  );
+
+  const [sampleIdx, setSampleIdx] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSampleIdx((s) => (s + 1) % samples.length);
+    }, 3200);
+    return () => clearInterval(timer);
+  }, [samples.length]);
+
+  const text = samples[sampleIdx];
+  const chars = text.split("");
+  const ids = chars.map((ch) => charToId.get(ch) ?? 0);
+
+  // 显示空格用 ␣ 占位
+  const showChar = (ch: string) => (ch === " " ? "␣" : ch);
+
+  return (
+    <VisualFrame title="字符级 tokenize：每个字符按词表查到一个整数 ID">
+      <div className="flex flex-col items-center gap-6">
+        {/* 顶部：词表预览 */}
+        <div className="w-full max-w-xl">
+          <div className="text-xs font-mono text-muted-foreground mb-2 text-center">
+            vocab（节选 41 个，全词表共 65 个）
+          </div>
+          <div className="flex flex-wrap gap-1 justify-center">
+            {vocab.map((ch, i) => {
+              const isActive = ids.includes(i);
+              return (
+                <div
+                  key={`v-${i}`}
+                  className={cn(
+                    "flex flex-col items-center justify-center w-7 py-1 rounded-sm border font-mono transition-colors",
+                    isActive
+                      ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300"
+                      : "border-neutral-200 dark:border-neutral-800 bg-transparent text-muted-foreground/60"
+                  )}
+                >
+                  <span className="text-xs leading-none">{showChar(ch)}</span>
+                  <span className="text-[10px] leading-none mt-0.5 opacity-70 tabular-nums">
+                    {i}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 分隔说明 */}
+        <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground/70">
+          <div className="w-8 h-px bg-border" />
+          <span>用这张表查输入</span>
+          <div className="w-8 h-px bg-border" />
+        </div>
+
+        {/* 底部：输入文本 → 编号序列 */}
+        <div className="flex flex-col items-center gap-2">
+          {/* 输入字符 */}
+          <div className="flex gap-2">
+            <AnimatePresence mode="popLayout">
+              {chars.map((ch, i) => (
+                <motion.div
+                  key={`${sampleIdx}-c-${i}`}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25, delay: i * 0.05 }}
+                  className="flex flex-col items-center justify-center w-10 h-10 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 font-mono text-base"
+                >
+                  {showChar(ch)}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {/* 箭头 */}
+          <div className="flex gap-2">
+            {chars.map((_, i) => (
+              <div
+                key={`${sampleIdx}-a-${i}`}
+                className="flex justify-center w-10 text-violet-400 dark:text-violet-500 font-mono text-xs"
+              >
+                ↓
+              </div>
+            ))}
+          </div>
+
+          {/* 输出编号 */}
+          <div className="flex gap-2">
+            <AnimatePresence mode="popLayout">
+              {ids.map((id, i) => (
+                <motion.div
+                  key={`${sampleIdx}-i-${i}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.25, delay: 0.2 + i * 0.05 }}
+                  className="flex items-center justify-center w-10 h-8 rounded border border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 font-mono text-sm text-violet-700 dark:text-violet-300 tabular-nums"
+                >
+                  {id}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {/* 数组表示 */}
+          <motion.div
+            key={`arr-${sampleIdx}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-2 font-mono text-xs text-muted-foreground tabular-nums"
+          >
+            &quot;{text}&quot; → [{ids.join(", ")}]
+          </motion.div>
         </div>
       </div>
     </VisualFrame>
