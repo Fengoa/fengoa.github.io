@@ -92,13 +92,13 @@ export function NextTokenPrediction() {
 
   return (
     <VisualFrame title="语言模型的核心：P(next | context)">
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-8 md:gap-12">
         {/* 上文 */}
-        <div className="flex-1 min-w-0">
+        <div className="shrink-0">
           <div className="text-xs font-mono text-muted-foreground mb-2">
             context
           </div>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap items-center gap-1 h-9">
             <AnimatePresence mode="popLayout">
               {current.context.split("").map((ch, i) => (
                 <motion.span
@@ -112,30 +112,49 @@ export function NextTokenPrediction() {
                   {ch}
                 </motion.span>
               ))}
-              <motion.span
-                key={`${idx}-arrow`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="inline-flex items-center text-neutral-400 dark:text-neutral-600 px-1 font-mono"
-              >
-                →
-              </motion.span>
-              <motion.span
-                key={`${idx}-q`}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.35 }}
-                className="inline-flex items-center justify-center w-9 h-9 rounded border border-dashed border-violet-400 text-violet-500 dark:text-violet-400 font-mono text-base"
-              >
-                ?
-              </motion.span>
             </AnimatePresence>
+            {/* 箭头和 ? 在三个样本间结构不变，放在 AnimatePresence 之外避免每次切换重 mount 抖动 */}
+            <span className="inline-flex items-center justify-center w-7 h-9 mx-1 text-neutral-400 dark:text-neutral-600 font-mono leading-none">
+              →
+            </span>
+            {/* ? 框：用 SVG 描边做转圈虚线动画，比静态 dashed 边框更"活"且不抢眼 */}
+            <span className="relative inline-flex items-center justify-center w-9 h-9">
+              <svg
+                className="absolute inset-0 w-full h-full text-violet-400 dark:text-violet-500"
+                viewBox="0 0 36 36"
+                fill="none"
+                aria-hidden
+              >
+                <rect
+                  x="1"
+                  y="1"
+                  width="34"
+                  height="34"
+                  rx="4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 4"
+                  strokeLinecap="round"
+                  pathLength="100"
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    from="0"
+                    to="-16"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </rect>
+              </svg>
+              <span className="relative font-mono text-base text-violet-500 dark:text-violet-400">
+                ?
+              </span>
+            </span>
           </div>
         </div>
 
         {/* 概率分布 */}
-        <div className="flex-1 min-w-0">
+        <div className="w-full sm:w-72 sm:shrink-0 min-w-0">
           <div className="text-xs font-mono text-muted-foreground mb-2">
             P(next | context)
           </div>
