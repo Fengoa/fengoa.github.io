@@ -197,6 +197,8 @@ MLP 还有几个问题：
 
 公式里的 <Math>{`\\sqrt{d_k}`}</Math> 是用来缩放数值的。维度一大，点积也跟着变大，softmax 容易落到饱和区，梯度就传不回去了。
 
+---
+
 一个 Attention 只能学到一种关注模式，不太够用。语言里要照顾的关系很多，所以一般会并行开 4 个 Attention Head，各自学各自的，最后把结果拼起来。再叠上 FFN 做非线性变换、LayerNorm 稳住训练、残差连接防止梯度消失，就构成了一个 Transformer Block。把它堆 2 层，再前后加上 embedding 和输出层，就是这里要训练的 MiniGPT：
 
 ```text
@@ -262,8 +264,8 @@ Your come bote yet for his true.
 
 两次提升做的其实就两件事：
 
-- Bigram → MLP：能看到的字符从 1 个变成 16 个，看到的更多
-- MLP → MiniGPT：从平均看 16 个，变成自己挑哪几个该多看，看得更准
+1. Bigram → MLP：能看到的字符从 1 个变成 16 个，看到的更多
+2. MLP → MiniGPT：从平均看 16 个，变成自己挑哪几个该多看，看得更准
 
 
 ## 和工业界的距离
@@ -284,7 +286,7 @@ Your come bote yet for his true.
 
 ## 动手跑一遍
 
-文章里的三个模型都整理成了一个自包含的 Colab notebook，从下载数据到生成莎士比亚台词全程不到 5 分钟。直接打开就能跑，不需要本地 Python 环境：
+文章里的三个模型都整理成了一个自包含的 Colab notebook，从下载数据到生成莎士比亚台词全程不到 5 分钟。直接打开就能运行，不需要本地 Python 环境：
 
 [在 Google Colab 上打开](https://colab.research.google.com/drive/1KKxT44KjJkeFfwWjEUnBO8RncfOZRQsd?usp=sharing)
 

@@ -106,7 +106,7 @@ export const Ol = ({ children, ...props }: ComponentPropsWithoutRef<"ol">) => (
 
 export const Ul = ({ children, ...props }: ComponentPropsWithoutRef<"ul">) => (
   <ul
-    className="mb-4 list-disc list-inside text-secondary-foreground"
+    className="mb-4 ps-5 list-disc text-secondary-foreground marker:text-muted-foreground [&>li>div]:inline [&>li>p]:inline [&>li>div]:m-0 [&>li>p]:m-0"
     {...props}
   >
     {children}
@@ -129,7 +129,7 @@ export const Blockquote = (props: ComponentPropsWithoutRef<"blockquote">) => (
 
 export const Pre = (props: ComponentPropsWithoutRef<"pre">) => (
   <pre
-    className="mb-8 py-4 px-4 border border-stone-200/80 dark:border-stone-800/80 bg-stone-50 dark:bg-stone-900/60 text-stone-700 dark:text-stone-300 rounded-md overflow-auto font-mono text-sm leading-relaxed"
+    className="mb-8 py-4 px-4 border border-stone-200 dark:border-stone-800/80 bg-stone-100 dark:bg-stone-900/60 text-stone-800 dark:text-stone-200 rounded-md overflow-auto font-mono text-sm leading-relaxed"
     {...props}
   />
 );
