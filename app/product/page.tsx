@@ -4,7 +4,7 @@ import type { ProductItem } from "@/components/product/product-card";
 import { Grid } from "@/components/ui/grid";
 import {
   Globe,
-  TrendingUpDown,
+  // TrendingUpDown,
   MessageCircle,
   AudioLines,
   SprayCan,
@@ -20,13 +20,13 @@ const products: ProductItem[] = [
     href: "https://oriensx.github.io",
     icon: <Globe className="size-5" />,
   },
-  {
-    id: "tradexcellet",
-    name: "交易分析产品 Tradexcellet",
-    description: "面向交易者的数据分析产品，提供专业的交易数据洞察与可视化。",
-    href: "https://tradexcellet.com",
-    icon: <TrendingUpDown className="size-5" />,
-  },
+  // {
+  //   id: "tradexcellet",
+  //   name: "交易分析产品 Tradexcellet",
+  //   description: "面向交易者的数据分析产品，提供专业的交易数据洞察与可视化。",
+  //   href: "https://tradexcellet.com",
+  //   icon: <TrendingUpDown className="size-5" />,
+  // },
   {
     id: "wechat-video",
     name: "微信聊天生成视频工具",

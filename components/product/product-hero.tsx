@@ -26,7 +26,7 @@ export function ProductHero() {
         <Grid.Cell row={1} column={2} colSpan={10}>
           <div className="flex flex-col items-center justify-center py-8">
             <h1 className="text-4xl md:text-5xl font-bold leading-tight text-foreground text-center">
-              打造过的一些东西
+              一些小玩意
             </h1>
             <p className="text-secondary-foreground text-center max-w-md mt-4">
               独立项目、开源工具与设计探索。

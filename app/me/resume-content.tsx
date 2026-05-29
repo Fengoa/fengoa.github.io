@@ -17,7 +17,7 @@ import { TelescopeIcon } from "@/components/ui/telescope-icon";
 import { AudioLinesIcon } from "@/components/ui/audio-lines-icon";
 import { FigmaIcon } from "@/components/ui/figma-icon";
 import { ScanLineIcon } from "@/components/ui/scan-line-icon";
-import { TrendingUpDownIcon } from "@/components/ui/trending-up-down-icon";
+// import { TrendingUpDownIcon } from "@/components/ui/trending-up-down-icon";
 import { MessageCircleIcon } from "@/components/ui/message-circle-icon";
 import { SprayCanIcon } from "@/components/ui/spray-can-icon";
 import { AvatarIcon } from "@/components/ui/avatar-icon";
@@ -282,13 +282,13 @@ export function ResumeContent({ resumeRef }: ResumeContentProps) {
                         个人网站 oriensx.github.io
                       </ExternalLink>
                     </InfoItem>
-                    <InfoItem>
+                    {/* <InfoItem>
                       <TrendingUpDownIcon size={16} />
                       交易分析产品
                       <ExternalLink href="https://tradexcellet.com">
                         Tradexcellet.com
                       </ExternalLink>
-                    </InfoItem>
+                    </InfoItem> */}
                     <InfoItem>
                       <MessageCircleIcon size={16} />
                       <ExternalLink href="https://lab.logeast.cc/chat">
