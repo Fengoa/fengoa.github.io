@@ -131,7 +131,7 @@ export function ChunkStrategyComparator() {
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono">
           <span className="text-muted-foreground">{strat.desc}</span>
           <span>
             <span className="text-emerald-500">优</span> {strat.pros}
@@ -158,17 +158,17 @@ export function ChunkStrategyComparator() {
             >
               <div className="flex items-baseline gap-2 mb-1">
                 <span
-                  className="text-[10px] font-mono font-semibold"
+                  className="text-xs font-mono font-semibold"
                   style={{ color: strat.color }}
                 >
                   chunk {i + 1}
                 </span>
-                <span className="text-[10px] font-mono text-muted-foreground">
+                <span className="text-xs font-mono text-muted-foreground">
                   {c.text.length} 字
                 </span>
                 {c.tag && (
                   <span
-                    className="text-[10px] font-mono px-1.5 rounded"
+                    className="text-xs font-mono px-1.5 rounded"
                     style={{
                       backgroundColor: strat.color + "22",
                       color: strat.color,

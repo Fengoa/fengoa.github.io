@@ -257,7 +257,7 @@ export function ScalingLawLoglogPlot() {
                   : "border-neutral-200 dark:border-neutral-800"
               )}
             >
-              <div className="text-muted-foreground text-[10px]">{s.tag}</div>
+              <div className="text-muted-foreground text-xs">{s.tag}</div>
               <div className="text-foreground">loss {s.loss}</div>
             </button>
           ))}

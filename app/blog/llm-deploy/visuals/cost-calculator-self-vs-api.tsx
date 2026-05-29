@@ -231,7 +231,7 @@ function Pill({
           : "border-neutral-200 dark:border-neutral-800"
       )}
     >
-      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className={cn("text-sm font-semibold mt-0.5 tabular-nums", color)}>
         {value}
       </div>

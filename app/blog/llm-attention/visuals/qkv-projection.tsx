@@ -102,7 +102,7 @@ export function QKVProjection() {
                 />
               ))}
             </div>
-            <div className="text-[11px] font-mono text-muted-foreground mt-2">
+            <div className="text-xs font-mono text-muted-foreground mt-2">
               {`"cat"`}
             </div>
           </div>
@@ -194,7 +194,7 @@ export function QKVProjection() {
                     <div className={cn("font-mono text-sm font-semibold", c.text)}>
                       {role.key}
                     </div>
-                    <div className="font-mono text-[11px] text-muted-foreground">
+                    <div className="font-mono text-xs text-muted-foreground">
                       {role.title}
                     </div>
                   </div>

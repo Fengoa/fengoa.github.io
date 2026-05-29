@@ -58,7 +58,7 @@ export function ChinchillaRatioCalculator() {
             onChange={(e) => setLogN(parseFloat(e.target.value))}
             className="accent-violet-500 w-full"
           />
-          <div className="flex justify-between text-[10px] text-muted-foreground">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>1M</span>
             <span>1B</span>
             <span>10B</span>
@@ -85,7 +85,7 @@ export function ChinchillaRatioCalculator() {
             <div className="text-foreground text-base">{closest.name}</div>
             <div
               className={cn(
-                "text-[11px]",
+                "text-xs",
                 isUnderfed
                   ? "text-rose-600 dark:text-rose-400"
                   : "text-emerald-600 dark:text-emerald-400"
@@ -113,7 +113,7 @@ export function ChinchillaRatioCalculator() {
                 )}
               >
                 <div className="text-foreground">{r.name}</div>
-                <div className="text-muted-foreground text-[10px]">
+                <div className="text-muted-foreground text-xs">
                   N={fmt(r.N)} · D={fmt(r.D)}
                 </div>
                 <motion.div
@@ -131,7 +131,7 @@ export function ChinchillaRatioCalculator() {
                   }}
                   transition={{ duration: 0.5 }}
                 />
-                <div className="text-[10px] text-muted-foreground mt-0.5">
+                <div className="text-xs text-muted-foreground mt-0.5">
                   D/N = {ratio.toFixed(1)}
                 </div>
               </button>

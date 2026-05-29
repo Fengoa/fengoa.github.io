@@ -75,7 +75,7 @@ export function BetaTradeoff() {
                   />
                   <div
                     className={cn(
-                      "absolute left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap text-[11px] font-mono transition-colors",
+                      "absolute left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap text-xs font-mono transition-colors",
                       active ? "text-foreground font-medium" : "text-muted-foreground"
                     )}
                   >
@@ -85,10 +85,10 @@ export function BetaTradeoff() {
               );
             })}
             {/* 端点标记 */}
-            <span className="absolute left-0 top-0 text-[10px] font-mono text-muted-foreground/70">
+            <span className="absolute left-0 top-0 text-xs font-mono text-muted-foreground/70">
               0.01
             </span>
-            <span className="absolute right-0 top-0 text-[10px] font-mono text-muted-foreground/70">
+            <span className="absolute right-0 top-0 text-xs font-mono text-muted-foreground/70">
               0.5
             </span>
           </div>

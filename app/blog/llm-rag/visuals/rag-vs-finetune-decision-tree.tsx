@@ -120,7 +120,7 @@ export function RagVsFinetuneDecisionTree() {
     <VisualFrame title="决定该用 RAG 还是微调，先问自己几个问题">
       <div className="space-y-4">
         {/* 路径面包屑 */}
-        <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-mono">
+        <div className="flex items-center gap-1.5 flex-wrap text-xs font-mono">
           {path.map((id, i) => {
             const n = TREE[id];
             const isLast = i === path.length - 1;
@@ -182,7 +182,7 @@ export function RagVsFinetuneDecisionTree() {
               backgroundColor: VERDICT_DESC[current.verdict!].color + "10",
             }}
           >
-            <div className="text-[11px] font-mono mb-1" style={{ color: VERDICT_DESC[current.verdict!].color }}>
+            <div className="text-xs font-mono mb-1" style={{ color: VERDICT_DESC[current.verdict!].color }}>
               建议
             </div>
             <div className="text-lg font-semibold mb-2">{current.text}</div>

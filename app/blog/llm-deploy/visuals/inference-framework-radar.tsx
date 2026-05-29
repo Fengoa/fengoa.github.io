@@ -181,7 +181,7 @@ export function InferenceFrameworkRadar() {
                 <div className="font-mono text-sm font-semibold" style={{ color: f.color }}>
                   {f.name}
                 </div>
-                <div className="text-[11px] text-muted-foreground mt-0.5">
+                <div className="text-xs text-muted-foreground mt-0.5">
                   {f.desc}
                 </div>
               </div>

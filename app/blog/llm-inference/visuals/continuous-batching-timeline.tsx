@@ -168,7 +168,7 @@ function Row({
 }) {
   return (
     <>
-      <div className="text-[10px] font-mono text-muted-foreground self-center">
+      <div className="text-xs font-mono text-muted-foreground self-center">
         {label}
       </div>
       <div className="grid grid-flow-col auto-cols-fr gap-px">

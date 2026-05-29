@@ -149,7 +149,7 @@ export function AttentionMemoryRoofline() {
                     style={{ width: `${100 - pctTotal}%` }}
                   />
                 </div>
-                <div className="text-[10px] font-mono text-muted-foreground">{d.desc}</div>
+                <div className="text-xs font-mono text-muted-foreground">{d.desc}</div>
               </div>
             );
           })}

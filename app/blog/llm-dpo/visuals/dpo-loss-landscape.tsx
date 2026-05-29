@@ -166,7 +166,7 @@ export function DpoLossLandscape() {
             onChange={(e) => setBeta(Number(e.target.value))}
             className="w-full accent-emerald-500"
           />
-          <div className="flex justify-between text-[10px] font-mono text-muted-foreground/70">
+          <div className="flex justify-between text-xs font-mono text-muted-foreground/70">
             <span>0.01 激进</span>
             <span>0.1 常用</span>
             <span>0.5 保守</span>

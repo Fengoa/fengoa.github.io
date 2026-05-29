@@ -180,7 +180,7 @@ export function WeightDistributionHistogram() {
             <span className="tabular-nums w-10 text-right">{clip.toFixed(3)}</span>
           </div>
 
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono text-muted-foreground">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="w-3 h-3 bg-violet-500 inline-block rounded-sm" />
               落在量化范围内

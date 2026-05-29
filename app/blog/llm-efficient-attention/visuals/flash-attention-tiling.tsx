@@ -53,7 +53,7 @@ export function FlashAttentionTiling() {
             )}
           >
             <div className="font-medium">朴素实现</div>
-            <div className="text-[10px] mt-0.5">整张 N×N 矩阵都进 HBM</div>
+            <div className="text-xs mt-0.5">整张 N×N 矩阵都进 HBM</div>
           </button>
           <button
             onClick={() => setMode("flash")}
@@ -65,7 +65,7 @@ export function FlashAttentionTiling() {
             )}
           >
             <div className="font-medium">Flash Attention</div>
-            <div className="text-[10px] mt-0.5">分 tile，整块在 SRAM 完成</div>
+            <div className="text-xs mt-0.5">分 tile，整块在 SRAM 完成</div>
           </button>
         </div>
 

@@ -233,7 +233,7 @@ function Card({
 }) {
   return (
     <div className="rounded border border-neutral-200 dark:border-neutral-800 px-3 py-2">
-      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className={cn("text-base font-semibold mt-0.5 tabular-nums", accent)}>
         {value}
       </div>

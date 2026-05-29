@@ -77,7 +77,7 @@ function TokenRow({ tokens }: { tokens: string[] }) {
       {tokens.map((t, i) => (
         <div
           key={i}
-          className="flex-1 text-center font-mono text-[11px] text-muted-foreground/80"
+          className="flex-1 text-center font-mono text-xs text-muted-foreground/80"
         >
           {t}
         </div>
@@ -127,13 +127,13 @@ export function MLPvsAttention() {
               <span className="font-mono text-sm font-semibold text-foreground">
                 MLP
               </span>
-              <span className="font-mono text-[11px] text-muted-foreground">
+              <span className="font-mono text-xs text-muted-foreground">
                 position-wise，权重训练完就固定
               </span>
             </div>
             <Bars weights={MLP_WEIGHTS} active />
             <TokenRow tokens={sample.tokens} />
-            <div className="mt-3 text-[11px] font-mono text-muted-foreground leading-relaxed">
+            <div className="mt-3 text-xs font-mono text-muted-foreground leading-relaxed">
               不管输入什么内容，第 1、2、3、4、5 个位置永远按这套比例混合
             </div>
           </div>
@@ -144,7 +144,7 @@ export function MLPvsAttention() {
               <span className="font-mono text-sm font-semibold text-foreground">
                 Attention
               </span>
-              <span className="font-mono text-[11px] text-muted-foreground">
+              <span className="font-mono text-xs text-muted-foreground">
                 输入相关，每次都重算
               </span>
             </div>
@@ -162,7 +162,7 @@ export function MLPvsAttention() {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="mt-3 text-[11px] font-mono text-violet-700 dark:text-violet-300 leading-relaxed"
+              className="mt-3 text-xs font-mono text-violet-700 dark:text-violet-300 leading-relaxed"
             >
               {sample.summary}
             </motion.div>

@@ -69,7 +69,7 @@ export function ChatTemplateComparator() {
           <button
             type="button"
             onClick={() => setShowRaw((s) => !s)}
-            className="ml-auto rounded border px-2 py-1 text-[11px] hover:bg-accent"
+            className="ml-auto rounded border px-2 py-1 text-xs hover:bg-accent"
           >
             {showRaw ? "隐藏控制 token" : "显示控制 token"}
           </button>

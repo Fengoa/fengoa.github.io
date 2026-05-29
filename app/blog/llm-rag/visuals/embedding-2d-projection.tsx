@@ -222,7 +222,7 @@ export function Embedding2DProjection() {
                 key={c.id}
                 className="flex items-start gap-2 px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40"
               >
-                <span className="text-[10px] font-mono text-muted-foreground w-3 shrink-0 mt-0.5">
+                <span className="text-xs font-mono text-muted-foreground w-3 shrink-0 mt-0.5">
                   #{i + 1}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -232,7 +232,7 @@ export function Embedding2DProjection() {
                       className="inline-block w-2 h-2 rounded-full"
                       style={{ backgroundColor: topicColor[c.topic] }}
                     />
-                    <span className="text-[10px] font-mono text-muted-foreground">
+                    <span className="text-xs font-mono text-muted-foreground">
                       {c.topic} · sim {(1 - c.dist).toFixed(2)}
                     </span>
                   </div>
@@ -242,7 +242,7 @@ export function Embedding2DProjection() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-mono pt-1 border-t border-neutral-200 dark:border-neutral-800">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono pt-1 border-t border-neutral-200 dark:border-neutral-800">
           {Object.entries(topicColor).map(([t, c]) => (
             <span key={t} className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c }} />

@@ -89,7 +89,7 @@ export function StreamingVsBatchDemo() {
               <span className="text-xs font-mono font-semibold text-emerald-700 dark:text-emerald-400">
                 Streaming（SSE）
               </span>
-              <span className="text-[10px] font-mono text-muted-foreground">
+              <span className="text-xs font-mono text-muted-foreground">
                 TTFT: <span className="text-emerald-600 dark:text-emerald-400">{streamTTFT}</span>
               </span>
             </div>
@@ -99,7 +99,7 @@ export function StreamingVsBatchDemo() {
                 <span className="inline-block w-1.5 h-3.5 bg-emerald-500 ml-0.5 animate-pulse align-middle" />
               )}
             </div>
-            <div className="text-[10px] font-mono text-muted-foreground mt-3">
+            <div className="text-xs font-mono text-muted-foreground mt-3">
               第一个字 30 ms 就出来，用户立刻知道有反应
             </div>
           </div>
@@ -110,7 +110,7 @@ export function StreamingVsBatchDemo() {
               <span className="text-xs font-mono font-semibold text-rose-700 dark:text-rose-400">
                 Batch（一次返回）
               </span>
-              <span className="text-[10px] font-mono text-muted-foreground">
+              <span className="text-xs font-mono text-muted-foreground">
                 TTFT: <span className="text-rose-600 dark:text-rose-400">{batchTTFT}</span>
               </span>
             </div>
@@ -123,7 +123,7 @@ export function StreamingVsBatchDemo() {
                 <span className="text-muted-foreground italic">点击「开始生成」</span>
               )}
             </div>
-            <div className="text-[10px] font-mono text-muted-foreground mt-3">
+            <div className="text-xs font-mono text-muted-foreground mt-3">
               整个 4.5 秒内屏幕没动静，用户开始怀疑是不是卡了
             </div>
           </div>

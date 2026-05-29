@@ -148,13 +148,13 @@ function SpecRow({
         visible ? "opacity-100" : "opacity-30"
       )}
     >
-      <div className="w-16 shrink-0 flex items-center font-mono text-[10px] text-muted-foreground">
+      <div className="w-16 shrink-0 flex items-center font-mono text-xs text-muted-foreground">
         {label}
       </div>
 
       {/* 小模型猜 */}
       <div className="flex flex-1 gap-px rounded border border-sky-200 dark:border-sky-900/60 bg-sky-50/50 dark:bg-sky-950/30 overflow-hidden">
-        <div className="flex-1 flex items-center justify-center px-2 text-[10px] font-mono text-sky-700 dark:text-sky-300">
+        <div className="flex-1 flex items-center justify-center px-2 text-xs font-mono text-sky-700 dark:text-sky-300">
           小模型 +4t
         </div>
         {draft.map((tok, i) => {
@@ -186,7 +186,7 @@ function SpecRow({
             : "border-neutral-200 dark:border-neutral-800 opacity-40"
         )}
       >
-        <div className="flex-1 flex items-center justify-center px-2 text-[10px] font-mono text-violet-700 dark:text-violet-300">
+        <div className="flex-1 flex items-center justify-center px-2 text-xs font-mono text-violet-700 dark:text-violet-300">
           大模型 +8t
         </div>
         {fallbackToken && verifyVisible && (
@@ -202,7 +202,7 @@ function SpecRow({
 function Stat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div className="rounded border border-neutral-200 dark:border-neutral-800 px-3 py-2">
-      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className={cn("text-base font-semibold mt-0.5", color)}>{value}</div>
     </div>
   );

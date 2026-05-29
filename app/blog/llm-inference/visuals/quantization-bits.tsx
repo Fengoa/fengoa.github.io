@@ -103,7 +103,7 @@ export function QuantizationBits() {
                   <span className={cn("font-mono text-sm font-semibold", f.colorClass)}>
                     {f.name}
                   </span>
-                  <span className="font-mono text-[10px] text-muted-foreground">
+                  <span className="font-mono text-xs text-muted-foreground">
                     {f.bits} bit
                   </span>
                 </div>

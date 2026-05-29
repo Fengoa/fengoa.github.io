@@ -135,7 +135,7 @@ export function LayerNormEffect() {
               </span>
             </div>
             <Histogram bins={histogram(raw)} color="amber" />
-            <div className="mt-2 font-mono text-[11px] text-muted-foreground">
+            <div className="mt-2 font-mono text-xs text-muted-foreground">
               scale 越大，分布越宽，下层就要面对越大的输入
             </div>
           </div>
@@ -150,7 +150,7 @@ export function LayerNormEffect() {
               </span>
             </div>
             <Histogram bins={histogram(normed)} color="violet" />
-            <div className="mt-2 font-mono text-[11px] text-muted-foreground">
+            <div className="mt-2 font-mono text-xs text-muted-foreground">
               不管前面 scale 多大，进 attention / FFN 的都是同一档幅度
             </div>
           </div>

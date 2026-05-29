@@ -147,7 +147,7 @@ export function TransformerBlockFlow() {
                 setStep(i);
               }}
               className={cn(
-                "px-2.5 py-1 rounded font-mono text-[11px] transition-colors border",
+                "px-2.5 py-1 rounded font-mono text-xs transition-colors border",
                 step === i
                   ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300"
                   : "border-transparent text-muted-foreground hover:text-foreground"

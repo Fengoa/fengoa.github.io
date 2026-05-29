@@ -109,7 +109,7 @@ export function PositionEmbeddingFailure() {
               transition={{ duration: 0.5 }}
             />
           </div>
-          <div className="flex justify-between text-[10px] font-mono text-muted-foreground tabular-nums">
+          <div className="flex justify-between text-xs font-mono text-muted-foreground tabular-nums">
             <span>1.0</span>
             <span>4.0</span>
             <span>8.0</span>

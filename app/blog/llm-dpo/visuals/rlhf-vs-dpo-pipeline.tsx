@@ -86,7 +86,7 @@ function Row({
               <div className="text-xs font-mono font-medium text-foreground">
                 {b.label}
               </div>
-              <div className="text-[10px] font-mono text-muted-foreground mt-0.5">
+              <div className="text-xs font-mono text-muted-foreground mt-0.5">
                 {b.note}
               </div>
             </div>
@@ -102,7 +102,7 @@ function Row({
 
 function Divider() {
   return (
-    <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground/60 uppercase">
+    <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground/60 uppercase">
       <div className="flex-1 h-px bg-border" />
       <span>简化为</span>
       <div className="flex-1 h-px bg-border" />

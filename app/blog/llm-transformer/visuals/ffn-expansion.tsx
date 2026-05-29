@@ -102,7 +102,7 @@ function Vec({ dim, active }: { dim: number; active: boolean }) {
   const cells = Math.min(40, Math.round(dim / 16));
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className="font-mono text-[11px] text-muted-foreground">
+      <div className="font-mono text-xs text-muted-foreground">
         dim = {dim}
       </div>
       <div className="flex gap-px">
@@ -187,7 +187,7 @@ export function FFNExpansion() {
             className="flex flex-col items-center gap-1 mt-2"
           >
             <GeluCurve />
-            <div className="font-mono text-[11px] text-muted-foreground">
+            <div className="font-mono text-xs text-muted-foreground">
               GELU(x) = x · Φ(x)，负值不会一刀切到 0，而是平滑衰减
             </div>
           </motion.div>

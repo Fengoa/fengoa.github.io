@@ -76,7 +76,7 @@ export function LoraMatrixDecomposition() {
             onChange={(e) => setR(Number(e.target.value))}
             className="w-full accent-emerald-500"
           />
-          <div className="flex justify-between text-[10px] font-mono text-muted-foreground/70">
+          <div className="flex justify-between text-xs font-mono text-muted-foreground/70">
             <span>1</span>
             <span>16</span>
             <span>32</span>
@@ -159,7 +159,7 @@ function Stat({
           : "border-neutral-200 dark:border-neutral-800 bg-stone-50/40 dark:bg-stone-900/30"
       )}
     >
-      <div className="text-muted-foreground mb-1 text-[11px]">{label}</div>
+      <div className="text-muted-foreground mb-1 text-xs">{label}</div>
       <div
         className={cn(
           "text-sm",

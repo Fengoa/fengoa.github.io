@@ -128,7 +128,7 @@ export function Rope2dRotation() {
                     {(angle).toFixed(2)} rad
                   </text>
                 </svg>
-                <div className="text-[11px] font-mono text-muted-foreground text-center">
+                <div className="text-xs font-mono text-muted-foreground text-center">
                   {f.name}
                   <br />
                   ω = {f.omega}

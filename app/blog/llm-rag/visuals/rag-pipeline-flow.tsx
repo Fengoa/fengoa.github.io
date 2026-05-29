@@ -98,7 +98,7 @@ export function RagPipelineFlow() {
                   }
                 >
                   <div
-                    className="text-[10px] font-mono"
+                    className="text-xs font-mono"
                     style={{ color: isActive ? s.color : undefined }}
                   >
                     step {i + 1}
@@ -109,7 +109,7 @@ export function RagPipelineFlow() {
                   >
                     {s.title}
                   </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                  <div className="text-xs text-muted-foreground mt-0.5">
                     {s.desc}
                   </div>
                 </button>
@@ -129,7 +129,7 @@ export function RagPipelineFlow() {
             backgroundColor: STEPS[active].color + "08",
           }}
         >
-          <div className="text-[10px] font-mono mb-2" style={{ color: STEPS[active].color }}>
+          <div className="text-xs font-mono mb-2" style={{ color: STEPS[active].color }}>
             {STEPS[active].title} 的输出
           </div>
           <AnimatePresence mode="wait">
@@ -146,7 +146,7 @@ export function RagPipelineFlow() {
           </AnimatePresence>
         </div>
 
-        <div className="text-[11px] font-mono text-muted-foreground text-center">
+        <div className="text-xs font-mono text-muted-foreground text-center">
           {auto ? "自动播放中" : "点击任意步骤切换"} ·{" "}
           <button
             type="button"

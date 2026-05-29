@@ -62,7 +62,7 @@ export function GqaHeadGrouping() {
               )}
             >
               <div className="font-medium">{s.label}</div>
-              <div className="text-[10px] mt-0.5 tabular-nums">
+              <div className="text-xs mt-0.5 tabular-nums">
                 {s.qHeads}Q / {s.kvHeads}KV
               </div>
             </button>

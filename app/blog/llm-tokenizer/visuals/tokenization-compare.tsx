@@ -105,7 +105,7 @@ export function TokenizationCompare() {
   const s = SAMPLES[idx];
 
   return (
-    <VisualFrame title="同一句话的三种切法：序列长度和词表大小的取舍">
+    <VisualFrame title="三种切法在序列长度、词表大小、未登录词处理上的差异">
       <div className="flex flex-col gap-5">
         {/* 原文行：和下面三组同基线左对齐，label 用 muted */}
         <div className="flex items-baseline gap-2 pb-3 border-b border-neutral-200 dark:border-neutral-800">

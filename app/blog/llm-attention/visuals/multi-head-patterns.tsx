@@ -195,7 +195,7 @@ export function MultiHeadPatterns() {
                     {head.name}
                   </span>
                 </div>
-                <div className="font-mono text-[11px] text-muted-foreground">
+                <div className="font-mono text-xs text-muted-foreground">
                   {head.tag}
                 </div>
                 <HeadHeatmap pattern={head.pattern} focusQ={focusQ} />
@@ -209,7 +209,7 @@ export function MultiHeadPatterns() {
           {SEQ.map((ch, i) => (
             <div
               key={i}
-              className="text-center font-mono text-[11px] text-muted-foreground/70"
+              className="text-center font-mono text-xs text-muted-foreground/70"
             >
               {showCh(ch)}
             </div>
