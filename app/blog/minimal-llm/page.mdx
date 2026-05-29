@@ -266,31 +266,6 @@ Your come bote yet for his true.
 - MLP → MiniGPT：从平均看 16 个，变成自己挑哪几个该多看，看得更准
 
 
-## 代码结构
-
-整个项目的目录组织如下：
-
-```text
-minimal-llm/src/
-  prepare_data.py     # 下载 Shakespeare + 字符级 tokenize
-  model.py            # BigramModel / MLPModel / MiniGPT
-  train.py            # 训练（--model bigram/mlp/minigpt）
-  generate.py         # 加载 checkpoint 交互式生成
-  data/               # 训练数据
-  checkpoints/        # 模型权重
-```
-
-按下面的顺序跑一遍，就能得到三个训练好的模型：
-
-```bash
-python prepare_data.py                    # 下载数据
-python train.py --model bigram            # 训练 Bigram（9秒）
-python train.py --model mlp               # 训练 MLP（71秒）
-python train.py --model minigpt           # 训练 MiniGPT（110秒）
-python generate.py --model minigpt --prompt "KING RICHARD:"  # 生成
-```
-
-
 ## 和工业界的距离
 
 | 环节 | 这个项目 | GPT-4 级别 |
@@ -311,7 +286,7 @@ python generate.py --model minigpt --prompt "KING RICHARD:"  # 生成
 
 文章里的三个模型都整理成了一个自包含的 Colab notebook，从下载数据到生成莎士比亚台词全程不到 5 分钟。直接打开就能跑，不需要本地 Python 环境：
 
-[在 Google Colab 上打开 →](https://colab.research.google.com/drive/1KKxT44KjJkeFfwWjEUnBO8RncfOZRQsd?usp=sharing)
+[在 Google Colab 上打开](https://colab.research.google.com/drive/1KKxT44KjJkeFfwWjEUnBO8RncfOZRQsd?usp=sharing)
 
 打开后菜单选「代码执行程序 → 更改运行时类型 → GPU」，然后从上到下依次运行所有 cell 即可。
 
