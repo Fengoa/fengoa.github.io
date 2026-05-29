@@ -71,9 +71,48 @@ export function MLConceptsCover({ className }: { className?: string }) {
         <text x="50" y="95" textAnchor="middle" className="text-[6px] font-mono" fill="#64748b">parameters</text>
         <text x="8" y="50" textAnchor="middle" className="text-[6px] font-mono" fill="#64748b" transform="rotate(-90,8,50)">loss</text>
 
-        {/* 最低点标记 */}
-        <circle cx={15 + 0.5 * 70} cy={15 + (1 - getY(0.5)) * 55 + 10} r="1.5" fill="none" stroke="#10b981" strokeWidth="0.8" strokeDasharray="2 1" />
-        <text x={15 + 0.5 * 70} y={15 + (1 - getY(0.5)) * 55 + 10 + 7} textAnchor="middle" className="text-[5px] font-mono" fill="#10b981">min</text>
+        {/* 最低点标记：圆点画在曲线"下方一点点"避免被覆盖；用引导线把它和真实最低点连起来 */}
+        {(() => {
+          const minX = 15 + 0.5 * 70;
+          const curveY = 15 + (1 - getY(0.5)) * 55 + 10;
+          const markY = curveY + 6;   // 标记点往下偏移
+          const labelY = markY + 5;   // 标签再往下
+          return (
+            <g>
+              {/* 引导线：曲线最低点 → 标记点 */}
+              <line
+                x1={minX}
+                y1={curveY}
+                x2={minX}
+                y2={markY}
+                stroke="#10b981"
+                strokeWidth="0.5"
+                strokeDasharray="1 1"
+                opacity="0.6"
+              />
+              {/* 标记点：实心 + 边框 */}
+              <circle
+                cx={minX}
+                cy={markY}
+                r="1.6"
+                fill="#0f172a"
+                stroke="#10b981"
+                strokeWidth="0.8"
+              />
+              {/* min 标签 */}
+              <text
+                x={minX}
+                y={labelY}
+                textAnchor="middle"
+                dominantBaseline="hanging"
+                className="text-[4.5px] font-mono"
+                fill="#10b981"
+              >
+                min
+              </text>
+            </g>
+          );
+        })()}
 
         <defs>
           <linearGradient id="mlGrad" x1="0%" y1="0%" x2="100%" y2="0%">

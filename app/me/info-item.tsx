@@ -32,9 +32,9 @@ export function InfoItem({ icon, href, children, className }: InfoItemProps) {
   }
 
   return (
-    <p className={classes}>
+    <div className={classes}>
       {icon}
       {children}
-    </p>
+    </div>
   );
 }
