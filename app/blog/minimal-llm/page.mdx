@@ -27,7 +27,7 @@ export const metadata = {
 
 ## 语言模型在做什么
 
-把这件事写成数学，其实只有一行：
+把这件事写成数学，其实只有一行： 
 
 <Math block>{`P(\\text{next} \\mid \\text{context})`}</Math>
 
@@ -97,7 +97,7 @@ class BigramModel(nn.Module):
 在我的 Mac 上跑 5000 步只要 9 秒，loss 很快就收敛了：
 
 ```text
-step     0 | val loss 4.53  ← 随机猜（ln(65)=4.17，还没开始学）
+step     0 | val loss 4.53  ← 随机猜测（ln(65)=4.17，还没开始学）
 step   500 | val loss 3.41
 step  1000 | val loss 3.02
 step  2000 | val loss 2.86
