@@ -65,8 +65,7 @@ export function SeriesNav({ series }: SeriesNavProps) {
         <span className="flex items-center gap-2 min-w-0">
           <span className="shrink-0 text-muted-foreground">本文是</span>
           <span className="font-medium truncate">「{config.title}」</span>
-          <span className="shrink-0 text-muted-foreground">·</span>
-          <span className="shrink-0 text-muted-foreground font-mono text-xs tabular-nums">
+          <span className="shrink-0 text-muted-foreground font-mono tabular-nums">
             {positionLabel}
           </span>
         </span>
