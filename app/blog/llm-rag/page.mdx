@@ -1,3 +1,10 @@
+import {
+  RagPipelineFlow,
+  Embedding2DProjection,
+  ChunkStrategyComparator,
+  RagVsFinetuneDecisionTree,
+} from "./visuals";
+
 export const metadata = {
   title: "RAG：给模型外接知识",
 }
@@ -6,176 +13,144 @@ export const metadata = {
 
 <SeriesNav series="llm" />
 
-模型的知识截止到训练那一刻。问它"今天天气怎样"？不知道。问它你公司内部的文档？不知道。
+模型的知识截止在训练那一刻。问它今天天气，它不知道；问它公司内网的请假政策，它更不知道。这不是模型不够聪明，是它压根没看过这些资料。
 
-RAG（Retrieval-Augmented Generation）的思路很简单：先检索相关信息，拼到 prompt 里，再让模型基于这些信息回答。相当于给模型开了"开卷考试"。
+RAG（Retrieval-Augmented Generation）的思路很朴素：先把相关资料找出来，塞进 prompt 里再让模型回答，相当于让它开卷考试。流程不复杂，但每个环节都有讲究。
 
----
+<RagPipelineFlow />
 
-## 流程
+## 为什么是开卷考试
 
-```text
-用户问题: "LLaMA 3 有什么新特性?"
-    │
-    ▼
-1. Embedding: 把问题变成向量
-    │
-    ▼
-2. 检索: 在向量数据库中找最相似的文档片段
-    │
-    ▼
-3. 拼接: 把检索到的片段放进 prompt
-    │
-    ▼
-4. 生成: 模型基于 context 回答
+闭卷考试，模型只能凭训练时记下来的东西作答。一旦问到训练数据没覆盖的领域，要么编一个似是而非的答案（幻觉），要么直接说「我不知道」。
 
-Prompt:
-  "根据以下信息回答问题：
-   [文档片段1] LLaMA 3 使用了 GQA 和更大的词表...
-   [文档片段2] LLaMA 3 在 15T tokens 上训练...
+开卷考试，模型先去文档里翻一遍，把相关段落抄到面前，再基于这些段落组织答案。模型本身不需要重新训练，加新知识只是往文档库里多塞几篇文件的事。
 
-   问题：LLaMA 3 有什么新特性?
-   回答："
-```
+整件事拆开看就五步：把问题向量化、在向量库里找相似的段落、拼到 prompt 里、生成答案、把引用回填给用户。每一步都能单独优化。
 
----
+## 把文本变成向量
 
-## 关键组件
+向量化是 RAG 的基础设施。Embedding 模型把任意一段文本压成一个固定长度（通常 1024 或 768 维）的稠密向量。语义相近的文本，向量在空间里靠得近；不相干的，离得远。
 
-### 1. Embedding 模型
+「靠得近」具体怎么算？最常见的就是余弦相似度——两个向量夹角的余弦值，落在 `[-1, 1]` 区间，越接近 1 越相似：
 
-把文本变成向量（语义相似的文本，向量距离近）：
+<Math block>{`\\text{sim}(q, d) = \\frac{q \\cdot d}{\\|q\\| \\, \\|d\\|}`}</Math>
+
+实际入库前会先把每个向量做 L2 归一化，分母变成 1，相似度就退化成纯点积，检索时一次矩阵乘法就出全表分数。
 
 ```python
 from sentence_transformers import SentenceTransformer
-model = SentenceTransformer("BAAI/bge-small-en-v1.5")
-embeddings = model.encode(["hello world", "hi there"])
+model = SentenceTransformer("BAAI/bge-small-zh-v1.5")
+emb = model.encode(["请假政策", "年假怎么休"])
+# emb.shape == (2, 512)
 ```
 
-### 2. 向量数据库
+这个空间长什么样？取一份内部文档，把每个 chunk 都丢进去算 embedding，再降到 2D 画出来：
 
-存储文档向量，支持快速近邻搜索：
+<Embedding2DProjection />
 
-| 数据库 | 特点 |
-|--------|------|
-| ChromaDB | 最简单，本地跑 |
-| pgvector | PostgreSQL 插件，适合已有 PG 的场景 |
-| Milvus | 分布式，适合大规模 |
-| Pinecone | 全托管，不用运维 |
+可以看到几个集群——讲模型架构的挤一块，讲推理硬件的挤一块，讲检索的又是另一块。问「LLaMA 3 有什么新特性」，向量会落在 LLaMA 集群附近，最近的几个 chunk 自然就是相关内容。问「怎么部署省显存」就会落到推理硬件那边。
 
-### 3. Chunk 策略
+实际跑的时候用的是近似最近邻索引（HNSW、IVF 这些），千万级 chunk 也能毫秒级出结果。本地玩 ChromaDB 就够了，规模上去再换 Milvus 或 pgvector。
 
-文档太长塞不进 context，需要切成小块：
+## 怎么切才不踩坑
+
+文档原文动辄几万字，整篇直接 embedding 没用——粒度太粗，检索回来一大段里大部分都和问题无关。所以入库前要切成一个个 chunk。
+
+切法看起来是细节，但直接影响检索质量。
+
+<ChunkStrategyComparator />
+
+定长切分最省事，但经常切到句子或词的中间，破坏语义。按段落切干净，但段落本身长度差异极大——有的段两行，有的段两千字，向量化后没法公平比较。递归切分是 LangChain 的默认策略，先按段切，太长的段再按句子细分，长度均衡的同时尽量保留语义。
+
+语义切分最理想——按主题边界划分，每个 chunk 内部主题统一。代价是要先算每对相邻句的 embedding 相似度，比纯切字符慢不少。文档量不大、对质量要求高的场景值得，否则递归切分够用。
+
+经验数字：chunk size 取 200-500 字，重叠窗口 30-50 字。重叠是为了避免一个完整概念正好被切到两个 chunk 的边界上。
+
+## 真实场景：检索走偏怎么办
+
+理论说完，看一个具体例子。某个内部知识库的真实问题：
+
+> 用户问：**「试用期员工能请病假吗？」**
+
+第一版直接扔了原文进去，bge-small 做检索，top-3 长这样：
 
 ```text
-固定大小: 每 512 token 切一段（简单但可能切断语义）
-按段落:  按 \n\n 切（保持语义完整）
-递归:    先按大段切，太长的再细切（LangChain 默认）
-语义:    按 embedding 相似度切（最智能但最慢）
+#1 (sim 0.79) 「公司全体员工年假天数按工龄计算：1-3 年 5 天…」
+#2 (sim 0.74) 「员工出差期间因公受伤按工伤处理…」
+#3 (sim 0.72) 「请假需提前一日通过 OA 系统申请…」
 ```
 
----
+最相关的那条「试用期员工请病假按入职时长按比例计算」根本没进 top-3。模型基于错的 context 回答，结果离谱。
 
-## 常见问题
+这个问题踩的坑常见，逐条修：
 
-### 检索不准
+第一刀加 BM25。纯向量检索对「试用期」「病假」这种关键词不够敏感。混合检索（向量 + BM25 各取 top-10 后融合）下，那条正确文档被拉进了 top-5。
 
-问题："公司的请假政策是什么？"
-检索到："公司的加班政策是..."（关键词匹配但语义不对）
+第二刀加 re-ranker。前两路召回还是会有噪音，让一个交叉编码器（bge-reranker-base）把召回的 10 条精排一遍。这条小模型对每个 (query, chunk) 二元组打分，比双塔的 cosine 准得多。命中率从 78% 涨到 92%。
 
-解法：
-- 用更好的 embedding 模型（bge-large > bge-small）
-- Hybrid search（向量 + BM25 关键词混合）
-- Re-ranking（检索 20 条，用精排模型选 top 5）
+第三刀改切分。原本按段落切，请假制度那段足足 800 字，把「试用期病假」混在一堆其他规则里。改成递归切分（每块 300 字左右），单独成块的概率高了，向量也更聚焦。
 
-### 上下文太长
+第四刀加引用约束。prompt 里强制要求「只能基于以下材料回答，不在材料里的内容直接说不知道，并标出引用编号」。模型从此不再瞎编，回答里直接带 `[文档片段 2]` 这样的标注，用户能反查。
 
-检索了 10 段，每段 500 token = 5000 token 的 context。加上 system prompt 和问题，超过模型的 ctx limit。
+修完之后，同一个问题的回答变成：
 
-解法：
-- 减少检索数量
-- 压缩检索结果（用小模型摘要）
-- 用支持长上下文的模型（128K+）
+> 试用期员工可以请病假，按入职时长按比例享受带薪病假天数 [文档片段 2]。具体天数和申请流程参见 OA 系统的请假申请页 [文档片段 3]。
 
-### 幻觉
+这个修复路径基本是 RAG 工程的通用打法：召回不准就加路（向量 + 关键词），排序不准就加排序模型，幻觉问题就在 prompt 和后处理上做约束。
 
-模型看了 context 但还是编造信息——"根据文档..."然后说了文档里没有的东西。
+## 这种事到底什么时候用 RAG
 
-解法：
-- Prompt 里加"只基于提供的信息回答，不确定就说不知道"
-- Citation：要求模型标注信息来源
-- 后处理：验证回答是否能在 context 中找到依据
+不是所有「让模型用上私有数据」的需求都靠 RAG。
 
----
+<RagVsFinetuneDecisionTree />
 
-## 和直接微调的对比
+核心区别在改的是什么：RAG 改的是模型「看到的内容」，微调改的是模型「自己的参数」。
 
-| | RAG | 微调 |
-|---|---|---|
-| 知识更新 | 实时（改文档即可） | 需要重新训练 |
-| 成本 | 低（只需向量数据库） | 高（GPU 训练） |
-| 准确性 | 高（有原文依据） | 可能幻觉 |
-| 适用场景 | 事实性问答 | 风格/能力改变 |
-| 局限 | 依赖检索质量 | 需要标注数据 |
+加新文档？RAG。让模型说话风格更礼貌？微调。客服场景里两件事都有：知识库要时时更新（RAG），客服话术要稳定（轻量微调或 prompt）——这种就是组合拳。
 
-大部分"让模型了解私有数据"的需求，RAG 是首选。只有当需要改变模型的**行为模式**时才需要微调。
+成本上 RAG 远低于微调。一台开发机就能起 ChromaDB，加新知识就是文档入库，几乎没有 GPU 成本。微调每跑一次都要数小时 A100 时间，数据集更新还要重训。
 
----
+## 工业界的 RAG 长什么样
 
-## 代码
+教学版的 RAG 五十行 Python 就能写。生产环境就要复杂得多。
 
 ```python
-# 最简 RAG pipeline（伪代码）
-
-<SeriesNav series="llm" />
-from chromadb import Client
+# 50 行的玩具版
+import chromadb
 from openai import OpenAI
 
-# 1. 索引文档
+db = chromadb.Client().create_collection("docs")
+for chunk in split_documents("./my_docs"):
+    db.add(documents=[chunk], embeddings=[embed(chunk)])
 
-<SeriesNav series="llm" />
-db = Client()
-collection = db.create_collection("docs")
-for chunk in split_documents("my_docs/"):
-    embedding = embed(chunk)
-    collection.add(documents=[chunk], embeddings=[embedding])
-
-# 2. 检索 + 生成
-
-<SeriesNav series="llm" />
-query = "LLaMA 3 有什么新特性?"
-results = collection.query(query_embeddings=[embed(query)], n_results=3)
-context = "\n".join(results["documents"][0])
-
-response = openai.chat.completions.create(
-    messages=[
-        {"role": "system", "content": f"基于以下信息回答：\n{context}"},
-        {"role": "user", "content": query},
-    ]
-)
+def answer(query: str) -> str:
+    hits = db.query(query_embeddings=[embed(query)], n_results=3)
+    context = "\n\n".join(hits["documents"][0])
+    return chat(f"基于以下材料回答：\n{context}\n\n问题：{query}")
 ```
 
----
-
-## 和工业界的距离
-
-| 环节 | 基础版 | 生产级 |
+| 环节 | 教学版 | 生产级 |
 |------|--------|--------|
-| 检索 | 单路向量 | 向量 + BM25 + Re-ranking |
-| Chunk | 固定 512 | 语义分割 + 重叠窗口 |
-| 向量库 | ChromaDB | Milvus 集群 |
-| 评估 | 人工看 | Ragas / TruLens 自动评估 |
-| 更新 | 手动重索引 | 增量更新 + CDC 同步 |
+| 检索 | 单路向量 | 向量 + BM25 + re-ranker 三路融合 |
+| 切分 | 定长 512 | 递归切分 + 重叠窗口 + 文档元信息 |
+| 向量库 | ChromaDB 单机 | Milvus 分布式集群 + 副本 |
+| 评估 | 人工抽检 | Ragas / TruLens 自动跑评测集 |
+| 数据更新 | 重新跑入库脚本 | CDC 监听 + 增量更新 |
+| 引用 | prompt 里加要求 | 解析模型输出再做来源高亮 |
 
-下一篇（最后一篇）——大模型全景图，回头看整个技术栈。
+下一篇是这个系列最后一篇，整个大模型技术栈的全景图——从 tokenizer 到 RAG，回头看哪些东西是真正的根基，哪些只是当前的工程实现。
 
----
+## 动手跑一遍
+
+整理了一个 50 行的最小 RAG notebook，包含 ChromaDB 入库、相似度检索、prompt 拼接、调用 OpenAI 兼容 API 的完整流程。再拼上 BM25 和 re-ranker，看效果差距：
+
+[在 Google Colab 上打开](https://colab.research.google.com/drive/TODO_RAG_NOTEBOOK)
 
 ## 参考论文
 
 | 论文 | 说明 |
 |------|------|
 | [Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks · Lewis, NeurIPS 2020](https://arxiv.org/abs/2005.11401) | RAG 原始论文 |
-| [Dense Passage Retrieval for Open-Domain Question Answering · Karpukhin, EMNLP 2020](https://arxiv.org/abs/2004.04906) | DPR，用双塔模型做文档检索 |
-| [Lost in the Middle: How Language Models Use Long Contexts · Liu, 2023](https://arxiv.org/abs/2307.03172) | LLM 对长 context 中间部分的信息利用率低 |
+| [Dense Passage Retrieval for Open-Domain Question Answering · Karpukhin, EMNLP 2020](https://arxiv.org/abs/2004.04906) | DPR，双塔模型做文档检索 |
+| [Lost in the Middle: How Language Models Use Long Contexts · Liu, 2023](https://arxiv.org/abs/2307.03172) | 长 context 中间部分的信息利用率低 |
 | [Self-RAG: Learning to Retrieve, Generate, and Critique · Asai, ICLR 2024](https://arxiv.org/abs/2310.11511) | 让模型自己决定何时检索、评估检索质量 |

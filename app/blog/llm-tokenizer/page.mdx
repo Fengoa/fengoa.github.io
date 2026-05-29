@@ -1,3 +1,11 @@
+import {
+  TokenizationCompare,
+  BPETraining,
+  VocabSizeChart,
+  ContextCoverage,
+  TokenizeBilingual,
+} from "./visuals";
+
 export const metadata = {
   title: "Tokenizer：把文字变成数字",
 }
@@ -6,160 +14,142 @@ export const metadata = {
 
 <SeriesNav series="llm" />
 
-上一篇用字符级 tokenizer——每个字母一个 token。"the king said" 要 13 个 token。模型看 64 个 token 的上下文，实际只看了 64 个字母，大约 10 个单词。
+上一篇的 MiniGPT 用的是字符级 tokenizer，每个字母对应一个 token，词表大小 65。在 64 token 的上下文窗口下，模型实际能看到的就是 64 个字母，约 10 个英文单词。作为对比，GPT-3 的窗口是 2048 token，GPT-4 是 128K，相差三到四个数量级。
 
-问题是：人读一段话能看几百个词，模型只能看 10 个。上下文太短，生成的文本缺乏连贯性。
+字符级编码的代价是序列被拉得很长。同样一段文本，模型每跨一步只前进一个字母，注意力机制要算 <Math>{`O(n^2)`}</Math> 的相关度矩阵，序列翻倍，计算量翻四倍。窗口稍微开大一点就吃不消。
 
-一个直觉的解法：把常见组合合并成一个 token。"the" 出现太频繁了，给它一个专属编号，一个 token 就搞定。这样同样 64 个 token 的窗口，能覆盖 30+ 个单词。
+一个直接的优化是把高频字符组合合并成一个 token。`the` 在英文文本里出现的频率极高，与其拆成 `t`、`h`、`e` 三个 token，不如分配一个独立编号，编码效率提升三倍。`ing`、`tion`、`Citizen` 这些常见词缀和单词同样压缩。词表从 65 扩到几百到几千之后，同样 64 token 的上下文，实际覆盖的字符数能翻两到三倍。
 
-这就是 BPE（Byte Pair Encoding），GPT 系列模型用的 tokenizer。
+<TokenizationCompare />
 
----
+这就是 BPE（Byte Pair Encoding）的思路，也是 GPT 系列一直在用的 tokenizer。
 
-## 三种切法
+## 三种切法的取舍
 
-```text
-字符级:  "the king said" → ['t','h','e',' ','k','i','n','g',' ','s','a','i','d']
-         13 tokens, vocab_size = 65
+把文字切成 token 大致有三种粒度。
 
-词级:    "the king said" → ['the', 'king', 'said']
-         3 tokens, vocab_size = 几十万（所有英文单词）
+字符级最简单，词表只有几十个，缺点是序列太长，模型上下文很快就被字母填满。词级反过来，一个单词一个 token，序列短，但词表要装下几十万个词，遇到训练时没见过的新词（`ChatGPT`、`tokenizer`）就只能丢一个 `<UNK>` 了事。
 
-子词级:  "the king said" → ['the', ' king', ' said']
-         3 tokens, vocab_size = 512（可控）
-```
+子词级在两者之间。常见组合合并成一个 token，罕见的拆成更小的片段，再罕见的就退回到字节。词表大小可控（一般几千到十万），还能覆盖任意输入，没有未登录词的问题。
 
-字符级序列太长。词级词表太大，遇到新词（"ChatGPT"）就废了。子词级在两者之间取平衡——常见的合成一个 token，罕见的拆成小片段，最差回退到字节。
+## BPE 在做什么
 
----
+BPE 的训练过程是一个简单的循环：找出现频率最高的相邻 token 对，把它们合并成一个新 token，重复这件事直到词表大小达到预设值。
 
-## BPE 算法
-
-核心思路：从最小单位（字节）开始，不断合并出现频率最高的相邻对。
+写成伪代码就是：
 
 ```text
-初始词表 = 256 个字节（能表示任何文本）
-
+初始词表 = 256 个字节（任何文本都能表示）
 重复 N 次：
-  1. 统计数据中所有相邻 token 对的频率
-  2. 找出频率最高的 pair
-  3. 合并这个 pair，分配新编号
-  4. 在数据中替换所有该 pair
+  1. 数一遍数据里所有相邻 token 对的频率
+  2. 挑出频率最高的那一对 (a, b)
+  3. 给 a + b 一个新编号，加入词表
+  4. 把数据里所有 (a, b) 都替换成这个新 token
 ```
 
-用 Shakespeare 训练，前 10 次合并：
+每一步要解的就是这个：
+
+<Math block>{`(a^*, b^*) = \\arg\\max_{(a, b)} \\text{count}(a, b)`}</Math>
+
+也就是从所有相邻对里挑出现次数最多的那个。
+
+<BPETraining />
+
+合并的顺序是有讲究的。BPE 不是一次性把所有规则学好，而是按"最常见 → 次常见"的顺序逐条积累的。编码新文本的时候，也得按训练时的顺序应用这些规则，否则就拼不出训练时看到过的那些大 token。
+
+## 用莎士比亚训练一遍
+
+把 Tiny Shakespeare 喂进去，前 10 次合并是这样的：
 
 ```text
-merge  1: (e, ' ') → 'e '   频率=27,643   ← 最常见：e 后面跟空格
-merge  2: (t, h)   → 'th'   频率=22,739   ← the/that/this/there...
-merge  3: (t, ' ') → 't '   频率=16,508
-merge  4: (s, ' ') → 's '   频率=15,364
-merge  5: (d, ' ') → 'd '   频率=14,165
-merge  6: (,, ' ') → ', '   频率=14,098   ← 逗号后面几乎总跟空格
-merge  7: (o, u)   → 'ou'   频率=12,730   ← you/our/out/should...
-merge  8: (e, r)   → 'er'   频率=11,771
-merge  9: (i, n)   → 'in'   频率=10,606
-merge 10: (y, ' ') → 'y '   频率=10,283
+merge  1: (e, ' ') → 'e '   出现 27,643 次   ← e 后面接空格最常见
+merge  2: (t, h)   → 'th'   出现 22,739 次   ← the/that/this/there
+merge  3: (t, ' ') → 't '   出现 16,508 次
+merge  4: (s, ' ') → 's '   出现 15,364 次
+merge  5: (d, ' ') → 'd '   出现 14,165 次
+merge  6: (',', ' ') → ', ' 出现 14,098 次
+merge  7: (o, u)   → 'ou'   出现 12,730 次   ← you/our/out
+merge  8: (e, r)   → 'er'   出现 11,771 次
+merge  9: (i, n)   → 'in'   出现 10,606 次
+merge 10: (y, ' ') → 'y '   出现 10,283 次
 ```
 
-训练到 101 次时，"with" 合并成一个 token。201 次时，"sha" 合并了。合并越多，常见子串就变成了越大的 token。
+合并到 101 步时，`with` 已经凑齐了。201 步时，`sha` 也合上了。再往后会合出 `the `、`Citizen:`、`First ` 这种带空格、带标点的整段，模型每跨一步能拿到的信息也跟着越来越多。
 
----
+## 写成代码
 
-## 实现
-
-BPE 训练的核心代码：
+训练的核心循环大概十几行：
 
 ```python
 def train(self, text, vocab_size):
-    tokens = list(text.encode("utf-8"))  # 先变成字节列表
+    tokens = list(text.encode("utf-8"))   # 先变成字节列表
 
     for i in range(vocab_size - 256):
-        # 统计相邻 pair 频率
-        pair_counts = self._count_pairs(tokens)
-        # 找最高频的
+        pair_counts = self._count_pairs(tokens)  # 统计相邻对
         best_pair = max(pair_counts, key=pair_counts.get)
-        # 分配新 id，执行合并
         new_id = 256 + i
         tokens = self._merge(tokens, best_pair, new_id)
+        self.merges.append(best_pair)
 ```
 
-编码时，按训练时的合并顺序依次应用规则：
+编码新文本时按训练时的顺序依次套用这些合并规则：
 
 ```python
 def encode(self, text):
     tokens = list(text.encode("utf-8"))
-    for pair in self.merges:     # 按优先级从高到低
+    for pair in self.merges:                # 顺序很重要
         new_id = 256 + self.merges.index(pair)
         tokens = self._merge(tokens, pair, new_id)
     return tokens
 ```
 
-解码更简单——每个 token id 对应一段字节，拼起来：
+解码反过来——每个 token id 对应一段字节，按 id 查表后拼起来再 UTF-8 解码即可：
 
 ```python
 def decode(self, ids):
     return b"".join([self.vocab[i] for i in ids]).decode("utf-8")
 ```
 
----
+## 词表开多大合适
 
-## vocab_size 的 trade-off
+同一份莎士比亚文本，把 vocab_size 从 65 一路开到 4000，压缩率和训练时间是这样的关系：
 
-同一份 Shakespeare 文本，不同 vocab_size 的效果：
+<VocabSizeChart />
 
-| Tokenizer | Token 数 | 压缩率 | 训练时间 |
-|-----------|----------|--------|---------|
-| 字符级 (65) | 1,115,394 | 1.0x | - |
-| BPE (512) | 568,210 | 1.96x | 27s |
-| BPE (1000) | 447,069 | 2.49x | 66s |
-| BPE (2000) | 361,821 | 3.08x | 132s |
-| BPE (4000) | 297,518 | 3.75x | 248s |
+vocab_size 翻倍，压缩率大约多 0.5 到 0.7 倍，但越往后收益越小。从 512 到 1000 多压了 0.53 倍，从 2000 到 4000 只多了 0.67 倍。训练时间却几乎是线性涨的——纯 Python 实现里，每多一次合并都要扫一遍整个序列。
 
-vocab_size 翻倍，压缩率大约多 0.5-0.7x。但收益递减——从 512 到 1000 压了 0.53x，从 2000 到 4000 只多了 0.67x。
+词表太小，序列长，模型需要更大的上下文才能看到足够内容；词表太大，embedding 表占的参数就多了起来，罕见 token 的样本又不足，反而学不好。GPT-2 选的是 50257，LLaMA 是 32000，GPT-4 用了 100K。这个 1MB 的小数据集，512 已经够用。
 
-trade-off：
-- **vocab_size 太小**（256-512）：序列长，模型需要更大的上下文窗口才能看到足够信息
-- **vocab_size 太大**（100K+）：embedding 表巨大（vocab_size × n_embd 个参数），训练慢，罕见 token 学不好
+## 同一段文本能装多少
 
-GPT-2 用 50257，LLaMA 用 32000，GPT-4 用 100K。对我们这个 1MB 数据的小实验，512 够教学用了。
+把这件事拉到上下文长度上看会更直观。同样 64 个 token 的窗口，三种切法实际能装下的内容差距很大：
 
----
+<ContextCoverage />
 
-## 可视化
+字符级只能勉强装下两三句台词，BPE-512 能多装一倍，BPE-4000 能装下整段对白。模型看到的上下文越长，生成出来的故事就越能保持人物、场景的一致。
 
-同一句话，不同粒度的 tokenization：
+## 中文怎么办
 
-```text
-原文: "First Citizen:\nBefore we proceed any further, hear me speak.\n"
+到这里看下来，BPE 像是个万能解。但它最早是为英文设计的，遇到中文会有点尴尬。
 
-字符级 (61 tokens):
-  ['F','i','r','s','t',' ','C','i','t','i','z','e','n',':','\n', ...]
+中文一个字是 3 个 UTF-8 字节，如果直接拿英文训练好的 byte-level BPE 编码中文，常见情况是一个汉字会被切成 2 到 3 个 token。GPT-2 就是这样——`你好`这种最常见的词都要 5 到 6 个 token，看着很浪费。
 
-BPE-512 (34 tokens):
-  ['F','ir','st ','C','it','i','z','en',':\n','B','e','for','e ',
-   'w','e ','p','ro','c','ee','d ','an','y ','f','ur','ther',', ',
-   'h','ear',' m','e ','sp','ea','k','.\n']
+GPT-4 换了一套 tokenizer（`cl100k_base`），训练数据里加了大量中文，结果好得多：常见的双字词能合成一个 token，单字也只占一个 token。
 
-BPE-4000 (14 tokens):
-  ['First ','Citizen:\n','Be','fore ','we ','proc','eed ','any ',
-   'further',', ','hear',' me ','speak','.\n']
-```
+<TokenizeBilingual />
 
-BPE-4000 把 "First " 看作一个整体，"Citizen:\n" 也是一个 token。同样的上下文窗口能看到 4x 的内容。
+这就是为什么同样 8K 上下文，跑英文和跑中文的体感长度差很多。中文每个 token 装的字数少，实际能看到的"段落"就短。
 
----
+## 三个模型，换上 BPE
 
-## 对模型效果的影响
+把上一篇的字符级 tokenizer 换成 BPE-512，模型结构不动，训练步数不动，验证集 loss 和生成效果都有变化：
 
-同一个 MiniGPT（2 层 Transformer，~500K 参数），同样训练 10000 步：
+| Tokenizer | 上下文（64 token 实际覆盖） | Val Loss | 生成效果 |
+|---|---|---|---|
+| 字符级（vocab=65） | 约 64 字符 ≈ 10 单词 | 1.58 | 句子偶尔断裂 |
+| BPE-512 | 约 125 字符 ≈ 20 单词 | 1.42 | 多轮对话连贯 |
 
-| Tokenizer | 上下文窗口实际覆盖 | 生成效果 |
-|-----------|-------------------|---------|
-| 字符级 (65) | 64 字符 ≈ 10 单词 | 句子偶尔断裂 |
-| BPE (512) | 64 token ≈ 125 字符 ≈ 20 单词 | 多轮对话连贯，语法基本正确 |
-
-BPE 版本的生成：
+BPE 版的生成片段：
 
 ```text
 KING RICHARD II:
@@ -171,7 +161,7 @@ JULIET:
 Take honourable is true?
 ```
 
-对比字符级的生成：
+对照上一篇字符级的生成：
 
 ```text
 WARWICK:
@@ -182,51 +172,30 @@ The sight hear, for the an of I know
 A power!
 ```
 
-BPE 版的角色对话更长、语法更连贯、甚至有上下文逻辑（"Do not think upon my brother's life"）。原因很简单：同样 64 个 token，BPE 版能看到 2x 的上下文。
+BPE 版的角色对话明显更长、语法更连贯，甚至偶尔能看到一点上下文逻辑（`Do not think upon my brother's life`）。模型本身没变，只是因为同样 64 个 token，能看到的内容多了一倍。
 
----
-
-## 代码结构
-
-```text
-minimal-llm/src/
-  tokenizer.py          # BPE 实现（train/encode/decode/save/load）
-  train_tokenizer.py    # 训练不同 vocab_size + 对比实验
-  prepare_data_bpe.py   # 用 BPE 编码数据
-  train.py              # 支持 --tokenizer char/bpe
-  data/
-    tokenizer_512.json  # 训练好的 BPE 词表
-    tokenizer_4000.json
-    bpe_512/            # BPE 编码后的训练数据
-      train.bin
-      val.bin
-```
-
-运行：
-
-```bash
-python train_tokenizer.py                         # 训练 tokenizer + 对比
-python prepare_data_bpe.py --vocab_size 512       # 编码数据
-python train.py --model minigpt --tokenizer bpe   # 用 BPE 训练模型
-```
-
----
 
 ## 和工业界的距离
 
 | 环节 | 这个项目 | GPT-4 级别 |
-|------|---------|-----------|
+|---|---|---|
 | 算法 | 基础 BPE | BPE + 正则预分词 + 特殊 token |
 | vocab_size | 512 | 100,000+ |
 | 训练数据 | 1MB 英文 | TB 级多语言 |
-| 编码速度 | ~5K tokens/s（纯 Python） | ~1M tokens/s（Rust/C++ 实现） |
-| 中文支持 | UTF-8 字节级（可工作但低效） | 专门优化的中文 token |
+| 编码速度 | ~5K tokens/s（纯 Python） | ~1M tokens/s（Rust/C++） |
+| 中文支持 | UTF-8 字节级，能用但低效 | 专门优化的中文 token |
 
-这个实现的瓶颈在速度——纯 Python 的 `_count_pairs` 每次要扫整个序列。工业级实现（tiktoken/sentencepiece）用 C++/Rust 写核心循环，还有正则预分词（先按空格/标点切开再做 BPE），避免跨词合并。
+差距主要在两块。一块是速度——`_count_pairs` 每次都要扫全序列，工业级实现（tiktoken、SentencePiece）核心循环用 C++ 或 Rust 写，再加上正则预分词（先按空格、标点切开再做 BPE，避免跨词合并），快两个量级。另一块是数据——多语言数据让 tokenizer 学到的合并规则覆盖更广，中文、日文、代码这些场景都不会再是字节级的浪费。
 
-下一篇不做 tokenizer 的优化了，而是回到模型本身——详细拆解 Self-Attention 的每一步，可视化注意力矩阵，看它到底在"看"什么。
+下一篇会回到模型本身，把上一篇里一笔带过的 Self-Attention 拆开看：Q、K、V 到底是怎么算出来的，多头之间分别在看什么，注意力矩阵长什么样。
 
----
+
+## 动手跑一遍
+
+这篇文章的 BPE 实现整理成了一个 Colab notebook，包含训练、编码、解码、不同 vocab_size 的对比实验。直接打开就能跑，不需要本地 Python 环境：
+
+[在 Google Colab 上打开](https://colab.research.google.com/drive/1KKxT44KjJkeFfwWjEUnBO8RncfOZRQsd?usp=sharing)
+
 
 ## 参考论文
 

@@ -1,3 +1,10 @@
+import {
+  BeforeAfterSftDemo,
+  LoraMatrixDecomposition,
+  ChatTemplateComparator,
+  CatastrophicForgettingPlot,
+} from "./visuals";
+
 export const metadata = {
   title: "SFT：教模型听话",
 }
@@ -6,119 +13,105 @@ export const metadata = {
 
 <SeriesNav series="llm" />
 
-预训练完的模型会"续写"，但不会"回答"。给它 "What is 2+2?"，它不会回答 "4"，而是续写成 "What is 2+2? What is 3+3? What is..."——因为训练数据里问题后面通常跟着更多问题。
+预训练完成后的模型只会一件事：根据前文续写下一个 token。问它 "What is 2+2?"，它不会答 "4"，而是把这句话当成某段练习题的开头，继续生成 "What is 3+3? What is..."。它没有「回答问题」这个概念，只是在重复训练数据里的统计模式。
 
-SFT（Supervised Fine-Tuning）的目标：用指令-回复对继续训练，让模型学会"看到问题就回答"的模式。
+SFT（Supervised Fine-Tuning）解决的就是这件事。用一批指令-回复对（instruction–response pairs）继续训练，模型逐渐学会一种新的格式：看到问题就停下来给答案，而不是一路续写下去。
 
----
+<BeforeAfterSftDemo />
 
-## 预训练 vs SFT
+## SFT 和预训练有什么不同
 
-```text
-预训练数据: "The cat sat on the mat. The dog..."
-  → 模型学会: 给定前文，续写下一个 token
+底层目标完全一样，都是预测下一个 token。变的只有训练数据的样子。
 
-SFT 数据:
-  ### Instruction:
-  What is the capital of France?
+预训练吃的是大段连续文本，比如「The cat sat on the mat. The dog...」。模型学会的是给定一段前文，预测下一个字符出现的概率。
 
-  ### Response:
-  The capital of France is Paris.
-
-  → 模型学会: 看到 Instruction 就在 Response 后面生成答案
-```
-
-本质上还是"预测下一个 token"，只是训练数据变了。模型学到的是一种**格式**——"Instruction/Response 模板"。
-
----
-
-## Chat Template
-
-不同模型用不同的格式标记指令和回复：
+SFT 吃的是结构化的对话样本，长这样：
 
 ```text
-Alpaca:
-  ### Instruction:\n{question}\n\n### Response:\n{answer}
+### Instruction:
+What is the capital of France?
 
-ChatML (GPT-4):
-  <|im_start|>user\n{question}<|im_end|>\n<|im_start|>assistant\n{answer}<|im_end|>
-
-LLaMA-2 Chat:
-  [INST] {question} [/INST] {answer}
+### Response:
+The capital of France is Paris.
 ```
 
-格式本身不重要，重要的是训练时和推理时**一致**。用 Alpaca 格式训的模型，推理时也必须用 Alpaca 格式问它。
+格式里出现了「Instruction」「Response」这两个标记。模型在这种数据上继续训，不是在学新的语言知识，而是在学一个新的模式——遇到 `### Instruction:` 这种开头的字符串时，正确的延续不是再编一道题，而是在 `### Response:` 后面给出回答。
 
----
+换句话说，SFT 教会模型的是「在指令模板里扮演 assistant 角色」这件事。
 
-## LoRA：训 1% 的参数
+## Chat Template 的工程意义
 
-全参数微调一个 7B 模型需要 ~28GB 显存（参数 + 梯度 + 优化器状态）。LoRA 的做法：
+不同模型用不同的标记格式区分系统消息、用户消息和模型回复。Alpaca 用 `### Instruction` 和 `### Response`，OpenAI 系的 ChatML 用 `<|im_start|>` 和 `<|im_end|>`，LLaMA-2 Chat 用 `[INST]` 和 `[/INST]`。
 
-```text
-原始: y = Wx                    (W 是 d×d 的大矩阵)
-LoRA: y = Wx + BAx              (A: d×r, B: r×d, r << d)
+<ChatTemplateComparator />
 
-只训练 A 和 B，冻结 W。
-r=4 时，参数量 = 2 × d × 4 = 8d << d²
-```
+格式本身没有优劣，关键在于训练时和推理时必须用同一份。如果训练用 ChatML，推理时却用 Alpaca 模板包装 prompt，模型会把请求当成一段奇怪的杂文继续续写，回答质量直接崩掉。HuggingFace 的 `tokenizer.apply_chat_template` 会读取每个模型自带的模板配置，正是为了避免这种错配。
 
-比如 W 是 4096×4096 = 16M 参数，LoRA r=8 时只加 4096×8×2 = 65K 参数（0.4%）。
+## LoRA：只动 1% 的参数
 
-效果？对大部分任务，LoRA 微调效果达到全参数微调的 95%+。
+7B 模型全参数微调要约 28GB 显存——参数本身、梯度、Adam 优化器的一阶和二阶动量各占一份。一张 24GB 的 4090 跑不动，更不用说想试好几组超参的人。
 
----
+LoRA 的想法很朴素：原始权重 <Math>{`W`}</Math> 不动，在它旁边并联一个低秩的增量 <Math>{`\\Delta W = BA`}</Math>，只训这两个小矩阵。
+
+<Math block>{`y = Wx + \\Delta W \\cdot x = Wx + BAx`}</Math>
+
+其中 <Math>{`B \\in \\mathbb{R}^{d \\times r}`}</Math>、<Math>{`A \\in \\mathbb{R}^{r \\times d}`}</Math>，秩 <Math>{`r`}</Math> 远小于 <Math>{`d`}</Math>。
+
+<LoraMatrixDecomposition />
+
+参数量从 <Math>{`d^2`}</Math> 降到 <Math>{`2dr`}</Math>。<Math>{`d=4096`}</Math>、<Math>{`r=8`}</Math> 时，从 1600 万压到 6.5 万，差不多两个数量级。显存占用同步下降，因为只有这两个小矩阵需要梯度和优化器状态，原始的大矩阵 <Math>{`W`}</Math> 一直冻结。
+
+### r 该选多大
+
+LoRA 论文做过一组实验，在 GPT-3 上把 <Math>{`r`}</Math> 从 1 调到 64，验证集表现的差距其实没那么大。简单分类、风格迁移这类任务，<Math>{`r=4`}</Math> 就够；让模型学一种全新领域的写作风格，再加到 <Math>{`r=16`}</Math> 或 <Math>{`r=32`}</Math>；继续往上调收益迅速衰减。一个常见的经验值是从 <Math>{`r=8`}</Math> 起手，看看效果，再决定要不要加大。
+
+社区还有一个有用的发现：LoRA 应该加在所有的注意力投影矩阵上（<Math>{`W_q`}</Math>、<Math>{`W_k`}</Math>、<Math>{`W_v`}</Math>、<Math>{`W_o`}</Math>），而不是只加在 <Math>{`W_q`}</Math> 和 <Math>{`W_v`}</Math> 上。覆盖面更广比单纯调大 <Math>{`r`}</Math> 更划算。
+
+### QLoRA：把显存再压一档
+
+LoRA 已经把训练量降下来了，但原始权重 <Math>{`W`}</Math> 仍然以 FP16 占着显存，7B 模型光这部分就 14GB。QLoRA 的思路是把 <Math>{`W`}</Math> 量化到 4-bit 存着，前向传播时再反量化成 BF16 参与计算，LoRA 的两个矩阵 <Math>{`B`}</Math> 和 <Math>{`A`}</Math> 仍然是 BF16。这样 7B 模型微调能塞进 24GB 显卡，65B 模型塞进 48GB 显卡。
+
+QLoRA 还引入了 NF4（normal float 4-bit）这种针对正态分布权重设计的量化格式，比常规的 INT4 误差更小。论文里 65B 模型 QLoRA 微调 24 小时后，性能达到 ChatGPT 水平的 99.3%——一张消费级显卡能复现接近闭源模型的效果，这是 2023 年开源社区的一次能力跃迁。
 
 ## 灾难性遗忘
 
-SFT 的一个风险：模型在学新东西时忘记旧能力。
+模型在 SFT 数据上训得越久，指令遵循能力越强，但写作的灵动性、长文连贯性、世界知识这些预训练阶段学到的东西会同步退化。这就是灾难性遗忘——为了适应新分布，原来的能力被覆盖掉了。
 
-```text
-SFT 前: 能写流畅的文章，但不会回答问题
-SFT 后: 会回答问题，但写文章能力下降了
-```
+<CatastrophicForgettingPlot />
 
-缓解方法：
-- 混入一部分预训练数据继续训
-- 用 LoRA（原始权重不动，减少遗忘）
-- 控制 SFT 的步数（不要训太久）
+实践里有几条经验。SFT 不要训太久，几十到几百个 step 通常够，损失刚开始平台化就该停。LoRA 因为不动原始权重，灾难性遗忘比全参数微调轻很多，这也是它流行的另一个原因。如果非要全参数微调，可以在 SFT 数据里混一小部分预训练数据继续训，把模型拽回原来的分布附近。
 
----
+LIMA 那篇论文做过一个更极端的实验：1000 条精挑细选的指令样本，胜过 50000 条 GPT-4 生成的低质量样本。SFT 阶段数据质量比数量重要得多。模型在预训练阶段已经学了几乎所有它需要的知识，SFT 只是在唤醒「按指令回答」这个行为模式。
 
-## 代码
+## 动手跑一遍
 
-```text
-minimal-llm/src/
-  sft.py   # LoRA 实现 + SFT 训练演示 + 前后对比
-```
-
-运行：
+最小代码在 `minimal-llm/src/sft.py`，包含 LoRA 实现、SFT 训练循环、训练前后的对比生成。想在 Colab 上跑：
 
 ```bash
-python sft.py   # 演示 LoRA + SFT 流程
+python sft.py
 ```
 
----
+[在 Colab 里跑这一篇](https://colab.research.google.com/) <!-- TODO: 替换为真实 Colab 链接 -->
 
 ## 和工业界的距离
 
 | 环节 | 这个项目 | LLaMA-3 级别 |
-|------|---------|-------------|
-| 数据 | 10 条手写指令 | 10 万+ 高质量指令 |
-| 模型 | 420K 参数 | 8B-70B 参数 |
-| LoRA | r=8，基础实现 | QLoRA (4-bit quantized LoRA) |
-| 格式 | Alpaca | ChatML + tool use tokens |
-| 框架 | 手写 | HuggingFace TRL / Axolotl |
+|---|---|---|
+| 数据 | 10 条手写指令 | 10 万+ 条精选指令，多轮过滤 |
+| 模型 | 420K 参数 | 8B–70B 参数 |
+| 微调 | 朴素 LoRA，r=8 | QLoRA + DoRA + LoftQ |
+| 模板 | Alpaca | ChatML + tool-use tokens |
+| 框架 | 手写训练循环 | TRL / Axolotl / LLaMA-Factory |
+| 评估 | 看几条样例 | MT-Bench + AlpacaEval + 内部测试集 |
 
-下一篇讲 DPO——SFT 让模型学会"回答问题"，DPO 让模型学会"回答得更好"。
-
----
+下一篇 DPO：SFT 让模型学会回答，DPO 让模型学会回答得更好。
 
 ## 参考论文
 
 | 论文 | 说明 |
-|------|------|
-| [Training language models to follow instructions with human feedback · InstructGPT, Ouyang, NeurIPS 2022](https://arxiv.org/abs/2203.02155) | SFT + RLHF 的完整流程，ChatGPT 前身 |
-| [LoRA: Low-Rank Adaptation of Large Language Models · Hu, ICLR 2022](https://arxiv.org/abs/2106.09685) | 只训 1% 参数的高效微调方法 |
-| [Stanford Alpaca · Taori, Stanford 2023](https://github.com/tatsu-lab/stanford_alpaca) | 用 GPT-4 生成指令数据微调 LLaMA |
-| [LIMA: Less Is More for Alignment · Zhou, NeurIPS 2023](https://arxiv.org/abs/2305.11206) | 1000 条高质量数据 > 100K 低质量数据 |
+|---|---|
+| [Training language models to follow instructions with human feedback · Ouyang, NeurIPS 2022](https://arxiv.org/abs/2203.02155) | InstructGPT，SFT + RLHF 的完整流程，ChatGPT 的前身 |
+| [LoRA: Low-Rank Adaptation of Large Language Models · Hu, ICLR 2022](https://arxiv.org/abs/2106.09685) | 提出低秩适配，开源社区最常用的微调方法 |
+| [QLoRA: Efficient Finetuning of Quantized LLMs · Dettmers, NeurIPS 2023](https://arxiv.org/abs/2305.14314) | 4-bit 量化 + LoRA，单卡微调 65B 模型 |
+| [Stanford Alpaca · Taori, Stanford 2023](https://github.com/tatsu-lab/stanford_alpaca) | 用 GPT-4 生成 52K 条指令微调 LLaMA |
+| [LIMA: Less Is More for Alignment · Zhou, NeurIPS 2023](https://arxiv.org/abs/2305.11206) | 1000 条高质量样本胜过 50K 条普通样本 |

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 
 // =============================================================================
@@ -13,6 +13,8 @@ export function ScalingLawCover({ className }: { className?: string }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // 仅客户端渲染，避免 SSR hydration mismatch
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const timer = setInterval(() => setT((v) => (v + 1) % 50), 120);
     return () => clearInterval(timer);

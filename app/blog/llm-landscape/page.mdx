@@ -1,3 +1,10 @@
+import {
+  LLMTimelineInteractive,
+  SeriesLearningPathMap,
+  OpenSourceModelsScatter,
+  MoeRoutingAnimation,
+} from "./visuals";
+
 export const metadata = {
   title: "大模型全景图",
 }
@@ -8,15 +15,21 @@ export const metadata = {
 
 14 篇写完了。回头看整个大模型技术栈到底长什么样——从数据到训练到对齐到推理到应用，每一层做什么、我们做了什么、还差什么。
 
-下面这张图覆盖了数据层到应用层的 8 个环节。正体是成熟技术，紫色斜体是前沿探索。
+下面这张图覆盖了数据层到应用层的 8 个环节。正体是已经成熟、工程上跑得起来的技术，紫色斜体是还在演进的前沿方向。
 
 <LLMSystemLandscape />
 
----
 
 ## 这张图怎么看
 
----
+整张图是从下游往上游读的：底层是原料，越往上越接近用户。
+
+数据层负责把人类世界压成 token，决定模型的认知边界。架构层是骨架，所有模型都长在 Transformer 这副身体上，区别只在 Attention 改了哪里、FFN 用不用 MoE。预训练把骨架灌满参数，对齐让它学会回答而不是续写，推理部署解决工程上跑得起来的问题，应用层把这一切包装成产品。
+
+每两层之间有一个连接器，写着上一层产出的中间产物。比如架构层产出『随机初始化的网络』，喂给预训练得到 base model；base model 经过 SFT/DPO 变成 chat model，再经过推理优化变成线上服务。这条主链每个节点都对应系列里的一篇文章，整套技术栈是闭环的。
+
+紫色斜体的部分是这两年还在快速变化的方向：合成数据、MoE、长上下文、多模态、Agent。文章正文不会全部展开，但放在这里是为了说明哪些东西已经定型、哪些还在动。
+
 
 ## 我们做了什么
 
@@ -29,84 +42,114 @@ export const metadata = {
 | 推理层 | KV Cache、GQA、量化概念 | Flash Attention kernel、PagedAttention |
 | 应用层 | RAG 概念、部署方案 | Agent、Tool Use、多模态 |
 
-核心链路走通了。每一层都理解了原理和实现方式。缺的部分要么需要更大规模（分布式训练），要么需要 CUDA 底层开发（Flash Attention），要么需要大量人工标注（RLHF）。
+主链路走通了，每一层都拆到能动手实现的颗粒度。剩下的部分基本是三类：要么需要大规模工程能力（分布式训练、PagedAttention 的 CUDA 实现），要么需要海量人工标注（大规模 RLHF），要么属于还在活跃研究的前沿方向（多模态统一、Agent 的长程规划）。这三类一个普通工程师在自己机器上跑不起来，但只要看懂主链路，再补上对应的论文和工程实现，是可以接得上的。
 
----
 
 ## 技术演进时间线
 
-```text
-2017  Transformer (Attention Is All You Need)
-2018  GPT-1 (Decoder-only 预训练)
-2019  GPT-2 (1.5B，证明 scaling works)
-2020  GPT-3 (175B，few-shot 涌现) + Scaling Laws 论文
-2022  InstructGPT (RLHF 对齐) + Chinchilla (最优配比)
-2023  LLaMA (开源) + GPT-4 + DPO + Flash Attention 2
-2024  LLaMA-3 + Qwen-2 + 长上下文 (128K+) + MoE
-2025  推理模型 (o1/o3) + Agent + 多模态统一
-2026  ...
-```
+下面这张时间轴把这九年里真正改变方向的关键工作画在一起。点进去能看到每个节点对应的论文和它解决的问题。
 
----
+<LLMTimelineInteractive />
+
+如果只挑三个节点串起整条故事线：2017 年 Transformer 提供了骨架，2020 年 GPT-3 + Scaling Laws 让大家相信『把规模放大就行』，2022 年 InstructGPT 把这个能力变成了可以聊天的产品。剩下的工作大多是在这三件事之间打补丁——LLaMA 把权重开源了、DPO 让对齐更便宜、Flash Attention 让长上下文跑得动、DeepSeek-V3 让 GPT-4 级别的模型训练成本降到几百万美元。
+
+2024 年之后又出现了一个新方向：把算力从训练阶段挪到推理阶段。o1 和 R1 用更长的思考链换更高的准确率，这件事在前面 13 篇里没怎么提，因为它还没有完全收敛——但很可能是下一个范式拐点。
+
 
 ## 开源模型生态
 
-| 模型 | 参数量 | 特点 |
-|------|--------|------|
-| LLaMA-3 | 8B/70B/405B | Meta，最广泛使用 |
-| Qwen-2.5 | 0.5B-72B | 阿里，中文最强 |
-| DeepSeek-V3 | 671B (MoE) | 深度求索，性价比极高 |
-| Mistral | 7B/8x7B | 法国，MoE 先驱 |
-| Gemma | 2B/7B/27B | Google，轻量级 |
+把开源模型按发布时间和参数量画在一张图上，这两年的密度比前面五年加起来还高。
 
----
+<OpenSourceModelsScatter />
+
+横轴是发布时间，纵轴是参数量（log 刻度），气泡大小代表社区影响力。MoE 模型多画一个虚线小气泡表示每次实际激活的参数——同样 671B，DeepSeek-V3 每次只跑 37B，成本接近一个 7B 的稠密模型。
+
+几个有意思的现象。一个是 Mistral-7B 把『小模型』这条线拉了起来，证明 7B 也能做到 13B 的水平，做对了架构（GQA + Sliding Window）和数据。另一个是中国团队最近一年密集出货：Qwen 把全尺寸开源做成了标准动作，DeepSeek 在 MoE 这条路上走到了世界前沿。第三个是 Meta 用 LLaMA-3.1 405B 把『稠密模型 vs 闭源旗舰』的差距正式抹平了——不过同期发布的 DeepSeek-V3 用 MoE 做到了同样的效果但成本只有零头。
+
+闭源模型（GPT-4、Claude、Gemini）没画在图上，因为它们既不公布参数也不公布训练成本。但从公开能力对比看，这条开源曲线和闭源旗舰的差距已经从 2023 年初的 18 个月缩到了 6 个月以内。
+
 
 ## 前沿方向
 
-### MoE（Mixture of Experts）
+### MoE 把容量和算力解耦
 
-不是所有参数每次都用——每个 token 只激活部分"专家"：
+MoE 的想法很简单：把 FFN 拆成很多个『专家』，每个 token 只选 top-k 个激活，剩下的不参与计算。这样总参数可以堆得很大（容量），但每次前向算的参数还是一小部分（成本）。
 
-```text
-总参数: 671B
-每次激活: ~37B（只用 6%）
-→ 效果接近 671B 全模型，成本接近 37B 模型
-```
+写成公式就一行——路由器先给 N 个专家打分，挑分数最高的 k 个，再把它们的输出按 softmax 权重加起来：
 
-DeepSeek-V3 和 Mixtral 用的就是这个。
+<Math block>{`y = \\sum_{i \\in \\text{TopK}(g(x))} \\text{softmax}(g(x))_i \\cdot E_i(x)`}</Math>
 
-### 多模态
+<MoeRoutingAnimation />
 
-一个模型同时处理文本、图片、音频、视频：
+代价是路由器要学得好——不能让所有 token 都涌向同一个专家（负载不均），也不能让相邻 token 的路由乱跳（训练不稳）。Mixtral 用 8 个专家激活 2 个，DeepSeek-V3 走得更激进：256 个专家激活 8 个，外加几个共享专家保底。
 
-```text
-输入: [图片 token] + [文字 token]
-→ 统一的 Transformer 处理
-→ 输出: 文字/图片/代码
-```
+为什么这件事现在火？训练 671B 稠密模型一次实验要烧上千万美元，能玩的家不多。但 671B-MoE 实际激活只有 37B，训练吞吐和 70B 稠密模型差不多，普通团队（哪怕只有几百张卡）也能进场。开源生态里 MoE 已经是新模型的默认选择。
 
-GPT-4o、Gemini、Qwen-VL 都是多模态模型。
+### 多模态走向统一表征
 
-### Agent
+早期多模态模型是『先用 ViT 把图片编码成向量，再喂给 LLM』——CLIP、LLaVA 都是这套。模型实际上有两个大脑，靠 projector 把它们粘起来。
 
-让模型使用工具、分步推理、自主完成复杂任务：
+GPT-4o 和 Gemini 走得更远：图片、文本、音频、视频全部 token 化，丢进同一个 Transformer。从输出端看，模型可以直接吐文字、吐图、吐音频，不用再切换模态。Sora、4o 的语音模式都是这条路线的产物。
 
-```text
-用户: "帮我查最近的天气并订一家适合的餐厅"
-模型:
-  1. 调用天气 API → 得到"晴天 25°C"
-  2. 推理: 晴天适合户外
-  3. 调用餐厅搜索 → 筛选有露台的
-  4. 返回推荐结果
-```
+工程上还有不少坑——视频 token 数太大（一秒 30 帧 × 一帧上千 token），怎么压才不丢信息？模态之间的 attention 怎么不互相干扰？这些都是 2024 年还在动的问题。
 
-### 长上下文
+### Agent 开始能用了
 
-从 4K → 32K → 128K → 1M token。让模型能"读"整本书、整个代码库。
+『让模型用工具』这件事 2023 年就在喊，但真正能跑的不多。原因不在模型不会调用 API，而在长程任务的规划——一个步骤错了，后面全错。
 
-关键技术：RoPE 外推（YaRN）、Ring Attention（分布式长序列）。
+2024 年下半年风向变了。Claude 的 Computer Use 能直接操作浏览器和桌面，Cursor 能在仓库级代码里做多文件改动，Devin 在 SWE-bench 上做到 13%。共同特点是：模型能在出错时回退、试错、查日志、再试，而不是一条道走到黑。
 
----
+支撑这件事的是两件事的叠加：一是模型本身推理能力变强了（o1/R1 那条线），二是工程上把『让模型循环 50 步』的反馈系统搭起来了。MCP 协议在 2024 年底出现就是一个标志——它把『模型怎么和外部工具说话』这件事标准化了。
+
+### 长上下文从 4K 走到 1M
+
+GPT-3 的 2K → GPT-3.5 的 4K → Claude 2 的 100K → Gemini 1.5 的 1M。这条线背后是三件事配合：RoPE 的外推方案（YaRN、LongRoPE），分布式 Attention（Ring Attention 把序列切到多卡），以及 KV Cache 的压缩（PagedAttention、量化）。
+
+但长上下文有个隐藏代价：『大海捞针』评测好看不代表真用得上。100K 的窗口塞 99K 噪声 + 1K 关键信息，模型的实际利用率是另一回事。这也是为什么 RAG 没有被长上下文淘汰——好的检索仍然比塞一整本书更靠谱。
+
+
+## 全系列学习路径
+
+把 14 篇文章放回阅读建议的依赖图，这条路径其实不像一条直线那么死板。
+
+<SeriesLearningPathMap />
+
+基础两篇（minimal-llm、tokenizer）是入口。架构那一行（attention → transformer → RoPE → 高效 attention）是 Transformer 的骨架，必须按顺序看完。训练和对齐这两条分支可以并行——读完 transformer 之后既可以往下走训练（training → scaling law），也可以跳到对齐（SFT → DPO）。推理优化和部署属于工程篇，看完高效 attention 之后再读会更顺。
+
+如果时间紧，最少版本是这 6 篇：minimal-llm、attention、transformer、training、SFT、inference。这条线串起来就是一个能跑、能微调、能部署的最小闭环，剩下 8 篇都是在这个闭环上拓展。
+
+
+## 参考论文
+
+收官这一篇不引入新概念，所以参考清单直接做成全系列论文索引。下面把 14 篇文章里出现过的核心工作聚到一起，按主题分组，方便闭环回顾。
+
+| 主题 | 论文 | 一句话价值 |
+|---|---|---|
+| 基础架构 | [Attention Is All You Need · Vaswani 2017](https://arxiv.org/abs/1706.03762) | Transformer 原始论文，整个系列都长在这上面 |
+| 基础架构 | [Language Models are Unsupervised Multitask Learners · GPT-2 2019](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) | Decoder-only 路线确立 |
+| 基础架构 | [Language Models are Few-Shot Learners · GPT-3 2020](https://arxiv.org/abs/2005.14165) | 175B 涌现能力，scaling 拐点 |
+| Tokenizer | [Neural Machine Translation of Rare Words · Sennrich 2016](https://arxiv.org/abs/1508.07909) | BPE 用于 NLP 的开创工作 |
+| Tokenizer | [SentencePiece · Kudo 2018](https://arxiv.org/abs/1808.06226) | LLaMA 等模型使用的语言无关分词器 |
+| 位置编码 | [RoFormer · Su 2021](https://arxiv.org/abs/2104.09864) | RoPE 原始论文 |
+| 位置编码 | [YaRN · Peng 2023](https://arxiv.org/abs/2309.00071) | 把训练长度外推到 128K 的核心方案 |
+| 高效注意力 | [Flash Attention · Dao 2022](https://arxiv.org/abs/2205.14135) | 重写 Attention kernel，长上下文跑得动靠它 |
+| 高效注意力 | [GQA · Ainslie 2023](https://arxiv.org/abs/2305.13245) | KV head 分组共享，推理显存大幅下降 |
+| 训练 | [Scaling Laws for Neural LMs · Kaplan 2020](https://arxiv.org/abs/2001.08361) | 训练 loss 的幂律规律 |
+| 训练 | [Chinchilla · Hoffmann 2022](https://arxiv.org/abs/2203.15556) | 参数量与数据量需要等比例放大 |
+| 训练 | [LLaMA · Touvron 2023](https://arxiv.org/abs/2302.13971) | 开源大模型起点 |
+| 对齐 | [InstructGPT · Ouyang 2022](https://arxiv.org/abs/2203.02155) | RLHF 把人类偏好灌进模型 |
+| 对齐 | [LoRA · Hu 2021](https://arxiv.org/abs/2106.09685) | 低秩适配，单卡也能微调 |
+| 对齐 | [DPO · Rafailov 2023](https://arxiv.org/abs/2305.18290) | 不用 RL 直接优化偏好 |
+| 推理 | [GPTQ · Frantar 2022](https://arxiv.org/abs/2210.17323) | 训练后量化到 4-bit |
+| 推理 | [vLLM · Kwon 2023](https://arxiv.org/abs/2309.06180) | PagedAttention + 连续批处理 |
+| 推理 | [Speculative Decoding · Leviathan 2022](https://arxiv.org/abs/2211.17192) | 用小模型起草、大模型验证，推理提速 |
+| 应用 | [RAG · Lewis 2020](https://arxiv.org/abs/2005.11401) | 把检索接进生成 |
+| 推理时 Scaling | [DeepSeek-R1 · DeepSeek 2025](https://arxiv.org/abs/2501.12948) | 纯 RL 学出推理能力 |
+| 前沿 | [Mixtral of Experts · Jiang 2024](https://arxiv.org/abs/2401.04088) | 第一个出圈的开源 MoE |
+| 前沿 | [DeepSeek-V3 · DeepSeek 2024](https://arxiv.org/abs/2412.19437) | MoE 把训练成本压到主流模型零头 |
+
+按主题刷完一组论文，再回头看对应那篇文章里的代码实现，会比第一次读时清楚很多。如果只能挑五篇当作系列的代表作，那就是 Vaswani 2017（架构起点）、Kaplan 2020（scaling 立论）、Hoffmann 2022（数据-参数等比）、Ouyang 2022（RLHF 出圈）和 Touvron 2023（开源拐点）。
+
 
 ## 和推荐系统的对比
 
@@ -119,17 +162,43 @@ GPT-4o、Gemini、Qwen-VL 都是多模态模型。
 | 服务 | 50ms 延迟，万级 QPS | 几秒延迟，百级 QPS |
 | 评估 | AUC / NDCG / A/B | Perplexity / Human Eval / ELO |
 
-两个领域的共同点：**都是从数据中学模式，然后在线服务**。推荐系统学"用户偏好"，大模型学"语言规律"。工程化的思路也一样——离线训练、在线推理、缓存加速、监控报警。
+两个领域骨子里是一回事：从数据中学模式，再在线服务。推荐系统学的是用户偏好，大模型学的是语言规律。工程化的套路也几乎相同——离线训练、在线推理、缓存加速、监控报警，连分布式训练那套（DP/TP/PP）都是从大模型这边长出来反哺到推荐系统的。
 
----
+差别主要在两件事。一是延迟和吞吐——推荐系统要在 50ms 内出结果，大模型一次回答几秒钟是常态。这导致推荐系统的工程优化重心在『极致低延迟』，大模型的重心在『单位算力出更多 token』。二是特征 vs 表示——推荐系统的胜负还在很大程度上取决于特征工程做得好不好，大模型已经把这一步内化了，但代价是模型本身要大几个数量级。
+
 
 ## 下一步
 
-如果要继续深入，建议按这个顺序：
+主链路走完后，往下深入大概有四个方向。
 
-1. **跑通一个开源模型的全流程**：下载 Qwen-2.5-7B → SFT → DPO → 量化 → vLLM 部署
-2. **做一个 RAG 应用**：给自己的文档建索引，做一个能回答私有知识的 chatbot
-3. **看论文**：Attention Is All You Need → GPT-2 → Chinchilla → LLaMA → DPO
-4. **写 CUDA kernel**：从 Flash Attention 的简化版开始，理解 GPU 编程
+最直接的一个是把整个流程在一个真实开源模型上走一遍：下载 Qwen-2.5-7B 或 LLaMA-3-8B，自己造一份 SFT 数据微调一遍，做一次 DPO 对齐，量化到 4bit，用 vLLM 跑起来。这条路把系列里 14 篇文章全部串起来，做完之后对每个环节的体感会比纸面学习深一个层级。
 
-从零到一已经走完了。接下来是从一到十——在真实场景中打磨。
+第二个是做一个真实的 RAG 应用。给自己的笔记、邮件或者团队文档建个索引，做一个能回答私有知识的助手。chunking 策略、embedding 选型、检索质量调优这些问题在真实数据上和 toy 数据上完全不是一回事。
+
+第三个是补论文。挑一个感兴趣的方向，按上面参考清单刷一组——比如『高效注意力』那一组从 Flash Attention 一路读到 PagedAttention，每篇都对照实现看一遍。
+
+第四个是写 GPU kernel。读 Flash Attention 的 Triton 实现，自己写一个简化版，跑通一遍。这一步进入了大模型的另一面：硬件层的优化。是否值得做取决于工作场景，但走到这里，整个技术栈就真正打通了。
+
+从零到一已经走完，接下来是从一到十——在真实场景里磨。
+
+
+## 动手跑一遍
+
+整套系列配套了一份『端到端走一遍』的 Colab notebook，从下载 base model 到 SFT、DPO、量化、vLLM 部署全程不到一小时。直接打开就能运行，不需要本地 GPU 环境：
+
+[在 Google Colab 上打开](https://colab.research.google.com/drive/1KKxT44KjJkeFfwWjEUnBO8RncfOZRQsd?usp=sharing)
+
+
+## 和工业界的距离
+
+| 环节 | 这个项目 | 工业界（GPT-4 / Claude / DeepSeek 级别） |
+|---|---|---|
+| 模型规模 | 42 万参数（minimal-llm） | 几百 B 到上 T 参数 |
+| 训练数据 | 1MB 莎士比亚 | 几十 T token 多语言混合语料 |
+| 训练算力 | 单卡 Mac 110 秒 | 万卡集群 × 数月 |
+| 后训练 | SFT + DPO 概念实现 | 大规模 RLHF + 安全对齐 + 多轮迭代 |
+| 推理 | KV Cache、GQA、量化概念 | PagedAttention + 投机解码 + 推理时 scaling |
+| 部署 | vLLM 单机 | 多副本调度 + 多区域分布 + 动态扩缩容 |
+| 评估 | Val loss、人工读 | MMLU/HumanEval/Arena ELO 全套 |
+
+骨架其实没什么差别，每一层用的都是同样一套思路。差距全在规模、工程细节和长期迭代上。系列写到这里，是把这副骨架从空白状态拼到能跑、能解释、能继续往下扩展。剩下要追上工业界的部分，多半不是靠看几篇论文能解决的，而是靠真实场景里日复一日地踩坑、调参、上线。

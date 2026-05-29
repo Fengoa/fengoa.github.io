@@ -1,3 +1,11 @@
+import {
+  QuantizationBits,
+  WeightDistributionHistogram,
+  SpeculativeDecodingFlow,
+  ContinuousBatchingTimeline,
+  LatencyThroughputTradeoff,
+} from "./visuals";
+
 export const metadata = {
   title: "推理优化：让模型跑得更快",
 }
@@ -6,123 +14,110 @@ export const metadata = {
 
 <SeriesNav series="llm" />
 
-一个 7B 模型推理一次，FP16 精度需要 14GB 显存。生成 100 个 token 需要几秒。如果要服务 100 个并发用户？1400GB 显存 + 几分钟延迟。不可接受。
+一个 7B 模型推理一次，FP16 精度要 14 GB 显存，生成 100 个 token 要等几秒。如果同时来 100 个用户，按这个跑法就是 1400 GB 显存加上几分钟延迟，谁也撑不住。
 
-这篇讲三个核心优化：量化（减小模型体积）、Speculative Decoding（加速生成）、Continuous Batching（提升吞吐）。
+模型训完上线后真正花时间的就是这一段。这篇主要拆三个东西：把模型压小（量化）、让生成本身更快（投机解码）、把多个请求挤在一起（连续批处理）。
 
----
+<QuantizationBits />
 
-## 量化：用更少的 bit 存权重
+## 量化：用更少的位数存权重
 
-FP32 → FP16 → INT8 → INT4，精度递减但体积大幅缩小：
+把每个权重原本用 32 位浮点存的值，改成 16 位、8 位甚至 4 位整数。位数砍半，模型体积也跟着砍半。LLaMA-7B 在 FP16 下是 14 GB，换成 INT4 只剩 3.5 GB，刚好能塞进消费级显卡。
 
-```text
-LLaMA-7B 模型大小:
-  FP32:  28 GB
-  FP16:  14 GB    (2x 压缩，几乎无损)
-  INT8:   7 GB    (4x 压缩，微小损失)
-  INT4:  3.5 GB   (8x 压缩，轻微损失)
-```
+听起来像在压缩图片，本质也差不多。一组浮点权重 `w`，量化的核心是把它们映射到 `q` 个整数格子上：
 
-INT4 的 7B 模型只需要 3.5GB 显存——一张消费级显卡就能运行。
+<Math block>{`q = \\text{round}\\!\\left(\\frac{w - z}{s}\\right), \\quad \\hat{w} = s \\cdot q + z`}</Math>
 
-### 为什么能量化
+`s` 是 scale，`z` 是 zero-point。挑一个范围，等分成 16 格（INT4）或 256 格（INT8），每个权重落到最近的格子上。还原的时候只是把整数乘回 scale。
 
-模型权重的分布很集中——大部分值在 [-0.1, 0.1] 之间，极少有很大的值。用 4 bit 也能表示这个范围内的值，只是精度粗了一点。
+误差从哪来？落点不可能正好踩在格子上，要四舍五入到最近的那个。所以位数越少，相邻格子的间隔越大，误差也越大。但只要权重本身的分布够集中，这个误差就还能接受。
 
-### 主流方法
+### 为什么量化能成
 
-| 方法 | 特点 |
-|------|------|
-| GPTQ | 逐层量化，需要校准数据，离线完成 |
-| AWQ | 保护重要权重通道不量化 |
-| GGUF | llama.cpp 格式，CPU 也能跑 |
-| bitsandbytes | 动态量化，HuggingFace 集成 |
+模型权重不是均匀散布在 `[-1, 1]`。绝大部分会挤在 `0` 附近的窄带里，远端只有零星几个。直接把整段 `[-1, 1]` 切成 16 格太亏——大部分格子根本用不上。
 
----
+<WeightDistributionHistogram />
 
-## Speculative Decoding：用小模型加速大模型
+实际做法是先看一遍权重的分布，挑一个合适的截断范围（比如 `±0.1`），把这段切 16 份。落在范围外的少数权重直接饱和到边界——损失一点尾部精度，换来对主体的精细分辨。
 
-大模型自回归生成慢的原因：每个 token 都要过完整的几十层。但大部分 token 其实"很好猜"——"The capital of France is" 后面大概率是 "Paris"。
+GPTQ、AWQ、bitsandbytes 这些工具本质都在做同一件事，区别在用多少校准数据、是否保护重要通道、量化后还要不要做微调修复。GGUF 是 llama.cpp 的存储格式，方便 CPU 跑。
 
-思路：
-1. 用一个**小模型**（draft model）快速猜 K 个 token
-2. 用大模型**一次性验证**这 K 个 token
-3. 如果猜对了，直接用；猜错的那个位置重新生成
+| 方法 | 关键做法 | 用在哪 |
+|------|---------|--------|
+| GPTQ | 离线，按层做误差最小化 | 生产部署，质量最稳 |
+| AWQ | 保护 1% 关键通道不量化 | LLaMA 生态主流 |
+| bitsandbytes | 推理时动态量化 | HuggingFace 一键加载 |
+| GGUF | llama.cpp 的格式 | 本地、CPU、边缘设备 |
 
-```text
-小模型猜: ["Paris", ".", " It", " is", " known"]  (5 个 token, 很快)
-大模型验: [✓, ✓, ✓, ✓, ✗]                       (1 次前向, 确认前 4 个对了)
-→ 相当于大模型 1 次前向就生成了 4 个 token（正常要 4 次）
-```
+## 投机解码：让小模型先猜
 
-加速比取决于小模型猜对的比例。通常能加速 2-3x。
+大模型每生成一个 token 都要把几十层走一遍。但很多 token 其实非常好猜——「The capital of France is」后面几乎肯定是「Paris」。这种地方让大模型从头算一遍，纯属浪费。
 
----
+思路是拉一个小模型来当陪跑。小模型每步只用一两毫秒，先一口气猜出 4 个 token；大模型把这 4 个 token 拼回去，**一次** forward 就能同时验证全部四个。猜中的部分直接采用，遇到第一个不一致的位置，用大模型自己的输出替换并停下，下一轮再开始。
 
-## Continuous Batching：多请求共享算力
+<SpeculativeDecodingFlow />
 
-传统 batching：等 N 个请求凑齐，一起做前向。问题是长请求拖慢短请求。
+加速比看小模型猜对的比例。在常见对话场景下能稳定拿到 2-3×。如果开始处理代码生成、专业术语之类小模型不熟的内容，命中率会掉，加速也会缩水。
 
-Continuous batching：
-- 短请求结束了立刻让新请求进来
-- 每一步只给"还在生成的"请求做前向
-- 不同请求可以有不同长度
+Medusa 和 EAGLE 是这个思路的延伸——不再单独训练一个小模型，而是在大模型上接几个轻量的预测头，直接让大模型自己「猜自己下一步」，工程上更省事。
 
-vLLM 的 PagedAttention 进一步优化：KV Cache 不再连续存储，而是像操作系统的虚拟内存一样分页管理，减少碎片浪费。
+## 连续批处理：把空闲算力填满
 
----
+GPU 这种东西，跑 batch size = 1 和跑 batch size = 16 花的时间差不多，因为算力本来就是一次能并行算很多。所以服务端把多个用户请求拼成一个 batch，一次过模型，算下来每个用户分摊的时间就少了。
 
-## 效果汇总
+但传统做法的问题是 batch 必须等到最长那个请求结束才能换。短请求早早算完了也得空等，新来的请求只能在外面排队。
 
-| 优化 | 效果 | 代价 |
-|------|------|------|
-| FP16 → INT4 量化 | 显存 4x↓ | 质量微降 |
-| KV Cache (上篇) | 速度 ~10x↑ | 显存换速度 |
-| GQA (上篇) | KV 显存 2-8x↓ | — |
-| Speculative Decoding | 速度 2-3x↑ | 需要小模型 |
-| Continuous Batching | 吞吐 2-4x↑ | 实现复杂 |
-| Flash Attention | 速度 2-4x↑ + 显存↓ | 需要 CUDA |
+连续批处理的做法是把 batch 看成一个动态的池子。每生成一个 token 都重新组装一次：谁结束了就把槽位让出来，外面排队的立刻进来填上，不浪费任何一步。
 
-组合起来：INT4 量化 + KV Cache + GQA + Continuous Batching = 一张 A100 服务几十个并发用户。
+<ContinuousBatchingTimeline />
 
----
+vLLM 在此之上又加了 PagedAttention。问题在于 KV Cache——每个请求生成时都在累积一段缓存，长度不固定。如果按最长长度预留连续显存，会出现大量碎片。PagedAttention 把 KV Cache 切成小块（页），按需分配，跟操作系统管理虚拟内存是一个套路。结果是单卡能塞下的并发请求数翻倍。
 
-## 代码
+## 延迟和吞吐之间的权衡
 
-这篇没有独立实验脚本——核心优化（KV Cache、GQA）在上一篇已经实现。量化和 Speculative Decoding 的完整实现依赖 CUDA kernel，不适合教学从零写。
+batch 越大、吞吐越高，但每个请求等的时间也越长。这是一道典型的取舍题。
 
-实际使用时直接用框架：
+<LatencyThroughputTradeoff />
+
+`bs=1` 时单条延迟最低，但 GPU 大半时间在闲；`bs=64` 把硬件榨满，吞吐拉到最高，但用户得等更久才看到第一个字。实际部署时要看场景：聊天应用看重首 token 延迟（TTFT），偏向小 batch；离线评测、批量摘要这种则可以一把梭，把 batch 开到顶。
+
+vLLM 默认的 continuous batching 已经把这件事做得相当聪明，新请求随时进队、长请求不会拖累短请求，单卡能把延迟和吞吐同时拉到比较舒服的位置。
+
+## 工业界用什么
+
+量化、投机解码、连续批处理三件事真到生产，没人手写。社区已经有一整套打通的方案——核心 kernel 都是 CUDA/C++，Python 这一层只负责调度。
 
 ```python
-# 量化（用 bitsandbytes）
-
-<SeriesNav series="llm" />
+# 量化：bitsandbytes 一行加载
 from transformers import AutoModelForCausalLM
-model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3-8B", load_in_4bit=True)
+model = AutoModelForCausalLM.from_pretrained(
+    "meta-llama/Llama-3-8B", load_in_4bit=True
+)
 
-# 推理服务（用 vLLM）
-
-<SeriesNav series="llm" />
+# 服务：vLLM 一条命令起服务，自带 continuous batching + PagedAttention
 # vllm serve meta-llama/Llama-3-8B --quantization awq
-
-<SeriesNav series="llm" />
 ```
 
----
+下一篇就把这些拼起来，做一个能对外接 HTTP 请求的模型服务。
 
 ## 和工业界的距离
 
-| 环节 | 理解层面 | 生产层面 |
-|------|---------|---------|
-| 量化 | 理解原理 | GPTQ/AWQ 工具一键量化 |
-| KV Cache | 手写实现 | PagedAttention (C++) |
-| 推测解码 | 理解流程 | Medusa / Eagle (多头预测) |
-| 批处理 | 理解概念 | vLLM / TGI 开箱即用 |
+| 环节 | 这篇能做到 | 生产级实现 |
+|------|-----------|-----------|
+| 量化 | 理解 scale / zero-point | GPTQ、AWQ 工具链一键搞定 |
+| 投机解码 | 理解 draft + verify 流程 | Medusa、EAGLE 多头预测 |
+| 批处理 | 看懂槽位填充示意图 | vLLM、TGI 开箱即用 |
+| KV 显存 | 算得出每个 token 占多少 | PagedAttention 分页管理 |
 
-下一篇把这些全串起来——实际部署一个能对话的模型服务。
+骨架其实很简单：把模型压小、让计算并行、不浪费每一步的算力。剩下的全是工程细节。
 
----
+## 动手跑一遍
+
+整理了一个 Colab notebook，对比 FP16 / INT8 / INT4 三种精度下的显存占用、生成质量、推理速度，再用 vLLM 起一个本地服务跑投机解码：
+
+[在 Google Colab 上打开](https://colab.research.google.com/drive/TODO_INFERENCE_NOTEBOOK)
+
+打开后切到 GPU 运行时即可。
 
 ## 参考论文
 
@@ -131,4 +126,5 @@ model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3-8B", load_in_4b
 | [SmoothQuant: Accurate and Efficient Post-Training Quantization · Xiao, ICML 2023](https://arxiv.org/abs/2211.10438) | W8A8 量化，把激活值的难度转移给权重 |
 | [AWQ: Activation-aware Weight Quantization · Lin, MLSys 2024](https://arxiv.org/abs/2306.00978) | 保护重要权重通道的 INT4 量化 |
 | [Fast Inference from Transformers via Speculative Decoding · Leviathan, ICML 2023](https://arxiv.org/abs/2211.17192) | 小模型先猜、大模型验证的加速方法 |
+| [Medusa: Simple LLM Inference Acceleration with Multiple Decoding Heads · Cai, 2024](https://arxiv.org/abs/2401.10774) | 在大模型上加多头预测，免训练单独的 draft 模型 |
 | [Efficient Memory Management for LLM Serving with PagedAttention · vLLM, Kwon, SOSP 2023](https://arxiv.org/abs/2309.06180) | Continuous Batching + PagedAttention |

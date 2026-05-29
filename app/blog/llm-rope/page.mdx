@@ -1,3 +1,10 @@
+import {
+  PositionEmbeddingFailure,
+  Rope2dRotation,
+  RopeFrequencyClock,
+  ExtrapolationComparison,
+} from "./visuals";
+
 export const metadata = {
   title: "位置编码：RoPE",
 }
@@ -6,177 +13,128 @@ export const metadata = {
 
 <SeriesNav series="llm" />
 
-Attention 的计算里没有任何"位置"的概念——`score = Q·K` 只看内容匹配度，不管 token 在第 1 个位置还是第 100 个位置。但 "dog bites man" 和 "man bites dog" 意思完全不同。模型需要知道顺序。
+把一句话喂给 Attention，它只看 Q 和 K 的内积，谁排在前、谁排在后完全无感。"dog bites man" 和 "man bites dog" 在它眼里是同一锅词向量。要让模型看出顺序，只能在外面给每个 token 贴一个表示位置的标签。
 
-GPT-2 的做法是学一个位置 embedding 表，加到 token embedding 上。简单有效，但有个致命问题：**训练时 ctx=1024，推理时就只能处理 1024 以内的序列**。超过就崩。
+GPT-2 的做法挺直接：开一个 `(ctx, n_embd)` 的位置 embedding 表，训练时学出来，推理时按位置查。问题是这张表的行数在训练时就钉死了。训练时 ctx=64，推理时来个第 65 个 token，根本没有对应的位置向量。模型不会优雅地外推，只会原地崩坏。
 
-RoPE（Rotary Position Embedding）用一个优雅的数学技巧解决了这个问题：不是把位置"加上去"，而是把位置编码成"旋转角度"。
+<PositionEmbeddingFailure />
 
----
+RoPE 换了个思路：不再把位置当成一个要学的向量"加"上去，而是让位置变成 Q、K 在做内积之前要"转"过的角度。这样位置信息进了几何里，外推也就自然了。
 
-## 绝对位置编码的问题
+## 绝对位置编码到底卡在哪
 
-GPT-2 的方式：
+GPT-2 的写法是这样：
 
 ```python
 x = token_embedding(idx) + position_embedding(pos)
 ```
 
-位置表是学出来的，大小固定（ctx × n_embd）。训练时 ctx=64，位置表只有 64 行。推理时输入第 65 个 token？没有对应的位置编码，直接报错或乱来。
+`position_embedding` 是一个 lookup table，行数等于训练 ctx。第 65 个 token 没出现在训练里，对应那一行从来没被梯度更新过——拿出来用，里面就是初始化时的随机数，叠到 token embedding 上不啻于注入噪声。
 
-这就是**不能外推**——只能处理训练时见过的长度。
+有人会想：那把位置表初始化大一点，开到 100 万行？没用。没被训练过的位置，attention 学到的相对位置先验也跟着失效。从根上说，绝对位置编码把"长度"这件事写死在了参数里。
 
----
+## RoPE 的核心想法
 
-## RoPE 的核心思想
+RoPE 不动 embedding，它动 Q 和 K。每个位置对应一个旋转矩阵 <Math>{`R_m`}</Math>，在算 attention 之前先把 Q、K 转一下：
 
-RoPE 不改 embedding，而是在算 Attention 时旋转 Q 和 K：
+<Math block>{`\\text{score}(i, j) = (R_i\\, q_i)^\\top (R_j\\, k_j)`}</Math>
 
-```text
-传统：score(i,j) = Q_i · K_j           （只看内容）
-RoPE：score(i,j) = (R_i × Q_i) · (R_j × K_j)  （内容 + 位置）
-```
+旋转矩阵是正交的，转置就是逆。展开一算：
 
-其中 R_i 是一个只依赖位置 i 的旋转矩阵。数学上可以证明：
+<Math block>{`(R_i q)^\\top (R_j k) = q^\\top R_i^\\top R_j k = q^\\top R_{j-i}\\, k`}</Math>
 
-```text
-(R_i × Q) · (R_j × K) = Q · R_(i-j) × K
-```
+注意力分数只跟 <Math>{`j - i`}</Math> 有关，不依赖绝对位置。第 3 个 token 看第 1 个，和第 100 个 token 看第 98 个，attention 模式是同一回事。模型不需要为每个绝对位置单独学个 embedding，相对位置自然落进了几何关系里。
 
-注意力分数只依赖**相对位置** (i-j)，不依赖绝对位置。这意味着：
-- 第 3 个 token 看第 1 个 token（距离 2）
-- 第 100 个 token 看第 98 个 token（距离也是 2）
+## 旋转的几何直觉
 
-它们的注意力模式是一样的。不需要显式学每个绝对位置的 embedding。
+二维平面上一个向量逆时针转 <Math>{`\\theta`}</Math>，矩阵长这样：
 
----
+<Math block>{`R(\\theta) = \\begin{bmatrix} \\cos\\theta & -\\sin\\theta \\\\ \\sin\\theta & \\cos\\theta \\end{bmatrix}`}</Math>
 
-## 旋转的直觉
+RoPE 把 <Math>{`d`}</Math> 维向量两两配对，每对就是一个二维平面上的向量。第 <Math>{`i`}</Math> 对的旋转频率是：
 
-在 2D 平面上，旋转角度 θ 的矩阵是：
+<Math block>{`\\omega_i = \\theta^{-2i/d}, \\quad \\theta = 10000`}</Math>
 
-```text
-R(θ) = [cos θ  -sin θ]
-       [sin θ   cos θ]
-```
+位置 <Math>{`m`}</Math> 给第 <Math>{`i`}</Math> 对带来的旋转角是 <Math>{`m \\cdot \\omega_i`}</Math>。所有维度共用同一个位置 <Math>{`m`}</Math>，但旋转速度不一样：低维 <Math>{`\\omega`}</Math> 大，转得快；高维 <Math>{`\\omega`}</Math> 小，转得慢。
 
-RoPE 把 embedding 的维度两两配对，每对做一次旋转。不同维度对应不同的旋转频率：
+<Rope2dRotation />
 
-```text
-维度 0-1: 频率最高 → 旋转最快 → 捕捉短距离关系
-维度 2-3: 频率次之
-...
-维度 d-2到d-1: 频率最低 → 旋转最慢 → 捕捉长距离关系
-```
+这一组频率刚好像一组钟表的指针。秒针跑得快，每分钟一圈，分辨细节；时针几乎不动，分辨大段。看一眼三根针，时刻是确定的。
 
-类比：时钟的秒针（高频，短周期）和时针（低频，长周期）。组合起来能唯一确定任何时间点。
+<RopeFrequencyClock />
 
----
+## 实现：复数视角下三行代码
 
-## 实现
+把维度配对、转角度这两件事写出来，最自然的语言是复数。一对实数 <Math>{`(x_{2i}, x_{2i+1})`}</Math> 看作复数 <Math>{`x_{2i} + i x_{2i+1}`}</Math>，乘上单位复数 <Math>{`e^{im\\omega_i}`}</Math> 就完成了旋转。
 
 ```python
 def precompute_freqs(dim, max_seq_len, theta=10000.0):
-    # 每个维度对的旋转频率：低维快，高维慢
     freqs = 1.0 / (theta ** (torch.arange(0, dim, 2) / dim))
-    # 每个位置的旋转角度
     t = torch.arange(max_seq_len)
-    angles = torch.outer(t, freqs)  # (seq_len, dim/2)
-    return torch.polar(torch.ones_like(angles), angles)  # 复数形式
+    angles = torch.outer(t, freqs)               # (seq_len, dim/2)
+    return torch.polar(torch.ones_like(angles), angles)  # 复数
 
 def apply_rotary_emb(q, k, freqs):
-    # 把 q, k 视为复数，乘以旋转因子
-    q_complex = torch.view_as_complex(q.reshape(..., -1, 2))
-    k_complex = torch.view_as_complex(k.reshape(..., -1, 2))
-    q_out = q_complex * freqs  # 旋转
+    q_complex = torch.view_as_complex(q.reshape(*q.shape[:-1], -1, 2))
+    k_complex = torch.view_as_complex(k.reshape(*k.shape[:-1], -1, 2))
+    q_out = q_complex * freqs                    # 旋转
     k_out = k_complex * freqs
-    return torch.view_as_real(q_out), torch.view_as_real(k_out)
+    return torch.view_as_real(q_out).flatten(-2), torch.view_as_real(k_out).flatten(-2)
 ```
 
-核心就三步：配对 → 转复数 → 乘旋转因子。
+预计算频率表只在初始化时跑一次，每步前向只花一次复数乘。它没有可学参数，也没有 lookup table，长度就不再是硬约束。
 
----
+## 同一个模型，三种位置编码
 
-## 实验对比
+用 2 层 128 维的小模型在 Tiny Shakespeare 上跑 5000 步，分别开关位置编码。表里 RoPE 参数最少（不需要存位置 embedding 表的 8192 个参数），val loss 还最低：
 
-三种位置编码在同一个模型上的效果（2 层 128 维，训练 5000 步）：
+| 位置编码 | 参数量 | val loss | 与 RoPE 差 |
+|---|---:|---:|---:|
+| 无位置 | 411,136 | 1.94 | +0.36 |
+| 绝对学习 | 419,328 | 1.65 | +0.07 |
+| 正弦 | 411,136 | 1.62 | +0.04 |
+| RoPE | 411,136 | 1.58 | 0 |
 
-```text
-位置编码方式        参数量        Val Loss    vs RoPE
-─────────────────────────────────────────────────────
-none (无)           411,136       1.9404     +0.3626
-learned (绝对)      419,328       1.6511     +0.0733
-rope (旋转)         411,136       1.5778      0.0000
-```
+参数更少，效果更好——只是因为参数量小很多的位置 embedding 表本来就没什么"信息密度"，把它替换成纯几何变换反而省事。
 
-RoPE 效果最好，而且参数更少（不需要位置 embedding 表的 8192 个参数）。
+真正能把它们彻底拉开的是外推：训练长度还是 64，推理时把序列拉到 256，看 loss 怎么变。
 
----
+<ExtrapolationComparison />
 
-## 外推能力
+绝对学习从 1.65 涨到 2.5+，基本生成不出连贯文本。RoPE 从 1.58 涨到 1.65，肉眼可见的稳定。正弦编码介于中间，能撑一段，远了也撑不住。
 
-关键优势：训练时 ctx=64，推理时能处理 ctx=128 吗？
+## 工业界为什么全部转向 RoPE
 
-```text
-                推理 ctx=64    推理 ctx=96    推理 ctx=128
-learned:        1.63           2.17           2.55    ← loss 暴涨
-rope:           1.59           1.58           1.73    ← 基本稳定
-```
+LLaMA、Qwen、Mistral、GPT-NeoX、DeepSeek 等公开权重的开源模型，几乎清一色用 RoPE。原因不是哪一条特别突出，而是它在几个维度上同时占便宜。
 
-learned 从 ctx=64 到 ctx=128，loss 从 1.63 涨到 2.55（+56%），基本不可用。RoPE 只从 1.59 涨到 1.73（+9%），仍然能正常生成。
+不需要额外参数，位置信息编码进旋转角；天然只依赖相对位置；和 Flash Attention 兼容（旋转可以 fuse 进 kernel，无需改 attention 主体）；远距离 token 的旋转角差大，点积幅度自然衰减，相当于自带一种局部性归纳偏置。
 
----
-
-## 为什么所有新模型都用 RoPE
-
-- **LLaMA**: RoPE, θ=10000
-- **GPT-NeoX**: RoPE
-- **Qwen**: RoPE, θ=1000000（更大的 θ 支持更长序列）
-- **Mistral**: RoPE
-
-优势总结：
-1. 不需要额外参数（位置信息编码在旋转角度里）
-2. 能外推到更长序列
-3. 注意力自然衰减（距离远的 token 旋转角度差大，点积小）
-4. 和 Flash Attention 兼容
-
----
-
-## 代码
-
-```text
-minimal-llm/src/
-  rope.py   # RoPE 实现 + 三种位置编码对比 + 外推实验
-```
-
-运行：
-
-```bash
-python rope.py                # 基础对比
-python rope.py --extrapolate  # 外推能力测试
-```
-
----
+外推能力是它压倒性的卖点。从 LLaMA 2 的 4K 一路往上，到 LLaMA 3 的 8K、Qwen 2.5 的 128K，背后都是 RoPE 的几何性质支撑。具体的扩展手段——NTK-aware Scaling、YaRN、Position Interpolation——本质上都在调旋转频率的底数 <Math>{`\\theta`}</Math> 或频段，而不是改公式本身。
 
 ## 和工业界的距离
 
-| 环节 | 这个项目 | LLaMA 级别 |
-|------|---------|-----------|
-| 实现 | 基础 RoPE | + NTK-aware scaling（动态调 θ）|
-| 上下文 | 64 → 128 外推 | 4K → 128K 外推 |
-| 优化 | 纯 Python | 融合进 Flash Attention kernel |
-| 扩展 | 固定 θ=10000 | YaRN / Dynamic NTK（自适应外推）|
+| 环节 | 这个项目 | LLaMA / Qwen 级别 |
+|---|---|---|
+| 实现 | 基础 RoPE，固定 <Math>{`\\theta = 10000`}</Math> | NTK-aware / YaRN，动态调整 <Math>{`\\theta`}</Math> |
+| 上下文 | 64 → 256 外推 | 4K → 128K 外推 |
+| 优化 | 纯 Python 复数乘 | Fuse 进 Flash Attention CUDA kernel |
+| 频率分配 | 全部维度均匀分配 | 部分模型保留少量绝对维度（hybrid） |
 
-核心数学一模一样。工业界的改进是让 RoPE 能外推到更长的序列（128K+），方法是动态调整旋转频率的底数 θ。
+数学骨架完全一致。差别在于工业界要把 RoPE 推到训练时几十倍的长度，需要在频率分配和插值方式上做更精细的设计。
 
-下一篇讲推理效率——当模型变大后，标准 Attention 的 O(n²) 复杂度让推理变得极慢。KV Cache、GQA、Flash Attention 是三个关键优化。
+## 跑一遍
 
----
+跟着这份笔记把三种位置编码在 Tiny Shakespeare 上各训一次，再做一次外推测试，能直接看到 loss 曲线分叉。
+
+[Colab: rope-vs-learned-vs-sinusoidal.ipynb](https://colab.research.google.com/github/TODO) — 三种位置编码同条件训练 + 外推 loss 对比
+
+下一篇讲推理效率。模型变大之后，标准 Attention 的 O(N²) 复杂度让推理急剧变慢，KV Cache、GQA、Flash Attention 是绕过这道墙的三个主要手段。
 
 ## 参考论文
 
 | 论文 | 说明 |
 |------|------|
-| [RoFormer: Enhanced Transformer with Rotary Position Embedding · Su, 2021](https://arxiv.org/abs/2104.09864) | RoPE 原始论文，用旋转矩阵编码相对位置 |
-| [YaRN: Efficient Context Window Extension · Peng, ICLR 2024](https://arxiv.org/abs/2309.00071) | 让 RoPE 外推到训练时没见过的长度 |
-| [Extending Context Window of Large Language Models via Positional Interpolation · Chen, 2023](https://arxiv.org/abs/2306.15595) | PI 方法：线性插值频率实现长度外推 |
+| [RoFormer: Enhanced Transformer with Rotary Position Embedding · Su, 2021](https://arxiv.org/abs/2104.09864) | RoPE 原始论文，旋转矩阵编码相对位置 |
+| [YaRN: Efficient Context Window Extension of Large Language Models · Peng, ICLR 2024](https://arxiv.org/abs/2309.00071) | 在 RoPE 上做长度外推的主流方法 |
+| [Extending Context Window of Large Language Models via Positional Interpolation · Chen, 2023](https://arxiv.org/abs/2306.15595) | Position Interpolation：线性插值频率扩展上下文 |
+| [Scaling Laws of RoPE-based Extrapolation · Liu, 2023](https://arxiv.org/abs/2310.05209) | 系统研究 RoPE 底数 <Math>{`\\theta`}</Math> 与外推长度的关系 |

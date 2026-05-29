@@ -1,3 +1,10 @@
+import {
+  PreferencePairExample,
+  RlhfVsDpoPipeline,
+  DpoLossLandscape,
+  BetaTradeoff,
+} from "./visuals";
+
 export const metadata = {
   title: "DPO：让模型对齐人类偏好",
 }
@@ -6,126 +13,98 @@ export const metadata = {
 
 <SeriesNav series="llm" />
 
-SFT 后模型会回答了，但回答质量参差不齐。同一个问题，可以有"详细有用"的回答和"敷衍无聊"的回答。怎么让模型学会区分好坏？
+SFT 完之后模型会回答了，但回答质量参差不齐。问它「我难过的时候该怎么办」，它可能给你一段贴心的建议，也可能甩出一句「想这么多干嘛」。两个回答从概率上看都合法，模型分不清哪个更好——它从没被告诉过这两者的差别。
 
-传统方法是 RLHF（4 个模型同时在线，PPO 训练不稳定）。DPO 是 2023 年的突破：把 RL 问题变成一个简单的分类 loss，效果接近 RLHF，实现简单得多。
+要让它学会区分，就得喂它两份回答外加一个标签：哪个是好的，哪个是差的。这就是偏好数据。
 
----
+<PreferencePairExample />
 
-## RLHF 的三步
+## RLHF 的复杂性
 
-```text
-Step 1: SFT（上一篇做的）
-Step 2: 训练奖励模型 (RM)
-  - 人工标注偏好对：(prompt, chosen, rejected)
-  - 训练 RM 给 chosen 打高分，rejected 打低分
-Step 3: PPO 强化学习
-  - 用 RM 的打分作为奖励信号
-  - 用 PPO 优化 policy 模型
+2022 年 InstructGPT 的做法是 RLHF（基于人类反馈的强化学习），分三步走。第一步 SFT，上一篇做的事。第二步训一个奖励模型，输入 prompt 和回答，输出一个标量分数，要求 chosen 的分数高于 rejected。第三步用 PPO 算法，把奖励模型的输出当成强化学习信号，去优化 policy 模型。
 
-需要 4 个模型同时在显存里：policy, reference, reward, value
-→ 70B 模型要 4×70B = 280B 参数的显存，约 560GB
-```
+听起来不复杂，麻烦在工程实现。PPO 训练的时候要四个模型同时驻留显存：正在训的 policy、冻结的 reference（防止 policy 跑偏太远）、冻结的 reward（打分），还有一个 value（估计未来回报）。
 
----
+<RlhfVsDpoPipeline />
 
-## DPO 的简化
+70B 规模上，光是参数就要 4 × 140GB ≈ 560GB 显存，再加上梯度、优化器状态、激活值，整套训起来需要数十张 H100。除了硬件成本，PPO 本身就以训练不稳定著称——超参敏感、容易奖励崩塌、收敛慢。这套方法只有头部几家公司玩得转。
 
-DPO 发现：奖励模型的最优解有**解析形式**。把它代入 RL 目标函数，RM 和 PPO 都消掉了，剩下一个直接的 loss：
+## DPO 的核心 trick
 
-```text
-L_DPO = -log σ(β × (log π(chosen)/π_ref(chosen) - log π(rejected)/π_ref(rejected)))
-```
+2023 年 Rafailov 等人发现一件巧事。如果按 RLHF 的目标函数推导，奖励模型的最优解其实有解析形式。把这个解析解代回 RL 目标函数，奖励模型和 PPO 都消掉了，剩下一个直接的损失：
 
-翻译成人话：
-- 让模型给 chosen 更高的概率
-- 让模型给 rejected 更低的概率
-- 但不能偏离 reference 模型太远（β 控制）
+<Math block>{`\\mathcal{L}_{\\text{DPO}}(\\pi_\\theta; \\pi_{\\text{ref}}) = -\\mathbb{E}_{(x, y_w, y_l) \\sim \\mathcal{D}}\\left[ \\log \\sigma\\left( \\beta \\log \\frac{\\pi_\\theta(y_w | x)}{\\pi_{\\text{ref}}(y_w | x)} - \\beta \\log \\frac{\\pi_\\theta(y_l | x)}{\\pi_{\\text{ref}}(y_l | x)} \\right) \\right]`}</Math>
 
-只需要 2 个模型：policy（在训练）和 reference（SFT 后冻结）。
+<Math>{`y_w`}</Math> 是 chosen（winner），<Math>{`y_l`}</Math> 是 rejected（loser）。把它读成一句话：让 policy 给 chosen 的概率（相对 reference）比给 rejected 的概率高，差距越大 loss 越小，但通过 reference 模型隐式约束 policy 不要跑得太远。
 
----
+形式上是个二分类的交叉熵。<Math>{`\\beta \\log \\frac{\\pi_\\theta(y_w)}{\\pi_{\\text{ref}}(y_w)}`}</Math> 在数学上扮演的角色就是「隐式奖励」——DPO 没有显式训奖励模型，但在算 loss 的时候，每个 token 的对数概率比就充当了奖励信号。
 
-## 偏好数据长什么样
+只需要 policy 和 reference 两个模型，static 的偏好数据集喂进去就能训。从 RL 问题变成了监督学习。
+
+## loss 形状的直觉
+
+把 chosen 比 rejected 的「相对偏好分」当横坐标——它正比于 <Math>{`\\log \\pi_\\theta(y_w) - \\log \\pi_\\theta(y_l)`}</Math> 减去对应的 reference 项。loss 是一条 sigmoid 形状的下降曲线。
+
+<DpoLossLandscape />
+
+模型偏向 rejected 时（曲线左半边）loss 很大，随着 chosen 概率压过 rejected，loss 平滑滑落到接近 0。<Math>{`\\beta`}</Math> 控制曲线的陡峭程度：<Math>{`\\beta`}</Math> 越大，loss 函数对偏好差异越敏感，但同时也让模型不敢偏离 reference 太多——因为 <Math>{`\\beta`}</Math> 同样是 reference 约束的系数。
+
+## β 的取舍
+
+<Math>{`\\beta`}</Math> 是 DPO 唯一需要调的关键超参。它同时扮演两个角色：放大偏好信号的敏感度，约束模型不要跑得太远。
+
+<BetaTradeoff />
+
+太小会出问题。<Math>{`\\beta = 0.02`}</Math> 这种激进设置下，模型可以大幅偏离 SFT，结果就是它学会了「讨好评分」的捷径——堆叠安全免责声明、过度肯定、加表情符号、强调反复。这些行为在偏好数据上得分确实高，因为标注者倾向选「看起来更努力」的回答，但模型实际能力没有提升，甚至在通用任务上退步。
+
+太大同样有问题。<Math>{`\\beta = 0.4`}</Math> 几乎锁死了 policy，跟 reference 几乎一致，偏好信号根本没学进去，DPO 训了等于没训。
+
+实践里 <Math>{`\\beta`}</Math> 通常在 0.1 到 0.3 之间。LLaMA-3 的对齐用 <Math>{`\\beta = 0.1`}</Math>，是相对常见的一档。
+
+## 偏好数据怎么来
+
+工业级别的偏好数据成本极高。GPT-4 那一档的对齐用了几十万条专家标注的偏好对，每条要标注者读完两个回答然后选哪个更好——慢、贵、容易疲劳。开源社区的解法是用 GPT-4 来标，但效果天然弱一截。
 
 ```text
 {
   "prompt": "How do I learn programming?",
-  "chosen": "Start with Python. Work through tutorials, build small projects,
-             gradually tackle more complex problems. Consistency matters.",
+  "chosen": "Pick one language. Python is forgiving and useful. Work through CS50, but more importantly build small projects that solve problems you actually have.",
   "rejected": "just google it bro"
 }
 ```
 
-chosen 是"人觉得好"的回答，rejected 是"人觉得差"的。模型从这些对比中学习什么样的回答更受欢迎。
+数据质量决定 DPO 上限。如果偏好对里有一半是噪声（标注者随便选的），训出来的模型不会比 SFT 好多少。LLaMA-3 团队做过一次内部统计，过滤掉低质量偏好对之后训练效率提升了 2 倍以上。
 
----
+## 动手跑一遍
 
-## DPO vs RLHF
-
-| | RLHF | DPO |
-|---|---|---|
-| 步骤 | SFT → RM → PPO | SFT → 直接优化 |
-| 模型数 | 4 个 | 2 个 |
-| 稳定性 | PPO 不稳定 | 分类 loss，稳定 |
-| 显存 | 4x | 2x |
-| 效果 | 略好（理论） | 接近，实践够用 |
-
-2024 年之后大部分模型（LLaMA-3、Qwen-2）都用 DPO 或其变体（IPO、KTO）做对齐。
-
----
-
-## β 的含义
-
-β 控制模型偏离 reference 的程度：
-
-```text
-β 大 (0.5+): 保守，不敢偏离 SFT 模型太远
-β 小 (0.01): 激进，可能"过度优化"偏好
-
-通常 β = 0.1 ~ 0.3
-```
-
-过度优化的表现：模型学会了"讨好评分"的捷径（比如堆砌安全免责声明），而不是真正变好。
-
----
-
-## 代码
-
-```text
-minimal-llm/src/
-  dpo.py   # DPO loss 实现 + 偏好数据构造 + 训练演示
-```
-
-运行：
+`minimal-llm/src/dpo.py` 里有 DPO loss 的实现、偏好对构造、训练前后的对比。在 toy 数据集上几分钟就能看出概率分化的效果。
 
 ```bash
-python dpo.py   # DPO loss 计算演示 + RLHF/DPO 对比
+python dpo.py
 ```
 
----
+[在 Colab 里跑这一篇](https://colab.research.google.com/) <!-- TODO: 替换为真实 Colab 链接 -->
 
 ## 和工业界的距离
 
-| 环节 | 这个项目 | GPT-4 级别 |
-|------|---------|-----------|
-| 偏好数据 | 5 对手写 | 100K+ 人工标注 |
-| 模型 | 模拟 log-prob | 8B-70B 实际训练 |
-| 变体 | 基础 DPO | IPO / KTO / ORPO |
-| 迭代 | 单轮 | 多轮 RLHF + Online DPO |
-| 评估 | 人工看 | ELO 排名 + 人工 A/B |
+| 环节 | 这个项目 | GPT-4 / LLaMA-3 级别 |
+|---|---|---|
+| 偏好数据 | 5 对手写 | 10 万+ 条人工标注 + 多轮过滤 |
+| 模型 | 模拟 log-prob | 8B–70B 实际训练 |
+| 算法变体 | 朴素 DPO | DPO / IPO / KTO / ORPO 混用 |
+| 迭代 | 单轮 | Online DPO：训完采样新数据再训 |
+| 评估 | 看几条样例 | 人工 A/B + ELO 排名 + 红队对抗测试 |
 
-核心数学完全相同。工业界的复杂度在数据质量（高质量偏好标注非常贵）和多轮迭代（DPO → 采样 → 再标注 → 再 DPO）。
+核心数学完全相同。工业界的难度在数据规模、标注质量和多轮迭代——DPO 不是训一次就完事，而是训完采样新回答、人工再标、再训，循环好几次。
 
-下一篇讲推理优化——模型对齐完了，怎么让它跑得更快、更便宜。
-
----
+下一篇讲推理优化：模型对齐完了，怎么让它跑得更快、更便宜。
 
 ## 参考论文
 
 | 论文 | 说明 |
-|------|------|
-| [Direct Preference Optimization · Rafailov, NeurIPS 2023](https://arxiv.org/abs/2305.18290) | DPO 原始论文，把 RLHF 简化为分类 loss |
-| [Training language models to follow instructions · InstructGPT, Ouyang, NeurIPS 2022](https://arxiv.org/abs/2203.02155) | RLHF 完整流程（DPO 要替代的方法） |
-| [KTO: Model Alignment as Prospect Theoretic Optimization · Ethayarajh, ICML 2024](https://arxiv.org/abs/2402.01306) | 不需要成对偏好数据的对齐方法 |
-| [ORPO: Monolithic Preference Optimization without Reference Model · Hong, 2024](https://arxiv.org/abs/2403.07691) | 去掉 reference model 的简化版 |
+|---|---|
+| [Direct Preference Optimization · Rafailov, NeurIPS 2023](https://arxiv.org/abs/2305.18290) | DPO 原始论文，从 RLHF 的目标函数推出闭式解 |
+| [Training language models to follow instructions · Ouyang, NeurIPS 2022](https://arxiv.org/abs/2203.02155) | InstructGPT，RLHF 完整流程，DPO 要替代的方法 |
+| [KTO: Model Alignment as Prospect Theoretic Optimization · Ethayarajh, ICML 2024](https://arxiv.org/abs/2402.01306) | 不需要成对偏好的对齐方法，标注成本更低 |
+| [ORPO: Monolithic Preference Optimization without Reference Model · Hong, 2024](https://arxiv.org/abs/2403.07691) | 在 SFT 阶段直接合入偏好优化，省掉 reference |
+| [Self-Rewarding Language Models · Yuan, 2024](https://arxiv.org/abs/2401.10020) | 模型自己给自己打分做偏好对，迭代式自对齐 |
