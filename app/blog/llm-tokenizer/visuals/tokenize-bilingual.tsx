@@ -71,7 +71,7 @@ function Row({
       <div className="flex items-baseline gap-2">
         <span className="font-mono text-xs text-muted-foreground">{label}</span>
         <span className="font-mono text-xs text-muted-foreground/60">
-          · {tokens.length} tokens · vocab={vocab}
+          {tokens.length} tokens，词表 {vocab}
         </span>
       </div>
       <div className="flex flex-wrap gap-0.5">
@@ -86,7 +86,7 @@ function Row({
               palette
             )}
           >
-            {showBytes ? showByte(t) : t.replace(/ /g, "·")}
+            {showBytes ? showByte(t) : t.replace(/ /g, "␣")}
           </motion.span>
         ))}
       </div>

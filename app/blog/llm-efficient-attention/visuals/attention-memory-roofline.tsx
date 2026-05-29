@@ -127,7 +127,7 @@ export function AttentionMemoryRoofline() {
                     )}
                   >
                     {total < 1 ? `${(total * 1024).toFixed(0)} MB` : `${total.toFixed(1)} GB`}
-                    {overflow && " · 超 80GB"}
+                    {overflow && "（超 80GB）"}
                   </span>
                 </div>
                 <div className="h-4 w-full bg-neutral-100 dark:bg-neutral-900 rounded overflow-hidden flex">

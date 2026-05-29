@@ -117,7 +117,7 @@ export function GenerationEvolutionSlider() {
           >
             <div className="flex items-center justify-between text-xs font-mono mb-2">
               <span className="text-muted-foreground">
-                step <span className="text-foreground">{cur.step}</span> · val
+                step <span className="text-foreground">{cur.step}</span>，val
                 loss{" "}
                 <span className="text-violet-600 dark:text-violet-400">
                   {cur.loss}

@@ -174,7 +174,7 @@ export function MoeRoutingAnimation() {
                   fontFamily="monospace"
                   className={cn(isTop ? "fill-violet-700 dark:fill-violet-200 font-semibold" : "fill-muted-foreground")}
                 >
-                  E{i} · {label}
+                  E{i}：{label}
                 </text>
                 {isTop && (
                   <text

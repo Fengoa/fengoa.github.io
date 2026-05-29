@@ -43,7 +43,7 @@ const SAMPLES: Sample[] = [
 
 // 用空格的可视化替身，避免 token 看起来是空的
 function showToken(t: string) {
-  return t.replace(/ /g, "·");
+  return t.replace(/ /g, "␣");
 }
 
 // 一行 tokens 的渲染
@@ -69,7 +69,7 @@ function TokenRow({
       <div className="flex items-baseline gap-2">
         <span className="font-mono text-xs text-foreground">{label}</span>
         <span className="font-mono text-xs text-muted-foreground/60">
-          {tokens.length} tokens · vocab = {vocab}
+          {tokens.length} tokens，词表 {vocab}
         </span>
       </div>
       <div className="flex flex-wrap gap-0.5">

@@ -57,7 +57,7 @@ export function DeploymentArchitectureDiagram() {
       w: 220,
       h: 40,
       label: "Prometheus + Grafana",
-      desc: "QPS · TTFT · 显存",
+      desc: "QPS / TTFT / 显存",
     },
   };
 

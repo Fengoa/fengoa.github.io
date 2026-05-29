@@ -147,7 +147,7 @@ export function RagPipelineFlow() {
         </div>
 
         <div className="text-xs font-mono text-muted-foreground text-center">
-          {auto ? "自动播放中" : "点击任意步骤切换"} ·{" "}
+          {auto ? "自动播放中" : "点击任意步骤切换"}，{" "}
           <button
             type="button"
             onClick={() => setAuto((a) => !a)}

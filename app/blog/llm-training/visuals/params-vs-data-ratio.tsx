@@ -91,7 +91,7 @@ export function ParamsVsDataRatio() {
             <div className="flex items-center justify-between text-xs font-mono">
               <span className="text-foreground font-medium">{r.name}</span>
               <span className="text-muted-foreground">
-                N={r.params} · D={r.tokens}
+                N={r.params}，D={r.tokens}
               </span>
             </div>
             <div className="relative h-3 bg-neutral-100 dark:bg-neutral-900 rounded">

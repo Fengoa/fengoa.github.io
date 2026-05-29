@@ -108,7 +108,7 @@ export function BetaTradeoff() {
             <span className="text-emerald-700 dark:text-emerald-400 font-medium">
               {cur.tag}
             </span>
-            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground/50">／</span>
             <span className="text-muted-foreground">{cur.risk}</span>
           </div>
           <div className="text-sm font-mono text-foreground/90 leading-relaxed">

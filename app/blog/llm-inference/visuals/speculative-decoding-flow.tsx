@@ -55,7 +55,7 @@ export function SpeculativeDecodingFlow() {
         <div>
           <div className="flex items-center justify-between text-xs font-mono mb-2">
             <span className="text-muted-foreground">
-              普通自回归 · 每个 token 都过一次大模型
+              普通自回归：每个 token 都过一次大模型
             </span>
             <span className="text-rose-500">
               共 {naiveTotal} 单位时间
@@ -91,7 +91,7 @@ export function SpeculativeDecodingFlow() {
         <div>
           <div className="flex items-center justify-between text-xs font-mono mb-2">
             <span className="text-muted-foreground">
-              投机解码 · 小模型一次猜 4 个，大模型一次验证
+              投机解码：小模型一次猜 4 个，大模型一次验证
             </span>
             <span className="text-emerald-500">共 {specTotal} 单位时间</span>
           </div>

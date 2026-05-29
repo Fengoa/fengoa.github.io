@@ -95,7 +95,7 @@ export function SeriesLearningPathMap() {
   const activePost = hover ? map.get(hover) : null;
 
   return (
-    <VisualFrame title="系列文章知识依赖图 · 悬停查看本篇要点">
+    <VisualFrame title="系列文章知识依赖图（悬停查看本篇要点）">
       <div className="overflow-x-auto">
         <svg
           viewBox={`0 0 ${W} ${H}`}

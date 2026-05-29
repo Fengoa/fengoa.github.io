@@ -69,7 +69,7 @@ export function OpenSourceModelsScatter() {
   const active = hover != null ? MODELS[hover] : null;
 
   return (
-    <VisualFrame title="开源大模型生态 · 横轴时间，纵轴参数量（log），气泡大小代表社区影响力">
+    <VisualFrame title="开源大模型生态：横轴时间，纵轴参数量（log），气泡大小代表社区影响力">
       <div className="overflow-x-auto">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: 600 }}>
           <line x1={PAD_L} y1={H - PAD_B} x2={W - PAD_R} y2={H - PAD_B} className="stroke-neutral-300 dark:stroke-neutral-700" strokeWidth={1} />
@@ -162,7 +162,7 @@ export function OpenSourceModelsScatter() {
           <>
             <div className="flex items-baseline gap-2 mb-1 flex-wrap">
               <span className="font-semibold">{active.name}</span>
-              <span className="text-xs text-muted-foreground">{active.org} · {active.date.toFixed(1)}</span>
+              <span className="text-xs text-muted-foreground">{active.org}，{active.date.toFixed(1)}</span>
               <span className="text-xs font-mono text-muted-foreground">
                 {active.active ? `${active.params}B 总 / ${active.active}B 激活` : `${active.params}B`}
               </span>

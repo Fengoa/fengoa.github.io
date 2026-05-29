@@ -233,7 +233,7 @@ export function MultiHeadPatterns() {
                       : "border-neutral-200 dark:border-neutral-800 text-muted-foreground"
                   )}
                 >
-                  {`'${showCh(SEQ[t.i])}'`} · {(t.p * 100).toFixed(0)}%
+                  {`'${showCh(SEQ[t.i])}'`}（{(t.p * 100).toFixed(0)}%）
                 </span>
               ))}
             </div>

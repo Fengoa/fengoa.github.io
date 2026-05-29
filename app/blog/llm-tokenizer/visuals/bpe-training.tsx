@@ -84,7 +84,7 @@ function buildSteps(initial: string[][], n: number) {
 }
 
 function fmt(s: string) {
-  if (s === "</w>") return "·";
+  if (s === "</w>") return "␣";
   return s;
 }
 

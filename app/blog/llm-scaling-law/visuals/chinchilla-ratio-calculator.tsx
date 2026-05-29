@@ -114,7 +114,7 @@ export function ChinchillaRatioCalculator() {
               >
                 <div className="text-foreground">{r.name}</div>
                 <div className="text-muted-foreground text-xs">
-                  N={fmt(r.N)} · D={fmt(r.D)}
+                  N={fmt(r.N)}，D={fmt(r.D)}
                 </div>
                 <motion.div
                   className={cn(

@@ -233,7 +233,7 @@ export function Embedding2DProjection() {
                       style={{ backgroundColor: topicColor[c.topic] }}
                     />
                     <span className="text-xs font-mono text-muted-foreground">
-                      {c.topic} · sim {(1 - c.dist).toFixed(2)}
+                      {c.topic}（sim {(1 - c.dist).toFixed(2)}）
                     </span>
                   </div>
                 </div>

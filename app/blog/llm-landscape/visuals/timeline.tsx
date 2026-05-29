@@ -171,7 +171,7 @@ export function LLMTimelineInteractive() {
   const yearSpan = maxYear - minYear;
 
   return (
-    <VisualFrame title="LLM 演进时间轴 · 点击节点查看详情">
+    <VisualFrame title="LLM 演进时间轴（点击节点查看详情）">
       <div className="space-y-6">
         <div className="relative pt-8 pb-12">
           <div className="absolute left-0 right-0 top-1/2 h-px bg-neutral-200 dark:bg-neutral-800" />
@@ -235,7 +235,7 @@ export function LLMTimelineInteractive() {
           <div className="flex items-baseline gap-3 mb-2 flex-wrap">
             <span className="font-mono text-xs text-muted-foreground">{node.year}</span>
             <span className="font-semibold text-base text-foreground">{node.name}</span>
-            <span className="text-xs text-muted-foreground">· {node.org}</span>
+            <span className="text-xs text-muted-foreground">{node.org}</span>
           </div>
           <div className="text-xs text-violet-600 dark:text-violet-400 font-mono mb-2">
             {node.highlight}

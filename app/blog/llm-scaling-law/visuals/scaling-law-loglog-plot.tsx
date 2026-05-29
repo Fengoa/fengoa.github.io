@@ -144,7 +144,7 @@ export function ScalingLawLoglogPlot() {
         </div>
 
         <p className="text-xs text-muted-foreground font-mono">
-          {meta.blurb} · α = {meta.alpha}
+          {meta.blurb}，α = {meta.alpha}
         </p>
 
         <svg
