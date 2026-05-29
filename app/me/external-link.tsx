@@ -92,7 +92,7 @@ export function ExternalLink({
       {isShimmering ? (
         <TextShimmer
           as="span"
-          className="[--base-color:var(--color-blue-600)]"
+          className="inline! [--base-color:var(--color-blue-600)]"
         >
           {children as string}
         </TextShimmer>
