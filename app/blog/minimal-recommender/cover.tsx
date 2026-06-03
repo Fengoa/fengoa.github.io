@@ -1,8 +1,8 @@
 "use client";
 
-import { BorderBeam } from "@/components/ui/border-beam";
-import { Grid } from "@/components/ui/grid";
-import { BlocksIcon, type BlocksIconHandle } from "@/components/ui/blocks-icon";
+import { BorderBeam } from "./components/ui/border-beam";
+import { Grid } from "./components/ui/grid";
+import { BlocksIcon, type BlocksIconHandle } from "./components/ui/blocks-icon";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 

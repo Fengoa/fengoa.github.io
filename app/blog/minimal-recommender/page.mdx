@@ -1,4 +1,6 @@
 import recommendationSystemPanorama from "./recommendation_system_panorama.svg";
+import { SeriesNav } from "./components/series-nav";
+import { RecommenderPipeline } from "./components/recommender-pipeline";
 
 export const metadata = {
   title: "从零搭一个推荐系统",
@@ -8,39 +10,30 @@ export const metadata = {
 
 <SeriesNav series="recsys" />
 
-你打开 Spotify，首页给你推了一首没听过的歌。你点进去听了，还不错。然后你开始想：它怎么知道我会喜欢这首？
+打开 Spotify，首页给你推了一首没听过的歌，点进去听了还不错。那它怎么知道我会喜欢这首歌呢？
 
-这个问题拆开来其实是两个问题。第一个：Spotify 曲库里有一亿首歌，它凭什么只给你看这 30 首？第二个：这 30 首里，排在第一位的那首凭什么排第一？
+这个问题拆开来其实就两句话。
 
-第一个问题叫召回，从一亿首里快速捞出几百首可能相关的。第二个问题叫排序，从几百首里精确挑出最匹配的排在最前面。
+1. 曲库里有一亿首歌，凭什么这 30 首被推荐出来了？
+2. 这 30 首里，凭什么这首歌排第一？
 
-一亿首不可能逐个算一遍你喜不喜欢，时间上来不及。所以要先粗筛再精排。粗筛求快，用简单规则大量过滤。精排求准，用更多信号精确打分。
+第一句叫**召回**，从一亿首里快速捞出几百首可能相关的。第二句叫**排序**，从几百首里精确挑出最匹配的排在最前面。
 
-这篇记录的就是从零搭一套这样的流水线的过程。数据用的 MovieLens，技术用的 Python + FastAPI。
+一亿首不可能逐个算分，时间上来不及。所以分两步走：先粗筛，再精排。粗筛求快，用简单规则大量过滤；精排求准，用更多信号精确打分。
 
-<figure className="my-10 overflow-hidden rounded-xl border border-neutral-200 bg-white p-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
-  <img
-    src={typeof recommendationSystemPanorama === "string" ? recommendationSystemPanorama : recommendationSystemPanorama.src}
-    alt="推荐系统全貌：从离线数据、召回、排序到在线服务"
-    className="block w-full"
-  />
-  <figcaption className="mt-3 text-center text-xs text-muted-foreground font-mono">
-    推荐系统全貌：离线准备数据，在线经过召回、合并、排序，最后返回 Top K。
-  </figcaption>
-</figure>
+这篇记录的就是从零搭一套这样的流水线的过程。数据用的 MovieLens，技术栈是 Python + FastAPI。
 
----
 
 ## 问题
 
-推荐系统要做的事情：
+推荐系统要做的事情，写成一行就是：
 
 ```text
 给用户 u，在所有物品 i 中，找到得分最高的 Top K
 score(user, item) → 排序 → Top K
 ```
 
-物品数量一大，逐个算分就来不及了。工业界的做法是分两步，先用简单规则快速筛出几百个候选（召回），再对这几百个用更复杂的方式精确打分（排序）。
+物品数量一大，逐个算分就来不及了。工业界的做法是分两步：先用简单规则快速筛出几百个候选（召回），再对这几百个用更复杂的方式精确打分（排序）。
 
 <RecommenderPipeline />
 
@@ -48,7 +41,7 @@ score(user, item) → 排序 → Top K
 
 ## 召回：三路并行
 
-召回的目标是从全量物品里快速捞出一批候选。一种策略总有覆盖不到的地方，所以跑了三路：
+召回的目标是从全量物品里快速捞出一批候选。一种策略总有覆盖不到的地方，所以跑了三路，各取 40 部，最后合并去重到 50 部左右：
 
 ```text
 多路召回（各取 40 部候选）
@@ -59,23 +52,19 @@ score(user, item) → 排序 → Top K
 
 ### 热门召回
 
-找评分人数多、均分高的电影。不依赖用户历史，新用户也能用。
+找评分人数多、均分高的电影。不依赖用户历史，新用户也能用。思路很简单：大家都说好，那你大概率也会觉得好。
 
 ### 类型偏好召回
 
-统计用户看过的电影类型分布，按频率算权重。看了 7 部 Drama、3 部 Comedy，那 Drama 权重 0.7、Comedy 权重 0.3。从对应类型里按权重选高分电影。
+统计用户看过的电影类型分布，按频率算权重。比如你看了 7 部 Drama、3 部 Comedy，那 Drama 权重 0.7、Comedy 权重 0.3。然后从对应类型里按权重选高分电影。
 
 ### ItemCF 召回
 
-思路是：
+思路是：喜欢 A 的人也喜欢 B → A 和 B 相似 → 用户看过 A，推荐 B。
 
-```text
-喜欢 A 的人也喜欢 B → A 和 B 相似 → 用户看过 A，推荐 B
-```
+离线扫一遍所有用户行为，统计物品之间的共现关系，算出每个物品的相似物品列表。在线时只查表，不用实时算。
 
-离线扫一遍所有用户行为，统计物品之间的共现关系，算出每个物品的相似物品列表。在线时只查表。
-
-有一个细节。活跃用户看过几百部电影，不加处理会让所有物品两两相似。所以要用 IUF 加权，看得越多的用户，每次共现贡献越低：
+有一个细节值得说。活跃用户看过几百部电影，不加处理会让所有物品两两相似。所以要用 IUF 加权，看得越多的用户，每次共现贡献越低：
 
 ```text
 weight = 1 / log(1 + 用户看过的电影数)
@@ -95,25 +84,27 @@ weight = 1 / log(1 + 用户看过的电影数)
 ItemCF：  recall_score = 相似度累加（0 到 几）
 ```
 
-直接加起来没意义。先归一化到 [0, 1]：
+直接加起来没意义，量纲不一样。先归一化到 [0, 1]：
 
 ```text
 normalized = (score - min) / (max - min)
 ```
 
-然后按权重合并：
+然后按权重合并。ItemCF 最个性化，给了最高权重；热门最泛化，权重最低：
 
 ```text
 merged_score = 0.5 × itemcf_norm + 0.3 × genre_norm + 0.2 × popular_norm
 ```
 
-ItemCF 最个性化给了最高权重，热门最泛化权重最低。合并之后去掉用户已看过的电影，输出候选集。
+合并之后去掉用户已看过的电影，输出候选集进入下一环节。
 
 ---
 
 ## 排序：加物品质量信号
 
-召回阶段只管"这部电影和用户有没有关系"，没管电影本身好不好。一部匹配口味但只有 3 分的烂片不应该排前面。排序阶段把物品质量信号加进来：
+召回阶段只管"这部电影和用户有没有关系"，没管电影本身好不好。一部匹配口味但只有 3 分的烂片不应该排前面。
+
+排序阶段把物品质量信号加进来，不再只看召回分，还看这部电影本身值不值得推：
 
 ```text
 final_score = 0.5 × recall_score_norm    （召回置信度）
@@ -121,7 +112,7 @@ final_score = 0.5 × recall_score_norm    （召回置信度）
             + 0.2 × popularity_norm      （多少人看过）
 ```
 
-跑出来看效果：
+跑出来看效果，精排前后排名变化大概是这样：
 
 | 电影 | 召回排名 | 精排后 | 原因 |
 |------|---------|--------|------|
@@ -133,6 +124,8 @@ final_score = 0.5 × recall_score_norm    （召回置信度）
 
 ## 代码结构
 
+搭完之后，整个项目长这样：
+
 ```text
 recommender/
   loader.py       # 数据加载，统一 ID 类型
@@ -143,7 +136,7 @@ scripts/
   build_itemcf.py # 离线构建 ItemCF 相似表
 ```
 
-最终接口：
+最终接口很简单，一个 GET 搞定：
 
 ```text
 GET /recommendations?user_id=1&top_k=20
@@ -158,6 +151,8 @@ GET /recommendations?user_id=1&top_k=20
 
 ## 和工业界的距离
 
+这个项目是一个完整但精简的推荐系统，和工业界的差距主要在规模和精度，结构是一样的：
+
 | 环节 | 这个项目 | 工业界 |
 |------|---------|--------|
 | 数据 | MovieLens pkl 文件 | 数据仓库 + 实时日志流 |
@@ -165,7 +160,7 @@ GET /recommendations?user_id=1&top_k=20
 | 排序 | 手写线性公式 | DeepFM / DIN / Wide&Deep |
 | 服务 | FastAPI + pandas 内存 | gRPC + Redis + 微服务 |
 
-区别在规模和精度，结构一样。
+下一篇会加上向量召回，用 embedding 做语义匹配，召回能力会上一个台阶。
 
 ---
 
