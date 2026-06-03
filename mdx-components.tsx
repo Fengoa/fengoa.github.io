@@ -106,7 +106,7 @@ export const Ol = ({ children, ...props }: ComponentPropsWithoutRef<"ol">) => (
 
 export const Ul = ({ children, ...props }: ComponentPropsWithoutRef<"ul">) => (
   <ul
-    className="mb-4 ps-5 list-disc text-secondary-foreground marker:text-muted-foreground [&>li>div]:inline [&>li>p]:inline [&>li>div]:m-0 [&>li>p]:m-0"
+    className="mb-4 ps-5 list-disc text-secondary-foreground marker:text-muted-foreground space-y-2 [&>li>div]:inline [&>li>p]:inline [&>li>div]:m-0 [&>li>p]:m-0"
     {...props}
   >
     {children}
