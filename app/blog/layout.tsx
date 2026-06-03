@@ -15,7 +15,7 @@ export default function BlogLayout({
       <ReadingTracker />
       <PresentationMode />
       <ZenMode />
-      <div className="max-w-3xl mx-auto relative">
+      <div className="max-w-4xl mx-auto relative">
         {/* 右侧导航栏 — 绝对定位，不占内容空间，h-full 让 sticky 生效 */}
         <aside className="hidden xl:block absolute left-full ml-8 w-48 top-0 h-full">
           <div className="sticky top-40">
