@@ -308,5 +308,15 @@
     "reranking-diversity",
     "recommender-landscape",
     "hard-negative-eval"
+  ],
+  "embodied-robot": [
+    "llm-landscape",
+    "recommender-landscape",
+    "cs-paper-guide",
+    "polar-starry-resources",
+    "ml-core-concepts",
+    "linear-algebra-for-dl",
+    "blog-recommender",
+    "craft-oriensx"
   ]
 }
