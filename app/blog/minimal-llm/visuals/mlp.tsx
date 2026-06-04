@@ -41,7 +41,7 @@ export function MLPWindow() {
                 className={cn(
                   "inline-flex items-center justify-center w-5 h-7 transition-all",
                   inWindow &&
-                    "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300",
+                    "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300",
                   isTarget &&
                     "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-400 dark:ring-emerald-600",
                   !inWindow && !isTarget && "text-muted-foreground/50"
@@ -65,7 +65,7 @@ export function MLPWindow() {
             {window.map((ch, i) => (
               <span
                 key={`${start}-${i}`}
-                className="inline-flex items-center justify-center w-5 h-5 rounded-sm bg-violet-100 dark:bg-violet-950/50 font-mono text-xs text-violet-700 dark:text-violet-300"
+                className="inline-flex items-center justify-center w-5 h-5 rounded-sm bg-emerald-100 dark:bg-emerald-950/50 font-mono text-xs text-emerald-700 dark:text-emerald-300"
               >
                 {ch === " " ? "␣" : ch}
               </span>
@@ -89,7 +89,7 @@ export function MLPWindow() {
                 transition={{ delay: i * 0.02, duration: 0.15 }}
                 className="flex-1"
                 style={{
-                  backgroundColor: `hsl(${260 + i * 4}, 65%, ${55 + (i % 3) * 8}%)`,
+                  backgroundColor: `hsl(${150 + i * 4}, 65%, ${55 + (i % 3) * 8}%)`,
                 }}
               />
             ))}

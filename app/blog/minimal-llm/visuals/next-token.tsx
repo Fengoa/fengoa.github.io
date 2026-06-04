@@ -88,7 +88,7 @@ export function NextTokenPrediction() {
             {/* ? 框：用 SVG 描边做转圈虚线动画，比静态 dashed 边框更"活"且不抢眼 */}
             <span className="relative inline-flex items-center justify-center w-9 h-9">
               <svg
-                className="absolute inset-0 w-full h-full text-violet-400 dark:text-violet-500"
+                className="absolute inset-0 w-full h-full text-emerald-400 dark:text-emerald-500"
                 viewBox="0 0 36 36"
                 fill="none"
                 aria-hidden
@@ -114,7 +114,7 @@ export function NextTokenPrediction() {
                   />
                 </rect>
               </svg>
-              <span className="relative font-mono text-base text-violet-500 dark:text-violet-400">
+              <span className="relative font-mono text-base text-emerald-500 dark:text-emerald-400">
                 ?
               </span>
             </span>
@@ -140,7 +140,7 @@ export function NextTokenPrediction() {
                     className={cn(
                       "h-full rounded-full",
                       i === 0
-                        ? "bg-violet-500 dark:bg-violet-400"
+                        ? "bg-emerald-500 dark:bg-emerald-400"
                         : "bg-neutral-300 dark:bg-neutral-700"
                     )}
                   />

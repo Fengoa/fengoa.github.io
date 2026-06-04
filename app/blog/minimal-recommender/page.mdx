@@ -34,16 +34,14 @@ export const metadata = {
 
 推荐系统的任务可形式化为：
 
-```text
-给用户 u，在所有物品 i 中，找到得分最高的 Top K
-score(user, item) → 排序 → Top K
-```
+给用户 <Math>{`u`}</Math>，在所有物品 <Math>{`i`}</Math> 中，找到得分最高的 Top <Math>{`K`}</Math>：
+
+<Math block>{`\\operatorname{score}(u, i) \\rightarrow \\text{排序} \\rightarrow \\text{Top } K`}</Math>
 
 物品数量较大时，逐一算分不可行。工业界采用两阶段方案：先利用简单规则快速筛选数百个候选（召回），再对这数百个候选采用更复杂的方式精确打分（排序）。
 
 <RecommenderPipeline />
 
----
 
 ## 召回：三路并行
 
@@ -60,31 +58,30 @@ score(user, item) → 排序 → Top K
 
 ### 热门召回
 
-找评分人数多、均分高的电影。不依赖用户历史，新用户也能用。思路很简单：大家都说好，那你大概率也会觉得好。
+筛选评分人数多且均分高的电影。该方法不依赖用户历史，适用于新用户。其核心假设为：若多数用户评价较高，则当前用户也可能偏好该物品。
 
 ### 类型偏好召回
 
-统计用户看过的电影类型分布，按频率算权重。比如你看了 7 部 Drama、3 部 Comedy，那 Drama 权重 0.7、Comedy 权重 0.3。然后从对应类型里按权重选高分电影。
+统计用户历史观看电影的类型分布，按频率计算权重。例如用户观看了 7 部 Drama 和 3 部 Comedy，则 Drama 权重为 0.7，Comedy 权重为 0.3。随后从对应类型中按权重选取高分电影。
 
 ### ItemCF 召回
 
-思路是：喜欢 A 的人也喜欢 B → A 和 B 相似 → 用户看过 A，推荐 B。
+其核心思路为：若用户喜欢物品 A，且物品 A 与物品 B 相似，则向该用户推荐物品 B。
 
-离线扫一遍所有用户行为，统计物品之间的共现关系，算出每个物品的相似物品列表。在线时只查表，不用实时算。
+具体实现为：离线遍历所有用户行为，统计物品间的共现关系，计算每个物品的相似物品列表。在线服务时仅需查表，无需实时计算。
 
-有一个细节值得说。活跃用户看过几百部电影，不加处理会让所有物品两两相似。所以要用 IUF 加权，看得越多的用户，每次共现贡献越低：
+需注意一个技术细节：活跃用户观看了数百部电影，若不加处理将导致所有物品两两相似。因此需采用 IUF 加权，即观看数量越多的用户，其每次共现的贡献度越低：
 
 <Math block>{`\\text{weight} = \\frac{1}{\\log(1 + \\text{用户看过的电影数})}`}</Math>
 
-和搜索引擎的 IDF 一个道理。
+此方法与搜索引擎中的 IDF 原理相近。
 
 <ItemCFSimilarity />
 
----
 
 ## 合并：归一化
 
-三路召回各自返回候选和分数，但分数尺度完全不同：
+三路召回各自返回候选及分数，但分数尺度存在差异：
 
 ```text
 热门召回：recall_score = 评分人数（几十到几千）
@@ -92,29 +89,28 @@ score(user, item) → 排序 → Top K
 ItemCF：  recall_score = 相似度累加（0 到 几）
 ```
 
-直接加起来没意义，量纲不一样。先归一化到 [0, 1]：
+由于量纲不同，直接相加无意义。需先归一化至 [0, 1] 区间：
 
 ```text
 normalized = (score - min) / (max - min)
 ```
 
-然后按权重合并。ItemCF 最个性化，给了最高权重；热门最泛化，权重最低：
+随后按权重合并各路召回结果。由于 ItemCF 具备最强的个性化特征，赋予其最高权重；热门召回泛化能力最强，权重最低：
 
 ```text
 merged_score = 0.5 × itemcf_norm + 0.3 × genre_norm + 0.2 × popular_norm
 ```
 
-合并之后去掉用户已看过的电影，输出候选集进入下一环节。
+合并完成后移除用户已观看的电影，输出候选集进入下一环节。
 
 <NormalizationMerge />
 
----
 
-## 排序：加物品质量信号
+## 排序：引入物品质量信号
 
-召回阶段只管"这部电影和用户有没有关系"，没管电影本身好不好。一部匹配口味但只有 3 分的烂片不应该排前面。
+召回阶段仅考虑"该电影与用户是否相关"，未评估电影本身的质量。一部符合用户口味但评分仅为 3 分的低质电影不应排在前列。
 
-排序阶段把物品质量信号加进来，不再只看召回分，还看这部电影本身值不值得推：
+排序阶段引入物品质量信号，不仅考虑召回分数，还评估该电影本身是否值得推荐：
 
 ```text
 final_score = 0.5 × recall_score_norm    （召回置信度）
@@ -122,7 +118,7 @@ final_score = 0.5 × recall_score_norm    （召回置信度）
             + 0.2 × popularity_norm      （多少人看过）
 ```
 
-跑出来看效果，精排前后排名变化大概是这样：
+精排前后的排名变化如下：
 
 | 电影 | 召回排名 | 精排后 | 原因 |
 |------|---------|--------|------|
@@ -132,11 +128,10 @@ final_score = 0.5 × recall_score_norm    （召回置信度）
 
 <RankingComparison />
 
----
 
-## 代码结构
+## 项目结构
 
-搭完之后，整个项目长这样：
+完整实现后的项目结构如下：
 
 ```text
 recommender/
@@ -148,7 +143,7 @@ scripts/
   build_itemcf.py # 离线构建 ItemCF 相似表
 ```
 
-最终接口很简单，一个 GET 搞定：
+最终接口设计简洁，单个 GET 请求即可完成调用：
 
 ```text
 GET /recommendations?user_id=1&top_k=20
@@ -159,27 +154,25 @@ GET /recommendations?user_id=1&top_k=20
   itemcf_recall(40)  ─┘
 ```
 
----
 
-## 和工业界的距离
+## 与工业级系统的差距
 
-这个项目是一个完整但精简的推荐系统，和工业界的差距主要在规模和精度，结构是一样的：
+本项目是一个完整但精简的推荐系统，与工业级应用的差距主要在规模和精度，两者结构相似：
 
-| 环节 | 这个项目 | 工业界 |
+| 环节 | 本项目 | 工业级应用 |
 |------|---------|--------|
 | 数据 | MovieLens pkl 文件 | 数据仓库 + 实时日志流 |
 | 召回 | popular + genre + ItemCF | 同 + 向量召回 + DNN 召回 |
 | 排序 | 手写线性公式 | DeepFM / DIN / Wide&Deep |
 | 服务 | FastAPI + pandas 内存 | gRPC + Redis + 微服务 |
 
-下一篇会加上向量召回，用 embedding 做语义匹配，召回能力会上一个台阶。
+后续文章将添加向量召回，利用 embedding 进行语义匹配，进一步提升召回能力。
 
----
 
 ## 参考论文
 
 | 论文 | 说明 |
 |------|------|
 | [Deep Neural Networks for YouTube Recommendations · Covington, RecSys 2016](https://dl.acm.org/doi/10.1145/2959100.2959190) | YouTube 的召回+排序两阶段架构，工业推荐系统范本 |
-| [The MovieLens Datasets: History and Context · Harper & Konstan, TiiS 2015](https://doi.org/10.1145/2827872) | 我们使用的 MovieLens 数据集 |
+| [The MovieLens Datasets: History and Context · Harper & Konstan, TiiS 2015](https://doi.org/10.1145/2827872) | 本文使用的 MovieLens 数据集 |
 | [Matrix Factorization Techniques for Recommender Systems · Koren, Computer 2009](https://doi.org/10.1109/MC.2009.263) | 矩阵分解的经典综述 |
