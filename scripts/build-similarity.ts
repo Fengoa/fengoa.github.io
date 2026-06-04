@@ -15,28 +15,50 @@ const OUTPUT_PATH = path.join(ROOT, "public/similarity.json");
 const TOP_K = 8; // 每篇文章推荐 top-8
 const TAG_BOOST = 0.08; // 同 tag 文章相似度加成
 
+// 标题模式加成：共享同一标题模式的文章获得额外相似度
+const PATTERN_BOOSTS: Record<string, number> = {
+  "从零搭建": 0.12,  // entry-level "from scratch" articles
+  "全景图": 0.10,    // overview/landscape articles
+};
+
 // ==============================================================================
 // 1. 读取所有文章内容 + 标签
 // ==============================================================================
 
-/** 从 lib/posts-data.ts 读取 tag 映射 */
-function getTagMap(): Record<string, string> {
-  const dataPath = path.join(ROOT, "lib/posts-data.ts");
-  const src = fs.readFileSync(dataPath, "utf-8");
-  const tagMap: Record<string, string> = {};
-  // 匹配 { slug: "xxx", ..., tag: "yyy", ... }
-  const re = /slug:\s*"([^"]+)"[\s\S]*?tag:\s*"([^"]+)"/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(src)) !== null) {
-    tagMap[m[1]] = m[2];
-  }
-  return tagMap;
+interface PostMeta {
+  tag: string;
+  title: string;
+  patterns: string[];
 }
 
-function getAllPosts(): { slug: string; content: string; tag: string }[] {
-  const tagMap = getTagMap();
+/** 从 lib/posts-data.ts 读取 tag、title 映射 */
+function getPostMetaMap(): Record<string, PostMeta> {
+  const dataPath = path.join(ROOT, "lib/posts-data.ts");
+  const src = fs.readFileSync(dataPath, "utf-8");
+  const metaMap: Record<string, PostMeta> = {};
+
+  // 匹配 { slug: "xxx", title: "yyy", tag: "zzz", date: "..." }
+  const re = /slug:\s*"([^"]+)"[\s\S]*?title:\s*"([^"]+)"[\s\S]*?tag:\s*"([^"]+)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src)) !== null) {
+    const slug = m[1];
+    const title = m[2];
+    const tag = m[3];
+    const patterns: string[] = [];
+    for (const pattern of Object.keys(PATTERN_BOOSTS)) {
+      if (title.includes(pattern)) {
+        patterns.push(pattern);
+      }
+    }
+    metaMap[slug] = { tag, title, patterns };
+  }
+  return metaMap;
+}
+
+function getAllPosts(): { slug: string; content: string; tag: string; patterns: string[] }[] {
+  const metaMap = getPostMetaMap();
   const dirs = fs.readdirSync(BLOG_DIR, { withFileTypes: true });
-  const posts: { slug: string; content: string; tag: string }[] = [];
+  const posts: { slug: string; content: string; tag: string; patterns: string[] }[] = [];
 
   for (const dir of dirs) {
     if (!dir.isDirectory()) continue;
@@ -46,7 +68,13 @@ function getAllPosts(): { slug: string; content: string; tag: string }[] {
     const raw = fs.readFileSync(mdxPath, "utf-8");
     const content = cleanMDX(raw);
     if (content.length > 50) {
-      posts.push({ slug: dir.name, content, tag: tagMap[dir.name] || "" });
+      const meta = metaMap[dir.name];
+      posts.push({
+        slug: dir.name,
+        content,
+        tag: meta?.tag || "",
+        patterns: meta?.patterns || [],
+      });
     }
   }
 
@@ -183,6 +211,7 @@ function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): numbe
 // ==============================================================================
 
 const MANUAL_OVERRIDES: Record<string, string[]> = {
+  // 孤立文章 + TF-IDF 效果差的
   "craft-oriensx": [
     "blog-recommender",       // 同属建站类
     "engineering-recommender", // 都是工程化/搭建
@@ -194,6 +223,26 @@ const MANUAL_OVERRIDES: Record<string, string[]> = {
     "craft-oriensx",       // 非技术内容
     "llm-landscape",       // 全景图/总览类
     "recommender-landscape",
+  ],
+  // 跨主题入门引导：确保同类难度的"从零搭建"互荐
+  "minimal-recommender": [
+    "minimal-llm",               // 跨主题从零搭建
+    "recommender-landscape",     // 推荐系统全景图
+    "llm-landscape",             // LLM 全景图（跨主题入门）
+  ],
+  "minimal-llm": [
+    "minimal-recommender",       // 跨主题从零搭建
+    "llm-landscape",             // LLM 全景图
+    "recommender-landscape",     // 推荐系统全景图（跨主题入门）
+  ],
+  // 全景图互相推荐
+  "llm-landscape": [
+    "recommender-landscape",     // 同"全景图"模式
+    "minimal-llm",               // LLM 入门引导
+  ],
+  "recommender-landscape": [
+    "llm-landscape",             // 同"全景图"模式
+    "minimal-recommender",       // 推荐系统入门引导
   ],
 };
 
@@ -229,6 +278,16 @@ function main() {
       // 同 tag 加成
       if (posts[i].tag && posts[j].tag && posts[i].tag === posts[j].tag) {
         score += TAG_BOOST;
+      }
+
+      // 标题模式加成：共享同一模式的跨主题文章获得额外加分
+      // 仅在标签不同时生效，避免与 TAG_BOOST 双重叠加
+      if (posts[i].tag !== posts[j].tag) {
+        for (const pattern of posts[i].patterns) {
+          if (posts[j].patterns.includes(pattern)) {
+            score += PATTERN_BOOSTS[pattern] || 0;
+          }
+        }
       }
 
       scores.push({ slug: posts[j].slug, score });
