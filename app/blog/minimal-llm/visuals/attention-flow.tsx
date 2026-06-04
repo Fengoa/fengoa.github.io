@@ -56,9 +56,9 @@ export function AttentionFlow() {
                     !visible
                       ? "border-neutral-200 dark:border-neutral-800 bg-transparent text-muted-foreground/40"
                       : strong
-                        ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300"
+                        ? "border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
                         : medium
-                          ? "border-violet-300/70 dark:border-violet-700 bg-violet-50/50 dark:bg-violet-950/20 text-violet-700/80 dark:text-violet-300/80"
+                          ? "border-emerald-300/70 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700/80 dark:text-emerald-300/80"
                           : "border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 text-foreground"
                   )}
                 >
@@ -72,9 +72,9 @@ export function AttentionFlow() {
                   className={cn(
                     "text-[11px] font-mono mt-1 tabular-nums transition-colors",
                     strong
-                      ? "text-violet-600 dark:text-violet-400 font-medium"
+                      ? "text-emerald-600 dark:text-emerald-400 font-medium"
                       : medium
-                        ? "text-violet-500/80 dark:text-violet-400/80"
+                        ? "text-emerald-500/80 dark:text-emerald-400/80"
                         : "text-muted-foreground/60"
                   )}
                 >
@@ -103,7 +103,7 @@ export function AttentionFlow() {
                 key={`p-${queryIdx}-${i}`}
                 d={`M ${x1} 0 C ${x1} 32, ${x2} 32, ${x2} 64`}
                 stroke="currentColor"
-                className="text-violet-500 dark:text-violet-400"
+                className="text-emerald-500 dark:text-emerald-400"
                 strokeWidth={Math.max(0.5, w[i] * 2.5)}
                 fill="none"
                 strokeOpacity={Math.min(1, 0.3 + w[i] * 0.8)}
@@ -128,7 +128,7 @@ export function AttentionFlow() {
               className={cn(
                 "w-full text-center px-2 py-1 rounded border font-mono text-xs transition-all",
                 i === queryIdx
-                  ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 ring-2 ring-violet-400/30"
+                  ? "border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-400/30"
                   : "border-neutral-200 dark:border-neutral-800 bg-transparent text-muted-foreground/40"
               )}
             >

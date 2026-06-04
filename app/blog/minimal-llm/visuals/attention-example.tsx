@@ -21,9 +21,9 @@ export function AttentionExample() {
   // 每个 level 对应的色块宽度和不透明度：色相统一，靠 alpha 拉开关注度差距
   const levelMeta = [
     { bar: "w-0",                                                  text: "text-muted-foreground/40" },
-    { bar: "w-3 bg-violet-600/25 dark:bg-violet-400/25",           text: "text-muted-foreground" },
-    { bar: "w-6 bg-violet-600/55 dark:bg-violet-400/55",           text: "text-violet-600 dark:text-violet-400" },
-    { bar: "w-9 bg-violet-600 dark:bg-violet-400",                 text: "text-violet-800 dark:text-violet-200 font-semibold" },
+    { bar: "w-3 bg-emerald-600/25 dark:bg-emerald-400/25",           text: "text-muted-foreground" },
+    { bar: "w-6 bg-emerald-600/55 dark:bg-emerald-400/55",           text: "text-emerald-600 dark:text-emerald-400" },
+    { bar: "w-9 bg-emerald-600 dark:bg-emerald-400",                 text: "text-emerald-800 dark:text-emerald-200 font-semibold" },
   ];
 
   return (
@@ -38,7 +38,7 @@ export function AttentionExample() {
             key={`w-${i}`}
             className={cn(
               "text-center font-mono text-sm",
-              t.word === "???" ? "text-violet-500 dark:text-violet-400 font-semibold" : "text-foreground"
+              t.word === "???" ? "text-emerald-500 dark:text-emerald-400 font-semibold" : "text-foreground"
             )}
           >
             {t.word}

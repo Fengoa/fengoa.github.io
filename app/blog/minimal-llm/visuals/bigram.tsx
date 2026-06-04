@@ -84,7 +84,7 @@ export function BigramTable() {
       <div className="flex flex-col items-center gap-4">
         {/* 读法说明 */}
         <div className="text-xs text-muted-foreground font-mono text-center">
-          <span className="text-violet-600 dark:text-violet-400 font-semibold">
+          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
             {showChar(activeChar)}
           </span>{" "}
           → 看下一个字符的可能性
@@ -105,11 +105,11 @@ export function BigramTable() {
                   className={cn(
                     "w-full rounded-t transition-colors",
                     p > 0.25
-                      ? "bg-violet-600 dark:bg-violet-400"
+                      ? "bg-emerald-600 dark:bg-emerald-400"
                       : p > 0.08
-                      ? "bg-violet-500 dark:bg-violet-500"
+                      ? "bg-emerald-500 dark:bg-emerald-500"
                       : p > 0
-                      ? "bg-violet-400 dark:bg-violet-700"
+                      ? "bg-emerald-400 dark:bg-emerald-700"
                       : "bg-neutral-100 dark:bg-neutral-900"
                   )}
                   style={{ minHeight: p > 0 ? "3px" : "0" }}
@@ -125,7 +125,7 @@ export function BigramTable() {
                 className={cn(
                   "flex-1 text-center font-mono text-xs transition-colors",
                   rowDist[c] > 0.2
-                    ? "text-violet-600 dark:text-violet-400 font-semibold"
+                    ? "text-emerald-600 dark:text-emerald-400 font-semibold"
                     : "text-muted-foreground/60"
                 )}
               >
@@ -156,7 +156,7 @@ export function BigramTable() {
                   className={cn(
                     "text-xs font-mono text-center transition-colors",
                     topNext[0]?.ch === ch
-                      ? "text-violet-600 dark:text-violet-400 font-semibold"
+                      ? "text-emerald-600 dark:text-emerald-400 font-semibold"
                       : "text-muted-foreground/60"
                   )}
                 >
@@ -172,7 +172,7 @@ export function BigramTable() {
                 className={cn(
                   "w-7 text-xs font-mono text-right pr-1.5 transition-colors",
                   r === activeRow
-                    ? "text-violet-600 dark:text-violet-400 font-semibold"
+                    ? "text-emerald-600 dark:text-emerald-400 font-semibold"
                     : "text-muted-foreground/60"
                 )}
               >
@@ -181,22 +181,24 @@ export function BigramTable() {
               <div
                 className={cn(
                   "flex-1 grid gap-px transition-shadow",
-                  r === activeRow && "ring-2 ring-violet-500 dark:ring-violet-400"
+                  r === activeRow && "ring-2 ring-emerald-500 dark:ring-emerald-400"
                 )}
                 style={{ gridTemplateColumns: `repeat(${size}, 1fr)` }}
               >
                 {row.map((p, c) => {
-                  // 用 gamma 提升小值的可见度，否则大量 0.05~0.15 的格子看着像白板
                   const isActive = r === activeRow;
                   const dim = isActive ? 1 : 0.85;
-                  // p^0.55 把分布往高位拉，最终 alpha 范围更靠近 0.2~1.0
-                  const alpha = p > 0 ? Math.min(1, Math.pow(p, 0.55) * dim) : 0;
+                  const rowMax = Math.max(...row);
+                  // 对 active 行归一化到该行最大值，确保最亮格子 100% 不透明
+                  const normalized = rowMax > 0 && isActive ? p / rowMax : p;
+                  // gamma 提升小值可见度
+                  const alpha = p > 0 ? Math.min(1, Math.pow(normalized, 0.55) * dim) : 0;
                   return (
                     <div
                       key={`cell-${r}-${c}`}
                       className="aspect-square transition-colors"
                       style={{
-                        backgroundColor: `rgba(139, 92, 246, ${alpha.toFixed(3)})`,
+                        backgroundColor: `rgba(16, 185, 129, ${alpha.toFixed(3)})`,
                       }}
                     />
                   );
@@ -215,7 +217,7 @@ export function BigramTable() {
               className={cn(
                 "flex items-center gap-1.5 px-2 py-1 rounded border",
                 i === 0
-                  ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300"
+                  ? "border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
                   : "border-neutral-200 dark:border-neutral-800 text-muted-foreground"
               )}
             >

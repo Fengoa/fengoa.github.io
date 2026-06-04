@@ -73,7 +73,7 @@ export function Tokenize() {
                   className={cn(
                     "flex flex-col items-center justify-center w-7 py-1 rounded-sm border font-mono transition-colors",
                     isActive
-                      ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300"
+                      ? "border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
                       : "border-neutral-200 dark:border-neutral-800 bg-transparent text-muted-foreground/60"
                   )}
                 >
@@ -119,7 +119,7 @@ export function Tokenize() {
             {chars.map((_, i) => (
               <div
                 key={`${sampleIdx}-a-${i}`}
-                className="flex justify-center w-10 text-violet-400 dark:text-violet-500 font-mono text-xs"
+                className="flex justify-center w-10 text-emerald-400 dark:text-emerald-500 font-mono text-xs"
               >
                 ↓
               </div>
@@ -136,7 +136,7 @@ export function Tokenize() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 8 }}
                   transition={{ duration: 0.25, delay: 0.2 + i * 0.05 }}
-                  className="flex items-center justify-center w-10 h-8 rounded border border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 font-mono text-sm text-violet-700 dark:text-violet-300 tabular-nums"
+                  className="flex items-center justify-center w-10 h-8 rounded border border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 font-mono text-sm text-emerald-700 dark:text-emerald-300 tabular-nums"
                 >
                   {id}
                 </motion.div>
