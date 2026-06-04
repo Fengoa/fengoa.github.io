@@ -20,7 +20,7 @@ type Post = {
 };
 
 const POSTS: Post[] = [
-  { slug: "minimal-llm", no: 1, title: "从零搭一个语言模型", short: "minimal LLM", stage: "basics", col: 0, row: 1, deps: [], hint: "用 42 万参数搭一个能写莎士比亚的小 GPT，串起整条管线。" },
+  { slug: "minimal-llm", no: 1, title: "从零搭建一个语言模型", short: "minimal LLM", stage: "basics", col: 0, row: 1, deps: [], hint: "用 42 万参数搭一个能写莎士比亚的小 GPT，串起整条管线。" },
   { slug: "llm-tokenizer", no: 2, title: "Tokenizer：BPE", short: "tokenizer", stage: "basics", col: 1, row: 1, deps: ["minimal-llm"], hint: "为什么字符级不够用，BPE 怎么把『常见组合』并成一个 token。" },
   { slug: "llm-attention", no: 3, title: "Attention 机制", short: "attention", stage: "arch", col: 2, row: 0, deps: ["minimal-llm"], hint: "Q/K/V 三个角色如何决定每个位置看哪些上下文。" },
   { slug: "llm-transformer", no: 4, title: "完整 Transformer", short: "transformer", stage: "arch", col: 3, row: 0, deps: ["llm-attention"], hint: "把多头、FFN、LayerNorm、残差拼成一个 Block，再堆几层。" },

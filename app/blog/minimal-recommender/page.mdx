@@ -1,12 +1,18 @@
 import recommendationSystemPanorama from "./recommendation_system_panorama.svg";
 import { SeriesNav } from "./components/series-nav";
 import { RecommenderPipeline } from "./components/recommender-pipeline";
+import {
+  RecallParallel,
+  ItemCFSimilarity,
+  NormalizationMerge,
+  RankingComparison,
+} from "./visuals";
 
 export const metadata = {
-  title: "从零搭一个推荐系统",
+  title: "从零搭建一个推荐系统",
 }
 
-# 从零搭一个推荐系统
+# 从零搭建一个推荐系统
 
 <SeriesNav series="recsys" />
 
@@ -50,6 +56,8 @@ score(user, item) → 排序 → Top K
   └─ ItemCF 召回    → 协同过滤相似电影
 ```
 
+<RecallParallel />
+
 ### 热门召回
 
 找评分人数多、均分高的电影。不依赖用户历史，新用户也能用。思路很简单：大家都说好，那你大概率也会觉得好。
@@ -71,6 +79,8 @@ weight = 1 / log(1 + 用户看过的电影数)
 ```
 
 和搜索引擎的 IDF 一个道理。
+
+<ItemCFSimilarity />
 
 ---
 
@@ -98,6 +108,8 @@ merged_score = 0.5 × itemcf_norm + 0.3 × genre_norm + 0.2 × popular_norm
 
 合并之后去掉用户已看过的电影，输出候选集进入下一环节。
 
+<NormalizationMerge />
+
 ---
 
 ## 排序：加物品质量信号
@@ -119,6 +131,8 @@ final_score = 0.5 × recall_score_norm    （召回置信度）
 | Raiders of the Lost Ark | 1 | 2 | 召回分最高，但质量信号不如肖申克 |
 | Shawshank Redemption | 2 | 1 | 评分 9.1 + 310 万人评 |
 | Godfather: Part II | 未进前 5 | 5 | 评分 8.7 + 210 万人评，热度补位 |
+
+<RankingComparison />
 
 ---
 

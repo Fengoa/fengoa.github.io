@@ -8,7 +8,7 @@ const SERIES: Record<string, { title: string; posts: { slug: string; title: stri
   recsys: {
     title: "推荐系统系列",
     posts: [
-      { slug: "minimal-recommender", title: "从零搭一个推荐系统" },
+      { slug: "minimal-recommender", title: "从零搭建一个推荐系统" },
       { slug: "vector-recall", title: "给推荐系统加上向量召回" },
       { slug: "deepfm-ranking", title: "用模型替代手写公式做排序" },
       { slug: "two-tower-recall", title: "用双塔模型做向量召回" },
@@ -24,7 +24,7 @@ const SERIES: Record<string, { title: string; posts: { slug: string; title: stri
   llm: {
     title: "大模型系列",
     posts: [
-      { slug: "minimal-llm", title: "从零搭一个语言模型" },
+      { slug: "minimal-llm", title: "从零搭建一个语言模型" },
       { slug: "llm-tokenizer", title: "Tokenizer：BPE" },
       { slug: "llm-attention", title: "Attention 机制" },
       { slug: "llm-transformer", title: "完整 Transformer" },

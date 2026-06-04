@@ -189,7 +189,7 @@ export const posts: PostData[] = [
   },
   {
     slug: "minimal-llm",
-    title: "从零搭一个语言模型",
+    title: "从零搭建一个语言模型",
     date: "2026-03-01",
     tag: "大模型",
     summary:
@@ -279,7 +279,7 @@ export const posts: PostData[] = [
   },
   {
     slug: "minimal-recommender",
-    title: "从零搭一个推荐系统",
+    title: "从零搭建一个推荐系统",
     date: "2026-02-01",
     tag: "推荐系统",
     summary:

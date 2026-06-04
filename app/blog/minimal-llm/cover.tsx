@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 // =============================================================================
-// 01 — 从零搭一个语言模型：字符逐个生成的打字机效果
+// 01 — 从零搭建一个语言模型：字符逐个生成的打字机效果
 // =============================================================================
 
 export function MinimalLLMCover({ className }: { className?: string }) {
