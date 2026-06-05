@@ -38,8 +38,8 @@ export function RecommenderCover({ className }: RecommenderCoverProps) {
       <BorderBeam
         size={60}
         duration={9}
-        colorFrom="#f97316"
-        colorTo="#06b6d4"
+        colorFrom="#059669"
+        colorTo="#34d399"
         borderWidth={2}
       />
 
@@ -49,7 +49,7 @@ export function RecommenderCover({ className }: RecommenderCoverProps) {
           ref={iconRef}
           size={64}
           duration={1.5}
-          className="text-neutral-300 dark:text-neutral-600"
+          className="text-emerald-300 dark:text-emerald-700"
         />
       </div>
     </div>

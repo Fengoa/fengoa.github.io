@@ -13,10 +13,10 @@ const CHANNELS = [
   {
     name: "热门召回",
     en: "popular",
-    color: "#f97316",
-    borderClass: "border-orange-400 dark:border-orange-500",
-    textClass: "text-orange-700 dark:text-orange-300",
-    bgClass: "bg-orange-50 dark:bg-orange-950/30",
+    color: "#059669",
+    borderClass: "border-emerald-600 dark:border-emerald-500",
+    textClass: "text-emerald-800 dark:text-emerald-200",
+    bgClass: "bg-emerald-50 dark:bg-emerald-950/30",
     weight: 0.2,
     rawLabel: "评分人数",
     rawUnit: "人",
@@ -24,10 +24,10 @@ const CHANNELS = [
   {
     name: "类型召回",
     en: "genre",
-    color: "#06b6d4",
-    borderClass: "border-cyan-400 dark:border-cyan-500",
-    textClass: "text-cyan-700 dark:text-cyan-300",
-    bgClass: "bg-cyan-50 dark:bg-cyan-950/30",
+    color: "#10b981",
+    borderClass: "border-emerald-500 dark:border-emerald-400",
+    textClass: "text-emerald-700 dark:text-emerald-300",
+    bgClass: "bg-emerald-50/80 dark:bg-emerald-950/25",
     weight: 0.3,
     rawLabel: "类型权重×均分",
     rawUnit: "",
@@ -35,10 +35,10 @@ const CHANNELS = [
   {
     name: "ItemCF",
     en: "itemcf",
-    color: "#8b5cf6",
-    borderClass: "border-violet-400 dark:border-violet-500",
-    textClass: "text-violet-700 dark:text-violet-300",
-    bgClass: "bg-violet-50 dark:bg-violet-950/30",
+    color: "#34d399",
+    borderClass: "border-emerald-400 dark:border-emerald-300",
+    textClass: "text-emerald-600 dark:text-emerald-400",
+    bgClass: "bg-emerald-50/60 dark:bg-emerald-950/20",
     weight: 0.5,
     rawLabel: "相似度累加",
     rawUnit: "",
@@ -111,7 +111,7 @@ export function NormalizationMerge() {
                 className={cn(
                   "px-2 py-0.5 rounded transition-colors",
                   phase === p
-                    ? "bg-neutral-900 dark:bg-neutral-100 text-neutral-100 dark:text-neutral-900 font-medium"
+                    ? "bg-emerald-600 dark:bg-emerald-400 text-white dark:text-emerald-950 font-medium"
                     : "text-muted-foreground"
                 )}
               >

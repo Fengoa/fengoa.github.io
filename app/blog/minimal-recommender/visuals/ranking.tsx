@@ -50,7 +50,7 @@ export function RankingComparison() {
     : FINAL_ORDER;
 
   return (
-    <VisualFrame title="精排：加入物品质量信号，召回排名发生变化">
+    <VisualFrame title="精排：引入物品质量信号后的排名变化">
       <div className="flex flex-col gap-4">
         {/* 切换标签 */}
         <div className="flex items-center gap-2 text-xs font-mono">
@@ -61,7 +61,7 @@ export function RankingComparison() {
               className={cn(
                 "px-3 py-1 rounded border transition-all",
                 view === v
-                  ? "border-neutral-700 dark:border-neutral-300 bg-neutral-900 dark:bg-neutral-100 text-neutral-100 dark:text-neutral-900"
+                  ? "border-emerald-500 dark:border-emerald-400 bg-emerald-600 dark:bg-emerald-400 text-white dark:text-emerald-950"
                   : "border-neutral-200 dark:border-neutral-800 text-muted-foreground hover:text-foreground"
               )}
             >
@@ -70,8 +70,8 @@ export function RankingComparison() {
           ))}
           <span className="text-muted-foreground/60 ml-1 hidden sm:inline">
             {view === "recall"
-              ? "← 仅看召回置信度"
-              : "← 加入均分 + 热度信号"}
+              ? "仅按召回置信度排序"
+              : "叠加均分与评分人数"}
           </span>
         </div>
 
@@ -141,8 +141,8 @@ export function RankingComparison() {
                         <span className="text-[10px] font-mono text-muted-foreground w-10 shrink-0">
                           热度
                         </span>
-                        <ScoreBar value={movie.ratingCount} max={320} color="#f59e0b" />
-                        <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400 tabular-nums w-8 shrink-0">
+                        <ScoreBar value={movie.ratingCount} max={320} color="#34d399" />
+                        <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 tabular-nums w-8 shrink-0">
                           {movie.ratingCount}万
                         </span>
                       </div>
@@ -157,7 +157,7 @@ export function RankingComparison() {
         {/* 公式说明：固定最小高度，避免两行/单行切换时跳动 */}
         <div className="text-xs font-mono text-muted-foreground border-t border-neutral-100 dark:border-neutral-900 pt-3 min-h-9">
           {view === "recall" ? (
-            <span>排序依据：召回置信度</span>
+            <span>排序依据：召回置信度（recall_score_norm）</span>
           ) : (
             <span>
               <span className="text-emerald-600 dark:text-emerald-400">final</span>

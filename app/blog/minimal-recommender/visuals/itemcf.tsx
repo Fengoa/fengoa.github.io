@@ -47,14 +47,14 @@ export function ItemCFSimilarity() {
   }, [activeRow]);
 
   return (
-    <VisualFrame title="ItemCF：喜欢同一部电影的用户越多，两部电影越相似">
+    <VisualFrame title="ItemCF：共现用户越多，物品相似度越高">
       <div className="flex flex-col items-center gap-5">
         {/* 说明 */}
         <div className="text-xs font-mono text-muted-foreground text-center">
-          <span className="text-violet-600 dark:text-violet-400 font-semibold">
+          <span className="text-emerald-700 dark:text-emerald-300 font-semibold">
             {MOVIES[activeRow]}
           </span>{" "}
-          → 找相似电影
+          → 相似物品检索
         </div>
 
         {/* 当前行相似度条形 */}
@@ -73,9 +73,9 @@ export function ItemCFSimilarity() {
                     className={cn(
                       "w-full rounded-t",
                       sim > 0.5
-                        ? "bg-violet-600 dark:bg-violet-400"
+                        ? "bg-emerald-600 dark:bg-emerald-400"
                         : sim > 0.3
-                        ? "bg-violet-400 dark:bg-violet-600"
+                        ? "bg-emerald-400 dark:bg-emerald-600"
                         : "bg-neutral-200 dark:bg-neutral-800"
                     )}
                   />
@@ -93,9 +93,9 @@ export function ItemCFSimilarity() {
                 className={cn(
                   "flex-1 text-center font-mono text-[10px] transition-colors leading-tight",
                   i === activeRow
-                    ? "text-violet-600 dark:text-violet-400 font-semibold"
+                    ? "text-emerald-700 dark:text-emerald-300 font-semibold"
                     : MATRIX[activeRow][i] > 0.5
-                    ? "text-violet-500 dark:text-violet-300 font-medium"
+                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
                     : "text-muted-foreground/60"
                 )}
               >
@@ -115,7 +115,7 @@ export function ItemCFSimilarity() {
                 className={cn(
                   "flex-1 text-[10px] font-mono text-center leading-none py-1 transition-colors",
                   topSim[0]?.i === i
-                    ? "text-violet-600 dark:text-violet-400 font-semibold"
+                    ? "text-emerald-700 dark:text-emerald-300 font-semibold"
                     : "text-muted-foreground/50"
                 )}
               >
@@ -130,7 +130,7 @@ export function ItemCFSimilarity() {
                 className={cn(
                   "w-14 text-[10px] font-mono text-right pr-2 shrink-0 leading-none py-0.5 transition-colors",
                   r === activeRow
-                    ? "text-violet-600 dark:text-violet-400 font-semibold"
+                    ? "text-emerald-700 dark:text-emerald-300 font-semibold"
                     : "text-muted-foreground/50"
                 )}
               >
@@ -139,7 +139,7 @@ export function ItemCFSimilarity() {
               <div
                 className={cn(
                   "flex flex-1 gap-px transition-all",
-                  r === activeRow && "ring-2 ring-violet-500 dark:ring-violet-400 rounded-sm"
+                  r === activeRow && "ring-2 ring-emerald-500 dark:ring-emerald-400"
                 )}
               >
                 {row.map((sim, c) => {
@@ -153,7 +153,7 @@ export function ItemCFSimilarity() {
                       style={{
                         backgroundColor: isSelf
                           ? "rgba(100,100,100,0.12)"
-                          : `rgba(139, 92, 246, ${alpha.toFixed(3)})`,
+                          : `rgba(16, 185, 129, ${alpha.toFixed(3)})`,
                       }}
                     />
                   );
@@ -165,14 +165,14 @@ export function ItemCFSimilarity() {
 
         {/* Top 相似电影 */}
         <div className="flex items-center gap-2 text-xs font-mono flex-wrap justify-center">
-          <span className="text-muted-foreground">相似 top 3：</span>
+          <span className="text-muted-foreground">相似度 Top 3：</span>
           {topSim.map((t, i) => (
             <div
               key={`${activeRow}-top-${i}`}
               className={cn(
                 "flex items-center gap-1.5 px-2 py-1 rounded border",
                 i === 0
-                  ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300"
+                  ? "border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
                   : "border-neutral-200 dark:border-neutral-800 text-muted-foreground"
               )}
             >

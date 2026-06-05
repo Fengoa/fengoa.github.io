@@ -12,17 +12,17 @@ import { VisualFrame } from "./frame";
 const CHANNELS = [
   {
     name: "热门召回",
-    desc: "评分人数×均分 — 通用覆盖",
+    desc: "评分人数 × 均分，覆盖冷启动",
     movies: ["肖申克的救赎", "教父", "黑暗骑士", "指环王", "千与千寻"],
   },
   {
     name: "类型偏好召回",
-    desc: "用户偏好类型权重×均分 — 个性化筛选",
+    desc: "类型权重 × 均分，按历史偏好筛选",
     movies: ["低俗小说", "搏击俱乐部", "美丽心灵", "心灵捕手", "楚门的世界"],
   },
   {
     name: "ItemCF 召回",
-    desc: "物品协同过滤 — 基于共现关系查表",
+    desc: "物品协同过滤，按共现相似度查表",
     movies: ["美国往事", "辛德勒名单", "勇敢的心", "泰坦尼克号", "阿甘正传"],
   },
 ] as const;
@@ -125,7 +125,7 @@ export function RecallParallel() {
                 ))}
               </div>
               <div className="text-xs font-mono text-muted-foreground mt-2.5 tabular-nums">
-                — 共 40 部 —
+                共 40 部候选
               </div>
             </motion.div>
           ))}
@@ -177,7 +177,7 @@ export function RecallParallel() {
           <div className="min-h-14 flex items-start">
             {mergedVisible === 0 ? (
               <span className="text-xs font-mono text-muted-foreground/40">
-                等待三路召回完成后合并...
+                等待三路召回完成
               </span>
             ) : (
               <div className="flex flex-wrap gap-3">
