@@ -134,7 +134,7 @@ ItemCF 的思路是：用户喜欢物品 A，且 A 与 B 相似，则向该用�
 
 排序阶段引入**物品质量信号**，在召回分之外再评估影片是否值得推荐：
 
-<Math block>{`\\text{最终分数} = 0.5 \\times \\text{召回分归一化} + 0.3 \\times \\text{均分归一化} + 0.2 \\times \\text{热度归一化}`}</Math>
+<Math block>{`\\text{Final Score} = 0.5 \\times \\text{Recall-normalized} + 0.3 \\times \\text{Rating-normalized} + 0.2 \\times \\text{Popularity-normalized}`}</Math>
 
 精排前后排名变化示例：
 
