@@ -17,7 +17,7 @@
     "llm-inference",
     "llm-landscape",
     "llm-transformer",
-    "llm-training"
+    "llm-sft"
   ],
   "cs-paper-guide": [
     "polar-starry-resources",
@@ -43,8 +43,8 @@
     "deepfm-ranking",
     "vector-recall",
     "two-tower-recall",
-    "mmoe-multitask",
     "reranking-diversity",
+    "mmoe-multitask",
     "hard-negative-eval",
     "recommender-landscape",
     "rec-llm-bridge"
@@ -55,8 +55,8 @@
     "cs-paper-guide",
     "polar-starry-resources",
     "recommender-landscape",
-    "rec-llm-bridge",
     "ml-core-concepts",
+    "rec-llm-bridge",
     "llm-scaling-law"
   ],
   "engineering-recommender": [
@@ -65,9 +65,9 @@
     "minimal-recommender",
     "deepfm-ranking",
     "reranking-diversity",
+    "rec-llm-bridge",
     "vector-recall",
-    "hard-negative-eval",
-    "rec-llm-bridge"
+    "hard-negative-eval"
   ],
   "hard-negative-eval": [
     "deepfm-ranking",
@@ -105,8 +105,8 @@
     "llm-efficient-attention",
     "llm-rag",
     "llm-attention",
-    "llm-training",
     "llm-sft",
+    "llm-training",
     "engineering-recommender"
   ],
   "llm-dpo": [
@@ -135,8 +135,8 @@
     "llm-landscape",
     "llm-sft",
     "llm-attention",
-    "llm-transformer",
     "llm-rag",
+    "llm-transformer",
     "llm-scaling-law"
   ],
   "llm-landscape": [
@@ -146,8 +146,8 @@
     "llm-efficient-attention",
     "llm-inference",
     "llm-scaling-law",
-    "llm-transformer",
-    "llm-sft"
+    "llm-sft",
+    "llm-transformer"
   ],
   "llm-rag": [
     "llm-landscape",
@@ -184,10 +184,10 @@
     "llm-dpo",
     "llm-training",
     "llm-inference",
-    "llm-transformer",
     "minimal-llm",
+    "llm-transformer",
     "llm-attention",
-    "llm-rag"
+    "llm-scaling-law"
   ],
   "llm-tokenizer": [
     "minimal-llm",
@@ -259,6 +259,16 @@
     "vector-recall",
     "hard-negative-eval"
   ],
+  "obsession": [
+    "llm-landscape",
+    "llm-rag",
+    "llm-transformer",
+    "llm-training",
+    "craft-oriensx",
+    "ml-core-concepts",
+    "llm-attention",
+    "llm-inference"
+  ],
   "polar-starry-resources": [
     "cs-paper-guide",
     "craft-oriensx",
@@ -275,8 +285,8 @@
     "vector-recall",
     "mmoe-multitask",
     "reranking-diversity",
-    "din-sequence",
     "engineering-recommender",
+    "din-sequence",
     "hard-negative-eval"
   ],
   "recommender-landscape": [

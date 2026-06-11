@@ -34,8 +34,18 @@ import { MLConceptsCover } from "@/app/blog/ml-core-concepts/cover";
 import { PaperGuideCover } from "@/app/blog/cs-paper-guide/cover";
 import { BlogRecommenderCover } from "@/app/blog/blog-recommender/cover";
 import { EmbodiedRobotCover } from "@/app/blog/embodied-robot/cover";
+import { ObsessionCover } from "@/app/blog/obsession/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "obsession",
+    title: "脑锁：如何摆脱强迫症",
+    date: "2026-06-11",
+    tag: "心理学",
+    summary: "整理自《脑锁》：重新确认、重新归因、重新聚焦、重新评价。把冲动当疾病信号，用行为训练改变大脑回路。",
+    cover: <ObsessionCover />,
+    coverShape: "circle",
+  },
   {
     slug: "embodied-robot",
     title: "具身机器人全景研究报告",
