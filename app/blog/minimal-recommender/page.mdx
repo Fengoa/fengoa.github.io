@@ -118,11 +118,17 @@ ItemCF 的思路是：用户喜欢物品 A，且 A 与 B 相似，则向该用�
 
 每一路独立**归一化**到 [0, 1] 区间：该路最低记为 0，最高记为 1，其余按相对位置落在中间。
 
-<Math block>{`\\text{归一化分数} = \\frac{\\text{分数} - \\min}{\\max - \\min}`}</Math>
+<Math block>{`\\text{norm} = \\frac{\\text{score} - \\min}{\\max - \\min}`}</Math>
 
 再按权重合并。**ItemCF** 个性化最强，权重最高；**热门召回** 泛化最广，权重最低：
 
-<Math block>{`\\text{合并分数} = 0.5 \\times \\text{ItemCF归一化} + 0.3 \\times \\text{类型归一化} + 0.2 \\times \\text{热门归一化}`}</Math>
+<Math block>{`\\begin{aligned}
+\\text{merged\\_score} &= 0.5 \\times \\text{itemcf\\_norm} \\\\
+&\\quad + \\; 0.3 \\times \\text{genre\\_norm} \\\\
+&\\quad + \\; 0.2 \\times \\text{popular\\_norm}
+\\end{aligned}`}</Math>
+
+其中 `itemcf_norm`、`genre_norm`、`popular_norm` 为三路分数各自归一化后的值，与上图动画第三步一致。
 
 合并后剔除用户已观看的电影，候选集进入排序环节。
 
@@ -134,7 +140,11 @@ ItemCF 的思路是：用户喜欢物品 A，且 A 与 B 相似，则向该用�
 
 排序阶段引入**物品质量信号**，在召回分之外再评估影片是否值得推荐：
 
-<Math block>{`\\text{Final Score} = 0.5 \\times \\text{Recall-normalized} + 0.3 \\times \\text{Rating-normalized} + 0.2 \\times \\text{Popularity-normalized}`}</Math>
+<Math block>{`\\begin{aligned}
+\\text{final\\_score} &= 0.5 \\times \\text{recall\\_norm} \\\\
+&\\quad + \\; 0.3 \\times \\text{rating\\_norm} \\\\
+&\\quad + \\; 0.2 \\times \\text{popularity\\_norm}
+\\end{aligned}`}</Math>
 
 精排前后排名变化示例：
 

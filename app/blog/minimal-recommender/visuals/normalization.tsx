@@ -6,34 +6,31 @@ import { motion, AnimatePresence } from "motion/react";
 import { VisualFrame } from "./frame";
 
 // =============================================================================
-// 归一化合并 — 三阶段：量纲差异 → 逐路归一化 → 加权合并
+// 归一化合并 — 三阶段精简版
 // =============================================================================
 
 const CHANNELS = [
   {
     id: "popular" as const,
     name: "热门召回",
+    shortName: "热门",
     weight: 0.2,
-    rawLabel: "评分人数",
-    unit: "",
     color: "#059669",
     textClass: "text-emerald-800 dark:text-emerald-200",
   },
   {
     id: "genre" as const,
     name: "类型召回",
+    shortName: "类型",
     weight: 0.3,
-    rawLabel: "权重×均分",
-    unit: "",
     color: "#10b981",
     textClass: "text-emerald-700 dark:text-emerald-300",
   },
   {
     id: "itemcf" as const,
     name: "ItemCF",
+    shortName: "ItemCF",
     weight: 0.5,
-    rawLabel: "相似度累加",
-    unit: "",
     color: "#34d399",
     textClass: "text-emerald-600 dark:text-emerald-400",
   },
@@ -50,9 +47,9 @@ const MOVIES = [
 const SPOTLIGHT = "黑暗骑士";
 
 const PHASES = [
-  { id: "problem" as const, label: "① 量纲不同" },
-  { id: "normalize" as const, label: "② 归一化" },
-  { id: "merge" as const, label: "③ 加权合并" },
+  { id: "problem" as const, label: "① 量纲不同", shortLabel: "① 量纲" },
+  { id: "normalize" as const, label: "② 归一化", shortLabel: "② 归一化" },
+  { id: "merge" as const, label: "③ 加权合并", shortLabel: "③ 合并" },
 ] as const;
 
 type Phase = (typeof PHASES)[number]["id"];
@@ -76,7 +73,7 @@ function channelBounds(ci: number) {
   const vals = MOVIES.map((m) => m.raw[ci]);
   const min = Math.min(...vals);
   const max = Math.max(...vals);
-  return { min, max, range: max - min || 1 };
+  return { min, max };
 }
 
 function normalizeRaw(raw: number, min: number, max: number) {
@@ -84,14 +81,12 @@ function normalizeRaw(raw: number, min: number, max: number) {
   return range === 0 ? 1 : (raw - min) / range;
 }
 
-function extremumMovies(ci: number) {
-  let minMovie: (typeof MOVIES)[number] = MOVIES[0];
-  let maxMovie: (typeof MOVIES)[number] = MOVIES[0];
-  for (const m of MOVIES) {
-    if (m.raw[ci] < minMovie.raw[ci]) minMovie = m;
-    if (m.raw[ci] > maxMovie.raw[ci]) maxMovie = m;
-  }
-  return { minMovie, maxMovie };
+function shortMovieName(name: string) {
+  const shorts: Record<string, string> = {
+    肖申克的救赎: "肖申克",
+    辛德勒名单: "辛德勒",
+  };
+  return shorts[name] ?? name;
 }
 
 function buildRows(): MovieRow[] {
@@ -111,6 +106,28 @@ function buildRows(): MovieRow[] {
   });
 }
 
+function NormBar({
+  value,
+  color,
+  delay = 0,
+}: {
+  value: number;
+  color: string;
+  delay?: number;
+}) {
+  return (
+    <div className="flex-1 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 overflow-hidden">
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: `${value * 100}%` }}
+        transition={{ duration: 0.45, delay }}
+        className="h-full rounded-full"
+        style={{ backgroundColor: color }}
+      />
+    </div>
+  );
+}
+
 export function NormalizationMerge() {
   const [phase, setPhase] = useState<Phase>("problem");
   const [paused, setPaused] = useState(false);
@@ -119,8 +136,11 @@ export function NormalizationMerge() {
   const bounds = useMemo(() => CHANNELS.map((_, ci) => channelBounds(ci)), []);
   const spotlight = rows.find((m) => m.name === SPOTLIGHT)!;
 
-  const naiveSum = spotlight.raw.reduce((a, b) => a + b, 0);
-  const popularShare = ((spotlight.raw[0] / naiveSum) * 100).toFixed(1);
+  const popularShare = (
+    (spotlight.raw[0] /
+      spotlight.raw.reduce((a, b) => a + b, 0)) *
+    100
+  ).toFixed(0);
 
   const ranked = useMemo(
     () => [...rows].sort((a, b) => b.merged - a.merged),
@@ -143,257 +163,181 @@ export function NormalizationMerge() {
     return () => clearTimeout(timer);
   }, [paused, phase]);
 
+  const phaseHint: Record<Phase, string> = {
+    problem: "三路分数单位不同，不能直接相加",
+    normalize: "每路独立缩放到 0~1，才能按权重合并",
+    merge: "合并后剔除已看电影，进入排序",
+  };
+
   return (
-    <VisualFrame title="归一化合并：量纲对齐后，按权重融合三路分数">
-      <div className="flex flex-col gap-4 max-w-xl mx-auto">
-        {/* 阶段指示 */}
-        <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-xs font-mono">
-          {PHASES.map((p, i) => (
-            <div key={p.id} className="flex items-center gap-1.5">
-              {i > 0 && <span className="text-muted-foreground/40">→</span>}
-              <span
+    <VisualFrame
+      title="归一化合并：量纲对齐后，按权重融合三路分数"
+      className="p-3 sm:p-6"
+    >
+      <div className="flex flex-col gap-3 max-w-xl mx-auto">
+        {/* 阶段 tab */}
+        <div className="px-1 sm:px-2">
+          <div className="flex items-stretch gap-1 font-mono flex-nowrap w-full">
+            {PHASES.map((p) => (
+              <button
+                key={p.id}
+                type="button"
                 className={cn(
-                  "px-2 py-0.5 rounded transition-colors duration-300 cursor-pointer select-none",
+                  "flex-1 min-w-0 whitespace-nowrap text-center text-[10px] sm:text-xs px-1.5 sm:px-2 py-1 rounded transition-colors duration-300 cursor-pointer select-none",
                   phase === p.id
                     ? "bg-emerald-600 dark:bg-emerald-400 text-white dark:text-emerald-950 font-medium"
                     : "text-muted-foreground hover:text-foreground",
                 )}
+                onClick={() => {
+                  setPhase(p.id);
+                  setPaused(true);
+                }}
                 onMouseEnter={() => {
                   setPhase(p.id);
                   setPaused(true);
                 }}
                 onMouseLeave={() => setPaused(false)}
               >
-                {p.label}
-              </span>
-            </div>
-          ))}
+                <span className="sm:hidden">{p.shortLabel}</span>
+                <span className="hidden sm:inline">{p.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* 主内容：固定高度，三阶段切换时不跳动 */}
-        <div className="h-[400px] rounded-md border border-emerald-300/80 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 px-4 py-4 overflow-hidden">
-          <AnimatePresence mode="wait">
-            {phase === "problem" && (
-              <PhasePanel key="problem">
-                <PanelTitle>
-                  以《{SPOTLIGHT}》为例：三路原始分量纲悬殊，不能直接相加
-                </PanelTitle>
+        {/* 主内容：固定高度槽位，切换不抖动 */}
+        <div className="rounded-md border border-emerald-300/80 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 px-3 py-3 sm:px-4 sm:py-4">
+          <div className="relative min-h-[168px] sm:min-h-[160px]">
+            <AnimatePresence mode="wait">
+              {phase === "problem" && (
+                <PhasePanel key="problem">
+                  <PhaseLayout
+                    hint={`《${SPOTLIGHT}》· ${phaseHint.problem}`}
+                    footer={
+                      <p className="text-xs text-center font-mono text-muted-foreground">
+                        直接相加时，热门占{" "}
+                        <span className="text-emerald-700 dark:text-emerald-300 font-semibold tabular-nums">
+                          {popularShare}%
+                        </span>
+                      </p>
+                    }
+                  >
+                    <div className="space-y-2.5">
+                      {CHANNELS.map((ch, ci) => {
+                        const raw = spotlight.raw[ci];
+                        const { max } = bounds[ci];
+                        return (
+                          <div key={ch.id} className="flex items-center gap-2 text-xs font-mono">
+                            <span className={cn("w-11 shrink-0 font-medium", ch.textClass)}>
+                              {ch.shortName}
+                            </span>
+                            <span className="w-10 shrink-0 text-right tabular-nums text-foreground/80">
+                              {raw.toLocaleString()}
+                            </span>
+                            <NormBar value={raw / max} color={ch.color} delay={ci * 0.08} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </PhaseLayout>
+                </PhasePanel>
+              )}
 
-                <div className="mt-3 flex-1 flex flex-col justify-center space-y-3">
-                  {CHANNELS.map((ch, ci) => {
-                    const raw = spotlight.raw[ci];
-                    const { max } = bounds[ci];
-                    const pct = (raw / max) * 100;
+              {phase === "normalize" && (
+                <PhasePanel key="normalize">
+                  <PhaseLayout hint={`《${SPOTLIGHT}》· ${phaseHint.normalize}`}>
+                    <div className="space-y-2.5">
+                      {CHANNELS.map((ch, ci) => {
+                        const raw = spotlight.raw[ci];
+                        const norm = spotlight.norm[ci];
+                        return (
+                          <div key={ch.id} className="flex items-center gap-1.5 text-xs font-mono">
+                            <span className={cn("w-11 shrink-0 font-medium", ch.textClass)}>
+                              {ch.shortName}
+                            </span>
+                            <span className="w-9 shrink-0 text-right tabular-nums text-muted-foreground">
+                              {raw}
+                            </span>
+                            <span className="text-muted-foreground/40 shrink-0">→</span>
+                            <span
+                              className={cn(
+                                "w-8 shrink-0 tabular-nums font-semibold",
+                                ch.textClass,
+                              )}
+                            >
+                              {norm.toFixed(2)}
+                            </span>
+                            <NormBar value={norm} color={ch.color} delay={ci * 0.08} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </PhaseLayout>
+                </PhasePanel>
+              )}
 
-                    return (
-                      <div key={ch.id} className="space-y-1">
-                        <div className="flex items-center justify-between text-xs font-mono">
-                          <span className={cn("font-medium", ch.textClass)}>
-                            {ch.name}
+              {phase === "merge" && (
+                <PhasePanel key="merge">
+                  <PhaseLayout hint={`《${SPOTLIGHT}》· ${phaseHint.merge}`}>
+                    <div className="space-y-2">
+                      <div className="rounded-md border border-neutral-200/80 dark:border-neutral-800/80 bg-white/60 dark:bg-neutral-950/40 px-2 py-1.5 text-xs font-mono tabular-nums text-center text-foreground/80 leading-relaxed">
+                        {spotlight.norm.map((n, i) => (
+                          <span key={CHANNELS[i].id}>
+                            {i > 0 && (
+                              <span className="text-muted-foreground"> + </span>
+                            )}
+                            <span className={CHANNELS[i].textClass}>
+                              {n.toFixed(2)}×{CHANNELS[i].weight}
+                            </span>
                           </span>
-                          <span className="text-muted-foreground tabular-nums">
-                            {ch.rawLabel} = {raw.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="h-2 rounded-full bg-neutral-100 dark:bg-neutral-900 overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${pct}%` }}
-                            transition={{ duration: 0.5, delay: ci * 0.1 }}
-                            className="h-full rounded-full"
-                            style={{ backgroundColor: ch.color }}
-                          />
-                        </div>
-                        <div className="text-[10px] font-mono text-muted-foreground/70 text-right tabular-nums">
-                          该路范围 0 ~ {max.toLocaleString()}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-3 shrink-0 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-neutral-950/40 px-3 py-2.5 text-xs font-mono leading-relaxed">
-                  <span className="text-muted-foreground">直接相加 </span>
-                  <span className="text-foreground/80 tabular-nums">
-                    {spotlight.raw[0]} + {spotlight.raw[1]} + {spotlight.raw[2]} ={" "}
-                    {naiveSum.toFixed(1)}
-                  </span>
-                  <span className="text-muted-foreground">，其中热门占 </span>
-                  <span className="text-emerald-700 dark:text-emerald-300 font-semibold tabular-nums">
-                    {popularShare}%
-                  </span>
-                </div>
-              </PhasePanel>
-            )}
-
-            {phase === "normalize" && (
-              <PhasePanel key="normalize">
-                <PanelTitle>
-                  每路独立归一化：该路最低 → 0，最高 → 1
-                </PanelTitle>
-
-                <div className="mt-3 flex-1 flex flex-col justify-between gap-2 min-h-0">
-                  {CHANNELS.map((ch, ci) => {
-                    const { min, max } = bounds[ci];
-                    const raw = spotlight.raw[ci];
-                    const norm = spotlight.norm[ci];
-                    const { minMovie, maxMovie } = extremumMovies(ci);
-                    const isMax = raw === max;
-                    const isMin = raw === min;
-
-                    return (
-                      <div
-                        key={ch.id}
-                        className="flex-1 min-h-0 rounded-md border border-neutral-200/80 dark:border-neutral-800/80 bg-white/50 dark:bg-neutral-950/30 px-3 py-2 flex flex-col justify-center"
-                      >
-                        <div className="flex items-center justify-between text-xs font-mono mb-1">
-                          <span className={cn("font-medium", ch.textClass)}>
-                            {ch.name}
-                          </span>
-                          <span className="text-muted-foreground tabular-nums">
-                            min={min.toLocaleString()} max={max.toLocaleString()}
-                          </span>
-                        </div>
-
-                        <div className="text-xs font-mono text-center text-foreground/80 tabular-nums mb-0.5">
-                          ({raw.toLocaleString()} − {min.toLocaleString()}) ÷ (
-                          {max.toLocaleString()} − {min.toLocaleString()}) ={" "}
-                          <span className={cn("font-semibold", ch.textClass)}>
-                            {norm.toFixed(2)}
-                          </span>
-                        </div>
-                        <p className="text-[10px] font-mono text-muted-foreground text-center mb-1 leading-relaxed">
-                          {isMax
-                            ? `《${SPOTLIGHT}》为该路最高分，归一化后恒为 1`
-                            : isMin
-                              ? `《${SPOTLIGHT}》为该路最低分（${raw}），归一化后为 0`
-                              : `该路最高为《${maxMovie.name}》（${maxMovie.raw[ci]}）`}
-                        </p>
-
-                        {/* 该路 5 部电影在 0~1 轴上的位置 */}
-                        <div className="relative h-3 rounded-full bg-neutral-100 dark:bg-neutral-900">
-                          {rows.map((m) => {
-                            const v = m.norm[ci];
-                            const isSpot = m.name === SPOTLIGHT;
-                            return (
-                              <div
-                                key={m.name}
-                                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
-                                style={{ left: `${v * 100}%` }}
-                              >
-                                <div
-                                  className={cn(
-                                    "rounded-full",
-                                    isSpot
-                                      ? "w-2.5 h-2.5 bg-emerald-600 dark:bg-emerald-400 ring-2 ring-white dark:ring-neutral-950"
-                                      : "w-1.5 h-1.5 bg-neutral-300 dark:bg-neutral-600",
-                                  )}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div className="flex justify-between text-[10px] font-mono text-muted-foreground/60 mt-0.5">
-                          <span className="truncate max-w-[38%]">
-                            0 ← {minMovie.name}
-                          </span>
-                          <span className="truncate max-w-[38%] text-right">
-                            {maxMovie.name} → 1
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </PhasePanel>
-            )}
-
-            {phase === "merge" && (
-              <PhasePanel key="merge">
-                <PanelTitle>三路归一化分数处于同一量纲，按权重加权求和</PanelTitle>
-
-                {/* 展开计算 */}
-                <div className="mt-3 shrink-0 rounded-md border border-emerald-300/60 dark:border-emerald-700/60 bg-white/60 dark:bg-neutral-950/40 px-3 py-2.5">
-                  <div className="text-xs font-mono text-emerald-700 dark:text-emerald-300 font-medium mb-2">
-                    《{SPOTLIGHT}》
-                  </div>
-                  <div className="space-y-1">
-                    {CHANNELS.map((ch, ci) => (
-                      <div
-                        key={ch.id}
-                        className="flex items-center justify-between text-xs font-mono tabular-nums"
-                      >
-                        <span className={ch.textClass}>{ch.name}</span>
-                        <span className="text-foreground/80">
-                          {spotlight.norm[ci].toFixed(2)} × {ch.weight} ={" "}
-                          <span className={cn("font-semibold", ch.textClass)}>
-                            {(spotlight.norm[ci] * ch.weight).toFixed(2)}
-                          </span>
+                        ))}
+                        <span className="text-muted-foreground"> = </span>
+                        <span className="text-emerald-700 dark:text-emerald-300 font-semibold">
+                          {spotlight.merged.toFixed(2)}
                         </span>
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-2 pt-2 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs font-mono">
-                    <span className="text-muted-foreground">merged_score</span>
-                    <span className="text-emerald-700 dark:text-emerald-300 font-semibold tabular-nums text-sm">
-                      {spotlight.merged.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
 
-                {/* 全部候选排名 */}
-                <div className="mt-3 flex-1 min-h-0 flex flex-col justify-center gap-1.5">
-                  {ranked.map((m, i) => (
-                    <div key={m.name} className="flex items-center gap-2 h-7">
-                      <span
-                        className={cn(
-                          "w-4 text-xs font-mono tabular-nums shrink-0 text-center",
-                          i === 0
-                            ? "text-emerald-700 dark:text-emerald-300 font-semibold"
-                            : "text-muted-foreground/60",
-                        )}
-                      >
-                        {i + 1}
-                      </span>
-                      <span
-                        className={cn(
-                          "w-20 shrink-0 text-xs font-mono truncate",
-                          m.name === SPOTLIGHT
-                            ? "text-emerald-700 dark:text-emerald-300 font-medium"
-                            : "text-foreground/70",
-                        )}
-                      >
-                        {m.name}
-                      </span>
-                      <div className="flex-1 h-2 rounded-full bg-neutral-100 dark:bg-neutral-900 overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${m.merged * 100}%` }}
-                          transition={{ duration: 0.5, delay: i * 0.06 }}
-                          className="h-full rounded-full bg-emerald-500 dark:bg-emerald-400"
-                        />
+                      <div className="space-y-1.5">
+                        {ranked.slice(0, 3).map((m, i) => (
+                          <div key={m.name} className="flex items-center gap-2 text-xs font-mono">
+                            <span
+                              className={cn(
+                                "w-4 shrink-0 text-center tabular-nums",
+                                i === 0
+                                  ? "text-emerald-700 dark:text-emerald-300 font-semibold"
+                                  : "text-muted-foreground/60",
+                              )}
+                            >
+                              {i + 1}
+                            </span>
+                            <span
+                              className={cn(
+                                "w-14 sm:w-16 shrink-0 truncate",
+                                m.name === SPOTLIGHT
+                                  ? "text-emerald-700 dark:text-emerald-300 font-medium"
+                                  : "text-foreground/70",
+                              )}
+                            >
+                              {shortMovieName(m.name)}
+                            </span>
+                            <NormBar
+                              value={m.merged}
+                              color="#10b981"
+                              delay={i * 0.06}
+                            />
+                            <span className="w-8 shrink-0 text-right tabular-nums text-emerald-700 dark:text-emerald-300">
+                              {m.merged.toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                      <span className="w-8 text-xs font-mono text-emerald-700 dark:text-emerald-300 tabular-nums text-right shrink-0">
-                        {m.merged.toFixed(2)}
-                      </span>
                     </div>
-                  ))}
-                </div>
-              </PhasePanel>
-            )}
-          </AnimatePresence>
+                  </PhaseLayout>
+                </PhasePanel>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-
-        <p
-          className={cn(
-            "text-xs text-center font-mono leading-relaxed transition-colors duration-300",
-            phase === "merge"
-              ? "text-muted-foreground"
-              : "text-muted-foreground/50",
-          )}
-        >
-          合并后剔除用户已观看的电影，候选集进入排序环节
-        </p>
       </div>
     </VisualFrame>
   );
@@ -402,21 +346,35 @@ export function NormalizationMerge() {
 function PhasePanel({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -4 }}
-      transition={{ duration: 0.35 }}
-      className="h-full flex flex-col"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="absolute inset-0"
     >
       {children}
     </motion.div>
   );
 }
 
-function PanelTitle({ children }: { children: React.ReactNode }) {
+function PhaseLayout({
+  hint,
+  children,
+  footer,
+}: {
+  hint: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
   return (
-    <p className="shrink-0 text-xs text-center text-muted-foreground font-mono leading-relaxed min-h-9 flex items-center justify-center">
-      {children}
-    </p>
+    <div className="h-full flex flex-col">
+      <p className="shrink-0 min-h-9 flex items-center justify-center text-xs text-center text-muted-foreground font-mono leading-snug px-0.5">
+        {hint}
+      </p>
+      <div className="flex-1 flex flex-col justify-center min-h-0">{children}</div>
+      <div className="shrink-0 min-h-6 flex items-center justify-center">
+        {footer}
+      </div>
+    </div>
   );
 }
