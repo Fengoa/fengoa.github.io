@@ -5,8 +5,8 @@
     "llm-rag",
     "rec-llm-bridge",
     "llm-tokenizer",
-    "minimal-llm",
     "linear-algebra-for-dl",
+    "minimal-llm",
     "vector-recall"
   ],
   "craft-oriensx": [
@@ -16,8 +16,8 @@
     "polar-starry-resources",
     "llm-inference",
     "llm-landscape",
-    "llm-transformer",
-    "llm-sft"
+    "obsession",
+    "llm-transformer"
   ],
   "cs-paper-guide": [
     "polar-starry-resources",
@@ -43,8 +43,8 @@
     "deepfm-ranking",
     "vector-recall",
     "two-tower-recall",
-    "reranking-diversity",
     "mmoe-multitask",
+    "reranking-diversity",
     "hard-negative-eval",
     "recommender-landscape",
     "rec-llm-bridge"
@@ -105,8 +105,8 @@
     "llm-efficient-attention",
     "llm-rag",
     "llm-attention",
-    "llm-sft",
     "llm-training",
+    "llm-sft",
     "engineering-recommender"
   ],
   "llm-dpo": [
@@ -261,13 +261,13 @@
   ],
   "obsession": [
     "llm-landscape",
-    "llm-rag",
-    "llm-transformer",
-    "llm-training",
     "craft-oriensx",
-    "ml-core-concepts",
+    "llm-rag",
     "llm-attention",
-    "llm-inference"
+    "llm-training",
+    "llm-transformer",
+    "llm-inference",
+    "ml-core-concepts"
   ],
   "polar-starry-resources": [
     "cs-paper-guide",
@@ -307,7 +307,7 @@
     "din-sequence",
     "two-tower-recall",
     "rec-llm-bridge",
-    "mmoe-multitask"
+    "engineering-recommender"
   ],
   "two-tower-recall": [
     "vector-recall",
