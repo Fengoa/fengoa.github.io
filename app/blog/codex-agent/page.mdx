@@ -749,7 +749,7 @@ export class SeatbeltSandbox {
 
 ### 6.1 流式 Tool Call 检测
 
-Codex 支持在流式传输过程中检测 tool_call 块，实现"边推理边执行"的效果：
+Codex 支持在流式传输过程中检测 tool_call 块，实现「边推理边执行」的效果：
 
 ```typescript
 // ============================================================
@@ -922,7 +922,7 @@ export class BrowserScreenshotTool extends Tool {
   name = "browser_screenshot";
   description = `
     截取当前页面截图，返回 base64 PNG 图像供 LLM 视觉分析。
-    这是 Agent 的"眼睛"，用于：
+    这是 Agent 的「眼睛」，用于：
     ① 确认操作是否成功  ② 定位需要点击的元素  ③ 检查表单状态  ④ 验证数据提取结果
   `;
 
@@ -1061,7 +1061,7 @@ export class BrowserClickTool extends Tool {
         // 文字匹配点击
         const locator = page.getByText(input.text, { exact: false });
         await locator.first().click(clickOptions);
-        return { success: true, content: `已点击含文字"${input.text}"的元素` };
+        return { success: true, content: `已点击含文字「${input.text}」的元素` };
       }
 
       if (input.selector) {
@@ -1800,7 +1800,7 @@ async function main() {
     密码：从环境变量 SITE_PASSWORD 中读取
 
     登录后：
-    1. 进入 "Reports > Sales" 页面
+    1. 进入「Reports > Sales」页面
     2. 选择日期范围：上个月
     3. 提取销售数据表格
     4. 保存为 /workspace/sales_report.csv

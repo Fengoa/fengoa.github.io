@@ -51,7 +51,7 @@ function RelatedPostsInner({ currentSlug, currentTag }: { currentSlug: string; c
       <span className="text-xs font-mono text-muted-foreground/60 tracking-wider uppercase">
         推荐阅读
       </span>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5">
         {related.map((post) => (
           <div key={post.slug} className="group flex items-center gap-1">
             <Link
