@@ -42,7 +42,7 @@ export const posts: PostData[] = [
     title: "脑锁：如何摆脱强迫症",
     date: "2026-06-11",
     tag: "心理学",
-    summary: "整理自《脑锁》：重新确认、重新归因、重新聚焦、重新评价。把冲动当疾病信号，用行为训练改变大脑回路。",
+    summary: "大脑用你自己的语言威胁你自己。整理自《脑锁》：两扇门之外还有第三道门，四步骤把「我」和「它」分开。",
     cover: <ObsessionCover />,
     coverShape: "circle",
   },
