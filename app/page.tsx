@@ -19,7 +19,6 @@ const TAG_CONFIG: { id: string; label: string }[] = [
   { id: "llm", label: "大模型" },
   { id: "recsys", label: "推荐系统" },
   { id: "ml", label: "机器学习" },
-  { id: "math", label: "数学" },
   { id: "resources", label: "资源" },
   { id: "dev", label: "人文" },
 ];

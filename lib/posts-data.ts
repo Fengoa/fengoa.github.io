@@ -11,7 +11,7 @@ export interface PostMeta {
 
 export const postsMeta: PostMeta[] = [
   { slug: "ml-core-concepts", title: "机器学习的 7 个核心概念", tag: "机器学习", date: "2026-05-09" },
-  { slug: "linear-algebra-for-dl", title: "线性代数：深度学习用到的那些", tag: "数学", date: "2026-05-06" },
+  { slug: "linear-algebra-for-dl", title: "线性代数：深度学习用到的那些", tag: "机器学习", date: "2026-05-06" },
   { slug: "rec-llm-bridge", title: "推荐系统 × 大模型：四层重叠与五大范式", tag: "推荐系统", date: "2026-05-28" },
   { slug: "llm-landscape", title: "大模型全景图", tag: "大模型", date: "2026-04-29" },
   { slug: "llm-rag", title: "RAG：给模型外接知识", tag: "大模型", date: "2026-04-26" },

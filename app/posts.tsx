@@ -91,7 +91,7 @@ export const posts: PostData[] = [
     slug: "linear-algebra-for-dl",
     title: "线性代数：深度学习用到的那些",
     date: "2026-05-06",
-    tag: "数学",
+    tag: "机器学习",
     summary:
       "不讲证明，只讲直觉。向量、点积、矩阵乘法、SVD、旋转矩阵——每个概念都对应到 Attention、LoRA、RoPE、矩阵分解召回的具体场景。",
     cover: <LinearAlgebraCover />,
@@ -339,8 +339,8 @@ export const posts: PostData[] = [
   {
     slug: "blog-recommender",
     title: "纯前端博客推荐系统：TF-IDF + 阅读历史",
-    date: "2026-01-21",
-    tag: "人文",
+    date: "2026-04-21",
+    tag: "机器学习",
     summary:
       "构建时计算 TF-IDF 余弦相似度矩阵，运行时读 localStorage 做个性化。零后端、零依赖、31 篇文章 100ms 搞定。",
     cover: <BlogRecommenderCover />,

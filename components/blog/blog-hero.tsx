@@ -8,7 +8,6 @@ const TAG_COLORS: Record<string, string> = {
   "llm": "bg-violet-100 dark:bg-violet-900/40",
   "recsys": "bg-cyan-100 dark:bg-cyan-900/40",
   "ml": "bg-sky-100 dark:bg-sky-900/40",
-  "math": "bg-amber-100 dark:bg-amber-900/40",
   "resources": "bg-emerald-100 dark:bg-emerald-900/40",
   "dev": "bg-rose-100 dark:bg-rose-900/40",
 };
@@ -55,9 +54,69 @@ export function BlogHero({ tags, activeTag, onTagChange, tagCounts }: BlogHeroPr
         <Grid.Cell row={1} column={12} />
       </Grid>
 
-      {/* 第 3 行：标签筛选 */}
-      {/* 移动端：横向滚动 flex */}
-      <div className="md:hidden overflow-x-auto scrollbar-hide border-x border-b border-border">
+      {/* 第 3 行：标签筛选（桌面端 Grid 须紧邻上一行 Grid，才能合并边框） */}
+      <Grid rows={1} columns={12} hideTopBorder className="hidden md:grid">
+        {tags && tags.length > 0 ? (
+          <>
+            {Array.from({ length: startCol - 1 }, (_, i) => (
+              <Grid.Cell
+                key={`r3-left-${i}`}
+                row={1}
+                column={i + 1}
+                className="aspect-square"
+              />
+            ))}
+            {tags.map((tag, i) => (
+              <Grid.Cell
+                key={tag.id}
+                row={1}
+                column={startCol + i}
+                className="aspect-square"
+              >
+                <button
+                  onClick={() => onTagChange?.(tag.id)}
+                  className={cn(
+                    "size-full flex flex-col items-center justify-center gap-1",
+                    "text-xs font-mono transition-colors duration-200",
+                    "hover:bg-foreground/[0.03] dark:hover:bg-foreground/[0.05]",
+                    activeTag === tag.id
+                      ? cn(TAG_COLORS[tag.id] || "bg-neutral-100 dark:bg-neutral-800/60", "text-foreground")
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <span>{tag.label}</span>
+                  {tagCounts && (
+                    <span className="text-xs opacity-60">
+                      {tagCounts[tag.id] ?? 0}
+                    </span>
+                  )}
+                </button>
+              </Grid.Cell>
+            ))}
+            {Array.from({ length: 12 - (startCol - 1) - tagCount }, (_, i) => (
+              <Grid.Cell
+                key={`r3-right-${i}`}
+                row={1}
+                column={startCol + tagCount + i}
+                className="aspect-square"
+              />
+            ))}
+          </>
+        ) : (
+          Array.from({ length: 12 }, (_, i) => (
+            <Grid.Cell
+              key={`r3-${i}`}
+              row={1}
+              column={i + 1}
+              className="aspect-square"
+            />
+          ))
+        )}
+        <Grid.Cross row={1} column={12} anchor="bottom-right" />
+      </Grid>
+
+      {/* 移动端：横向滚动 */}
+      <div className="md:hidden -mt-px overflow-x-auto scrollbar-hide border-x border-b border-border">
         <div className="flex items-center gap-0 min-w-max">
           {tags?.map((tag) => (
             <button
@@ -81,72 +140,6 @@ export function BlogHero({ tags, activeTag, onTagChange, tagCounts }: BlogHeroPr
             </button>
           ))}
         </div>
-      </div>
-
-      {/* 桌面端：Grid 格子 */}
-      <div className="hidden md:block">
-        <Grid rows={1} columns={12} hideTopBorder>
-          {tags && tags.length > 0 ? (
-            <>
-              {/* 左侧空格子 */}
-              {Array.from({ length: startCol - 1 }, (_, i) => (
-                <Grid.Cell
-                  key={`r3-left-${i}`}
-                  row={1}
-                  column={i + 1}
-                  className="aspect-square"
-                />
-              ))}
-              {/* 标签格子 */}
-              {tags.map((tag, i) => (
-                <Grid.Cell
-                  key={tag.id}
-                  row={1}
-                  column={startCol + i}
-                  className="aspect-square"
-                >
-                  <button
-                    onClick={() => onTagChange?.(tag.id)}
-                    className={cn(
-                      "size-full flex flex-col items-center justify-center gap-1",
-                      "text-xs font-mono transition-colors duration-200",
-                      "hover:bg-foreground/[0.03] dark:hover:bg-foreground/[0.05]",
-                      activeTag === tag.id
-                        ? cn(TAG_COLORS[tag.id] || "bg-neutral-100 dark:bg-neutral-800/60", "text-foreground")
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    <span>{tag.label}</span>
-                    {tagCounts && (
-                      <span className="text-xs opacity-60">
-                        {tagCounts[tag.id] ?? 0}
-                      </span>
-                    )}
-                  </button>
-                </Grid.Cell>
-              ))}
-              {/* 右侧空格子 */}
-              {Array.from({ length: 12 - (startCol - 1) - tagCount }, (_, i) => (
-                <Grid.Cell
-                  key={`r3-right-${i}`}
-                  row={1}
-                  column={startCol + tagCount + i}
-                  className="aspect-square"
-                />
-              ))}
-            </>
-          ) : (
-            Array.from({ length: 12 }, (_, i) => (
-              <Grid.Cell
-                key={`r3-${i}`}
-                row={1}
-                column={i + 1}
-                className="aspect-square"
-              />
-            ))
-          )}
-          <Grid.Cross row={1} column={12} anchor="bottom-right" />
-        </Grid>
       </div>
     </>
   );
