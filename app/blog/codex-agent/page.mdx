@@ -1,0 +1,1836 @@
+import codexAgentLoop from "./images/codex_agent_loop.png";
+import browserOpencliOrchestration from "./images/browser_opencli_orchestration.png";
+
+export const metadata = {
+  title: "Codex Agent 技术实现原理详解",
+};
+
+# Codex Agent 技术实现原理详解
+
+## 面向浏览器自动化平台的深度指南
+
+---
+
+## 目录
+
+1. [核心设计哲学：ReAct 模式](#1-核心设计哲学react-模式)
+2. [Agent Loop 核心实现](#2-agent-loop-核心实现)
+3. [Tool System 设计](#3-tool-system-设计)
+4. [Context Window 管理](#4-context-window-管理)
+5. [Approval & Safety 系统](#5-approval--safety-系统)
+6. [流式输出实现](#6-流式输出实现)
+7. [浏览器工具设计（Browser Tools）](#7-浏览器工具设计browser-tools)
+8. [OpenCLI 工具设计](#8-opencli-工具设计)
+9. [Browser + OpenCLI 任务编排](#9-browser--opencli-任务编排)
+10. [完整实现示例](#10-完整实现示例)
+
+---
+
+## 1. 核心设计哲学：ReAct 模式
+
+### 1.1 什么是 ReAct
+
+Codex Agent 的核心是 **ReAct（Reasoning + Acting）** 模式，由 Yao et al. 2022 年提出。其本质是：让 LLM 在一个循环中交替进行**推理**和**行动**，并将行动结果（Observation）作为新的上下文输入继续推理。
+
+```
+Thought → Action → Observation → Thought → Action → Observation → ... → Final Answer
+```
+
+这个模式之所以强大，在于：
+
+- **可解释性**：每一步的推理过程都可见
+- **可纠错性**：错误的行动可以被后续步骤观察并修正
+- **可扩展性**：只需扩展工具集，无需修改核心 Loop
+
+### 1.2 与传统 Chain-of-Thought 的区别
+
+| 维度       | Chain-of-Thought     | ReAct / Codex Agent            |
+| ---------- | -------------------- | ------------------------------ |
+| 执行方式   | 单次推理，一次性输出 | 迭代循环，多轮推理             |
+| 与环境交互 | 无                   | 有（通过工具调用）             |
+| 错误恢复   | 不支持               | 支持（观察错误再重试）         |
+| 适用场景   | 数学推理、分析       | 代码执行、浏览器操作、文件处理 |
+
+### 1.3 Codex 的三大核心组件
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   Codex Agent                       │
+│                                                     │
+│   ┌──────────────┐   ┌──────────────┐              │
+│   │  LLM Core    │   │ Tool System  │              │
+│   │ (推理引擎)    │◄──►│ (执行引擎)   │              │
+│   └──────────────┘   └──────────────┘              │
+│           ▲                   ▲                     │
+│           └───────────────────┘                     │
+│                Context Manager                      │
+│              (状态与历史管理)                         │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. Agent Loop 核心实现
+
+### 2.1 伪代码描述
+
+Agent Loop 是一个 `while` 循环，终止条件是 LLM 输出 `end_turn`（即不再调用工具）。
+
+```
+FUNCTION run_agent(user_input):
+  history = []
+  history.push({ role: "user", content: user_input })
+
+  LOOP:
+    context = build_context(system_prompt, tools, history)
+    response = call_llm(context)                    // 调用 LLM
+
+    IF response.stop_reason == "end_turn":
+      RETURN extract_text(response)                 // 返回最终答案
+
+    IF response.stop_reason == "tool_use":
+      history.push({ role: "assistant", content: response.content })
+
+      FOR EACH tool_call IN response.tool_calls:
+        approved = request_approval(tool_call)      // 可选：人工审批
+        IF approved:
+          result = execute_tool(tool_call)          // 执行工具
+          observation = format_observation(result)  // 格式化结果
+          history.push({ role: "tool", content: observation })
+
+      GOTO LOOP                                     // 继续循环
+```
+
+<figure className="my-8">
+  <img
+    src={codexAgentLoop.src}
+    alt="Codex Agent Loop：用户输入经 Context Builder 进入 LLM Core，Response Parser 在 end_turn 时输出给用户，tool_call 时进入 Approval Gate、Tool Executor、Observation Injector 再回到 LLM Core"
+    className="mx-auto w-full rounded-lg border border-neutral-200 dark:border-neutral-800"
+  />
+  <figcaption className="mt-2 text-xs text-center text-muted-foreground">
+    Agent Loop 全貌：<strong>Context Builder</strong> 组装上下文，
+    <strong>LLM Core</strong> 推理并决定是否调用工具，工具结果经 Observation
+    Injector 写回历史后继续循环。
+  </figcaption>
+</figure>
+
+### 2.2 TypeScript 实现
+
+```typescript
+// ============================================================
+// types.ts - 核心类型定义
+// ============================================================
+
+export interface Message {
+  role: "user" | "assistant" | "tool";
+  content: string | ContentBlock[];
+  tool_use_id?: string; // tool role 时需要
+}
+
+export interface ContentBlock {
+  type: "text" | "tool_use" | "tool_result" | "image";
+  id?: string; // tool_use 时的唯一 ID
+  name?: string; // tool_use 时的工具名
+  input?: unknown; // tool_use 时的参数
+  text?: string; // text 时的内容
+  content?: string; // tool_result 时的结果
+  source?: ImageSource;
+}
+
+export interface ToolCall {
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+export interface ToolResult {
+  success: boolean;
+  content: string | ImageContent;
+  error?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ImageContent {
+  type: "image";
+  data: string; // base64
+  media_type: "image/png" | "image/jpeg" | "image/webp";
+}
+
+// ============================================================
+// agent.ts - 核心 Agent Loop
+// ============================================================
+
+export class CodexAgent {
+  private history: Message[] = [];
+  private maxIterations: number;
+  private iterationCount = 0;
+
+  constructor(
+    private readonly llmClient: LLMClient,
+    private readonly toolRegistry: ToolRegistry,
+    private readonly approvalGate: ApprovalGate,
+    private readonly contextBuilder: ContextBuilder,
+    options: AgentOptions = {},
+  ) {
+    this.maxIterations = options.maxIterations ?? 50;
+  }
+
+  async run(userInput: string): Promise<string> {
+    // 重置状态
+    this.iterationCount = 0;
+    this.history = [];
+
+    // 注入用户输入
+    this.history.push({ role: "user", content: userInput });
+
+    // 核心 Loop
+    while (this.iterationCount < this.maxIterations) {
+      this.iterationCount++;
+
+      // Step 1: 构建 Context（系统提示 + 工具 + 历史）
+      const context = this.contextBuilder.build(this.history);
+
+      // Step 2: 调用 LLM（支持流式）
+      const response = await this.llmClient.complete(context);
+
+      // Step 3: 解析响应
+      const { stopReason, textContent, toolCalls } = parseResponse(response);
+
+      if (stopReason === "end_turn" || toolCalls.length === 0) {
+        // 终止：返回最终文本输出
+        this.history.push({ role: "assistant", content: textContent });
+        return textContent;
+      }
+
+      // Step 4: 将 Assistant 响应加入历史
+      this.history.push({
+        role: "assistant",
+        content: response.content, // 保留完整 content 块
+      });
+
+      // Step 5: 并发执行所有工具调用（Codex 支持并发）
+      const toolResults = await this.executeToolCalls(toolCalls);
+
+      // Step 6: 将 Observation 注入历史
+      for (const [call, result] of toolResults) {
+        this.history.push({
+          role: "tool",
+          tool_use_id: call.id,
+          content: formatObservation(result),
+        });
+      }
+
+      // 继续循环
+    }
+
+    throw new Error(`Agent exceeded max iterations (${this.maxIterations})`);
+  }
+
+  private async executeToolCalls(
+    toolCalls: ToolCall[],
+  ): Promise<Array<[ToolCall, ToolResult]>> {
+    // 并发执行所有工具（但先进行 Approval 检查）
+    const results = await Promise.all(
+      toolCalls.map(async (call) => {
+        // Approval Gate
+        const approved = await this.approvalGate.check(call);
+        if (!approved) {
+          return [
+            call,
+            {
+              success: false,
+              content: "Tool call rejected by user",
+              error: "REJECTED",
+            },
+          ] as [ToolCall, ToolResult];
+        }
+
+        // 从注册表查找工具
+        const tool = this.toolRegistry.get(call.name);
+        if (!tool) {
+          return [
+            call,
+            {
+              success: false,
+              content: `Unknown tool: ${call.name}`,
+              error: "NOT_FOUND",
+            },
+          ] as [ToolCall, ToolResult];
+        }
+
+        // 执行工具（带超时保护）
+        try {
+          const result = await withTimeout(
+            tool.execute(call.input),
+            tool.timeoutMs ?? 30_000,
+          );
+          return [call, result] as [ToolCall, ToolResult];
+        } catch (err) {
+          return [
+            call,
+            {
+              success: false,
+              content: `Tool execution failed: ${err instanceof Error ? err.message : String(err)}`,
+              error: "EXECUTION_ERROR",
+            },
+          ] as [ToolCall, ToolResult];
+        }
+      }),
+    );
+
+    return results;
+  }
+}
+```
+
+### 2.3 关键细节：为什么要保留完整 `content` 块
+
+```typescript
+// ❌ 错误做法：只保存文本
+this.history.push({ role: "assistant", content: textContent });
+
+// ✅ 正确做法：保存完整 content 数组
+// 因为 tool_use block 包含 ID，后续 tool_result 需要引用它
+this.history.push({ role: "assistant", content: response.content });
+// response.content 结构：
+// [
+//   { type: "text", text: "我来帮你点击这个按钮..." },
+//   { type: "tool_use", id: "toolu_01X...", name: "browser_click", input: { selector: "#submit" } }
+// ]
+```
+
+---
+
+## 3. Tool System 设计
+
+### 3.1 Tool Schema 定义（JSON Schema）
+
+Codex 通过 JSON Schema 向 LLM 描述每个工具的能力。**Schema 写得越精确，LLM 调用越准确**。
+
+```typescript
+// ============================================================
+// tool-schema.ts - 工具 Schema 标准格式
+// ============================================================
+
+export interface ToolSchema {
+  name: string; // 工具唯一名称，snake_case
+  description: string; // 工具用途描述（LLM 会读这里决定是否使用）
+  input_schema: {
+    type: "object";
+    properties: Record<string, JSONSchemaProperty>;
+    required?: string[];
+  };
+}
+
+// 浏览器截图工具示例 Schema
+const screenshotToolSchema: ToolSchema = {
+  name: "browser_screenshot",
+  description: `
+    对当前浏览器页面截图，返回 base64 编码的 PNG 图像。
+    使用场景：
+    - 查看当前页面状态
+    - 定位元素位置
+    - 确认操作是否成功
+    - 检查页面是否加载完成
+  `,
+  input_schema: {
+    type: "object",
+    properties: {
+      full_page: {
+        type: "boolean",
+        description:
+          "是否截取完整页面（包括滚动区域），默认 false（仅可视区域）",
+      },
+      selector: {
+        type: "string",
+        description: "可选：CSS 选择器，截取特定元素的截图",
+      },
+    },
+    required: [],
+  },
+};
+
+// CLI 执行工具 Schema
+const execCommandSchema: ToolSchema = {
+  name: "opencli_exec",
+  description: `
+    在沙箱环境中执行 shell 命令，返回 stdout 和 stderr。
+    - 支持管道（pipe）和重定向
+    - 默认工作目录：/workspace
+    - 环境变量已预配置
+    注意：不要执行交互式命令（如 vim、ssh）
+  `,
+  input_schema: {
+    type: "object",
+    properties: {
+      command: {
+        type: "string",
+        description: "要执行的 shell 命令",
+      },
+      workdir: {
+        type: "string",
+        description: "工作目录，默认 /workspace",
+      },
+      timeout_ms: {
+        type: "number",
+        description: "超时时间（毫秒），默认 30000",
+      },
+      env: {
+        type: "object",
+        description: "额外的环境变量",
+        additionalProperties: { type: "string" },
+      },
+    },
+    required: ["command"],
+  },
+};
+```
+
+### 3.2 Tool Registry（工具注册表）
+
+```typescript
+// ============================================================
+// tool-registry.ts - 工具注册与管理
+// ============================================================
+
+export abstract class Tool {
+  abstract name: string;
+  abstract description: string;
+  abstract inputSchema: ToolSchema["input_schema"];
+  timeoutMs = 30_000;
+
+  abstract execute(input: unknown): Promise<ToolResult>;
+
+  toSchema(): ToolSchema {
+    return {
+      name: this.name,
+      description: this.description,
+      input_schema: this.inputSchema,
+    };
+  }
+}
+
+export class ToolRegistry {
+  private tools = new Map<string, Tool>();
+
+  register(tool: Tool): this {
+    this.tools.set(tool.name, tool);
+    return this;
+  }
+
+  get(name: string): Tool | undefined {
+    return this.tools.get(name);
+  }
+
+  getSchemas(): ToolSchema[] {
+    return Array.from(this.tools.values()).map((t) => t.toSchema());
+  }
+
+  // 按标签过滤工具集（如只给 LLM 暴露 browser 相关工具）
+  filter(predicate: (tool: Tool) => boolean): ToolSchema[] {
+    return Array.from(this.tools.values())
+      .filter(predicate)
+      .map((t) => t.toSchema());
+  }
+}
+
+// 工具注册示例
+const registry = new ToolRegistry()
+  .register(new BrowserNavigateTool(browserContext))
+  .register(new BrowserClickTool(browserContext))
+  .register(new BrowserTypeTool(browserContext))
+  .register(new BrowserScreenshotTool(browserContext))
+  .register(new BrowserExtractTool(browserContext))
+  .register(new OpenCliExecTool(cliRuntime))
+  .register(new FileReadTool())
+  .register(new FileWriteTool());
+```
+
+### 3.3 Observation 格式化
+
+工具结果需要被格式化为 LLM 易理解的形式：
+
+```typescript
+// ============================================================
+// observation.ts - 结果格式化
+// ============================================================
+
+function formatObservation(result: ToolResult): string | ContentBlock[] {
+  if (!result.success) {
+    // 错误信息要清晰，帮助 LLM 理解失败原因并重试
+    return `ERROR: ${result.error}\nDetails: ${result.content}`;
+  }
+
+  // 图像类型（截图）：返回多模态内容块
+  if (typeof result.content === "object" && result.content.type === "image") {
+    return [
+      {
+        type: "text",
+        text: "Screenshot captured successfully:",
+      },
+      {
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: result.content.media_type,
+          data: result.content.data,
+        },
+      },
+    ];
+  }
+
+  // 文本类型：直接返回
+  return result.content as string;
+}
+```
+
+---
+
+## 4. Context Window 管理
+
+### 4.1 Context 构建
+
+```typescript
+// ============================================================
+// context-builder.ts - 上下文构建器
+// ============================================================
+
+export class ContextBuilder {
+  constructor(
+    private readonly systemPrompt: string,
+    private readonly registry: ToolRegistry,
+    private readonly options: ContextOptions = {},
+  ) {}
+
+  build(history: Message[]): LLMRequest {
+    const managedHistory = this.manageHistory(history);
+
+    return {
+      model: "claude-opus-4-5",
+      system: this.buildSystemPrompt(),
+      tools: this.registry.getSchemas(),
+      messages: managedHistory,
+      max_tokens: 8192,
+      temperature: 1, // Codex 推荐使用默认温度
+    };
+  }
+
+  private buildSystemPrompt(): string {
+    // 注入环境信息（关键！让 LLM 知道它在什么环境下工作）
+    const envInfo = this.getEnvironmentInfo();
+    return `${this.systemPrompt}
+
+## Current Environment
+${envInfo}
+
+## Guidelines
+- 优先使用工具执行操作，不要假设结果
+- 每次操作后截图确认结果
+- 遇到错误时，分析原因并重试或换策略
+- 保持 step-by-step 的操作节奏，不要跳步
+`;
+  }
+
+  private getEnvironmentInfo(): string {
+    return `
+- 当前时间：${new Date().toISOString()}
+- 工作目录：${process.cwd()}
+- 可用工具：${this.registry
+      .getSchemas()
+      .map((t) => t.name)
+      .join(", ")}
+- 浏览器状态：已初始化，Chromium
+    `.trim();
+  }
+
+  private manageHistory(history: Message[]): Message[] {
+    // 策略1：硬截断（简单粗暴）
+    const maxMessages = this.options.maxMessages ?? 100;
+    if (history.length <= maxMessages) return history;
+
+    // 策略2：保留头部（user 初始请求）+ 尾部（最近 N 条）
+    const keepHead = 2;
+    const keepTail = maxMessages - keepHead;
+    return [
+      ...history.slice(0, keepHead),
+      {
+        role: "user",
+        content: `[... ${history.length - maxMessages} messages summarized ...]`,
+      } as Message,
+      ...history.slice(-keepTail),
+    ];
+  }
+}
+```
+
+### 4.2 历史压缩策略
+
+对于长任务（如爬取上百个页面），需要定期压缩历史：
+
+```typescript
+// ============================================================
+// history-compressor.ts - 对话历史压缩
+// ============================================================
+
+export class HistoryCompressor {
+  // 当 token 超过阈值时，用摘要替换中间段
+  async compress(history: Message[], llmClient: LLMClient): Promise<Message[]> {
+    const tokenCount = estimateTokens(history);
+    if (tokenCount < TOKEN_THRESHOLD) return history;
+
+    // 保留：首条 user 消息 + 最近 20 条
+    const head = history.slice(0, 1);
+    const middle = history.slice(1, -20);
+    const tail = history.slice(-20);
+
+    if (middle.length === 0) return history;
+
+    // 用 LLM 对中间段生成摘要
+    const summary = await llmClient.complete({
+      model: "claude-haiku-4-5-20251001", // 用轻量模型做摘要
+      system:
+        "请用中文简洁总结以下操作历史，重点记录已完成的步骤、发现的数据和重要状态。",
+      messages: [{ role: "user", content: JSON.stringify(middle) }],
+      max_tokens: 1024,
+    });
+
+    return [
+      ...head,
+      { role: "user", content: `[历史摘要] ${extractText(summary)}` },
+      ...tail,
+    ];
+  }
+}
+```
+
+---
+
+## 5. Approval & Safety 系统
+
+### 5.1 三种 Approval Mode
+
+Codex 的核心安全机制是三层 Approval 模式，Codex CLI 开源代码中称为 `ApprovalPolicy`：
+
+```typescript
+// ============================================================
+// approval-gate.ts - 审批门控
+// ============================================================
+
+export type ApprovalMode = "auto" | "ask" | "sandboxed";
+
+export interface ApprovalGate {
+  check(toolCall: ToolCall): Promise<boolean>;
+}
+
+// 模式1：全自动（full-auto）—— 信任所有工具调用
+export class AutoApprovalGate implements ApprovalGate {
+  async check(_: ToolCall): Promise<boolean> {
+    return true;
+  }
+}
+
+// 模式2：选择性询问 —— 高风险操作询问用户
+export class SelectiveApprovalGate implements ApprovalGate {
+  private readonly HIGH_RISK_TOOLS = new Set([
+    "opencli_exec", // Shell 命令执行
+    "file_write", // 文件写入
+    "browser_navigate", // 导航到新 URL（防止 SSRF）
+  ]);
+
+  async check(toolCall: ToolCall): Promise<boolean> {
+    if (!this.HIGH_RISK_TOOLS.has(toolCall.name)) {
+      return true; // 低风险工具直接通过
+    }
+
+    // 向用户展示工具调用详情并询问
+    const decision = await promptUser({
+      title: `允许执行 ${toolCall.name}？`,
+      detail: JSON.stringify(toolCall.input, null, 2),
+      options: ["允许", "拒绝", "允许本次会话所有"],
+    });
+
+    return decision !== "拒绝";
+  }
+}
+
+// 模式3：沙箱模式 —— 在 Docker 中执行，网络和文件系统受限
+export class SandboxedApprovalGate implements ApprovalGate {
+  async check(toolCall: ToolCall): Promise<boolean> {
+    // 验证工具调用不违反沙箱规则
+    if (toolCall.name === "opencli_exec") {
+      const command = toolCall.input.command as string;
+
+      // 禁止网络操作（在沙箱内应通过代理）
+      const BLOCKED_PATTERNS = [
+        /curl\s+.*https?:\/\/(?!localhost)/,
+        /wget\s+/,
+        /npm\s+publish/,
+      ];
+      if (BLOCKED_PATTERNS.some((p) => p.test(command))) {
+        throw new Error(`Sandboxed mode: blocked command pattern`);
+      }
+    }
+    return true;
+  }
+}
+```
+
+### 5.2 沙箱实现（Codex CLI 的 Seatbelt / Docker 方案）
+
+Codex CLI 在 macOS 使用 `sandbox-exec`（Seatbelt），在 Linux 使用 Docker：
+
+```typescript
+// ============================================================
+// sandbox.ts - 命令执行沙箱
+// ============================================================
+
+export class DockerSandbox {
+  private readonly IMAGE = "codex-sandbox:latest";
+
+  async exec(
+    command: string,
+    options: SandboxOptions = {},
+  ): Promise<ExecResult> {
+    const dockerArgs = [
+      "run",
+      "--rm",
+      "--network=none", // 禁止网络访问
+      "--memory=512m", // 限制内存
+      "--cpus=1", // 限制 CPU
+      `--volume=${options.workdir}:/workspace`, // 挂载工作目录
+      "--read-only", // 文件系统只读
+      "--tmpfs=/tmp", // 临时可写区
+      this.IMAGE,
+      "bash",
+      "-c",
+      command,
+    ];
+
+    const { stdout, stderr, exitCode } = await spawnProcess(
+      "docker",
+      dockerArgs,
+      {
+        timeout: options.timeout ?? 30_000,
+      },
+    );
+
+    return { stdout, stderr, exitCode };
+  }
+}
+
+// macOS Seatbelt 方案（更轻量）
+export class SeatbeltSandbox {
+  private readonly PROFILE = `
+    (version 1)
+    (deny default)
+    (allow file-read*)
+    (allow file-write* (subpath "/workspace"))
+    (allow process-exec*)
+    (deny network*)
+  `;
+
+  async exec(command: string): Promise<ExecResult> {
+    return spawnProcess("sandbox-exec", [
+      "-p",
+      this.PROFILE,
+      "bash",
+      "-c",
+      command,
+    ]);
+  }
+}
+```
+
+---
+
+## 6. 流式输出实现
+
+### 6.1 流式 Tool Call 检测
+
+Codex 支持在流式传输过程中检测 tool_call 块，实现"边推理边执行"的效果：
+
+```typescript
+// ============================================================
+// streaming.ts - 流式输出处理
+// ============================================================
+
+export async function* streamWithToolDetection(
+  stream: AsyncIterable<StreamChunk>,
+  onText: (text: string) => void,
+  onToolStart: (toolName: string) => void,
+): AsyncGenerator<ContentBlock> {
+  let currentToolCall: Partial<ToolCall> | null = null;
+  let inputBuffer = "";
+
+  for await (const chunk of stream) {
+    switch (chunk.type) {
+      case "content_block_start":
+        if (chunk.content_block.type === "tool_use") {
+          currentToolCall = {
+            id: chunk.content_block.id,
+            name: chunk.content_block.name,
+          };
+          onToolStart(chunk.content_block.name); // 通知 UI 开始执行工具
+        }
+        break;
+
+      case "content_block_delta":
+        if (chunk.delta.type === "text_delta") {
+          onText(chunk.delta.text); // 实时渲染推理文本
+        }
+        if (chunk.delta.type === "input_json_delta") {
+          inputBuffer += chunk.delta.partial_json; // 累积工具参数
+        }
+        break;
+
+      case "content_block_stop":
+        if (currentToolCall) {
+          currentToolCall.input = JSON.parse(inputBuffer);
+          yield {
+            type: "tool_use",
+            ...currentToolCall,
+          } as ContentBlock;
+          currentToolCall = null;
+          inputBuffer = "";
+        }
+        break;
+    }
+  }
+}
+```
+
+---
+
+## 7. 浏览器工具设计（Browser Tools）
+
+Softmax Agent 作为专注浏览器网站的垂直工具，这部分是平台的核心竞争力。以下是完整的 Browser Tool 实现：
+
+### 7.1 Browser Context 管理
+
+```typescript
+// ============================================================
+// browser-context.ts - 浏览器上下文单例
+// ============================================================
+
+import { chromium, Browser, BrowserContext, Page } from "playwright";
+
+export class BrowserContextManager {
+  private browser: Browser | null = null;
+  private context: BrowserContext | null = null;
+  private page: Page | null = null;
+
+  async initialize(options: BrowserOptions = {}): Promise<void> {
+    this.browser = await chromium.launch({
+      headless: options.headless ?? true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        `--window-size=${options.width ?? 1280},${options.height ?? 800}`,
+      ],
+    });
+
+    this.context = await this.browser.newContext({
+      viewport: { width: options.width ?? 1280, height: options.height ?? 800 },
+      userAgent:
+        options.userAgent ?? "Mozilla/5.0 (compatible; Codex-Agent/1.0)",
+      // 持久化 cookies 和 localStorage
+      storageState: options.storageState,
+    });
+
+    this.page = await this.context.newPage();
+  }
+
+  getPage(): Page {
+    if (!this.page) throw new Error("Browser not initialized");
+    return this.page;
+  }
+
+  // 保存当前会话状态（cookies, localStorage）供后续任务复用
+  async saveState(path: string): Promise<void> {
+    await this.context!.storageState({ path });
+  }
+
+  async close(): Promise<void> {
+    await this.browser?.close();
+  }
+}
+```
+
+### 7.2 核心浏览器工具集
+
+```typescript
+// ============================================================
+// browser-tools.ts - 浏览器操作工具实现
+// ============================================================
+
+// ── 导航工具 ─────────────────────────────────────────────────
+export class BrowserNavigateTool extends Tool {
+  name = "browser_navigate";
+  description = "导航到指定 URL，等待页面加载完成后返回页面标题和当前 URL";
+  timeoutMs = 60_000;
+
+  inputSchema = {
+    type: "object" as const,
+    properties: {
+      url: {
+        type: "string",
+        description: "目标 URL，必须包含协议（https://）",
+      },
+      wait_for: {
+        type: "string",
+        enum: ["load", "domcontentloaded", "networkidle"],
+        description: "等待页面到达的状态，默认 networkidle",
+      },
+    },
+    required: ["url"],
+  };
+
+  constructor(private readonly browserCtx: BrowserContextManager) {
+    super();
+  }
+
+  async execute(input: {
+    url: string;
+    wait_for?: string;
+  }): Promise<ToolResult> {
+    const page = this.browserCtx.getPage();
+    try {
+      await page.goto(input.url, {
+        waitUntil: (input.wait_for ?? "networkidle") as any,
+        timeout: this.timeoutMs,
+      });
+
+      return {
+        success: true,
+        content: `已导航到: ${page.url()}\n页面标题: ${await page.title()}`,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        content: `导航失败: ${err instanceof Error ? err.message : String(err)}`,
+        error: "NAVIGATION_FAILED",
+      };
+    }
+  }
+}
+
+// ── 截图工具（视觉观测的核心）────────────────────────────────
+export class BrowserScreenshotTool extends Tool {
+  name = "browser_screenshot";
+  description = `
+    截取当前页面截图，返回 base64 PNG 图像供 LLM 视觉分析。
+    这是 Agent 的"眼睛"，用于：
+    ① 确认操作是否成功  ② 定位需要点击的元素  ③ 检查表单状态  ④ 验证数据提取结果
+  `;
+
+  inputSchema = {
+    type: "object" as const,
+    properties: {
+      full_page: { type: "boolean", description: "截取完整页面，默认 false" },
+      selector: { type: "string", description: "截取特定元素" },
+      highlight_selector: {
+        type: "string",
+        description: "截图前高亮该元素（帮助 LLM 定位）",
+      },
+    },
+    required: [],
+  };
+
+  constructor(private readonly browserCtx: BrowserContextManager) {
+    super();
+  }
+
+  async execute(input: {
+    full_page?: boolean;
+    selector?: string;
+    highlight_selector?: string;
+  }): Promise<ToolResult> {
+    const page = this.browserCtx.getPage();
+
+    // 可选：高亮元素辅助视觉定位
+    if (input.highlight_selector) {
+      await page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (el) {
+          (el as HTMLElement).style.outline = "3px solid red";
+          (el as HTMLElement).style.backgroundColor = "rgba(255,0,0,0.1)";
+        }
+      }, input.highlight_selector);
+    }
+
+    let screenshotBuffer: Buffer;
+    if (input.selector) {
+      const element = await page.$(input.selector);
+      if (!element) {
+        return {
+          success: false,
+          content: `元素未找到: ${input.selector}`,
+          error: "ELEMENT_NOT_FOUND",
+        };
+      }
+      screenshotBuffer = await element.screenshot({ type: "png" });
+    } else {
+      screenshotBuffer = await page.screenshot({
+        type: "png",
+        fullPage: input.full_page ?? false,
+      });
+    }
+
+    // 去掉高亮
+    if (input.highlight_selector) {
+      await page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (el) {
+          (el as HTMLElement).style.outline = "";
+          (el as HTMLElement).style.backgroundColor = "";
+        }
+      }, input.highlight_selector);
+    }
+
+    return {
+      success: true,
+      content: {
+        type: "image",
+        data: screenshotBuffer.toString("base64"),
+        media_type: "image/png",
+      },
+    };
+  }
+}
+
+// ── 点击工具（支持多种定位策略）─────────────────────────────
+export class BrowserClickTool extends Tool {
+  name = "browser_click";
+  description = `
+    点击页面上的元素。支持多种定位方式：
+    - CSS 选择器（最精确）
+    - 文字内容（适合按钮、链接）
+    - 坐标（从截图中读取 x,y）
+  `;
+
+  inputSchema = {
+    type: "object" as const,
+    properties: {
+      selector: { type: "string", description: "CSS 选择器" },
+      text: { type: "string", description: "元素的文字内容" },
+      x: { type: "number", description: "点击坐标 x" },
+      y: { type: "number", description: "点击坐标 y" },
+      button: {
+        type: "string",
+        enum: ["left", "right", "middle"],
+        description: "鼠标键，默认 left",
+      },
+      double_click: { type: "boolean", description: "双击，默认 false" },
+    },
+    required: [],
+  };
+
+  constructor(private readonly browserCtx: BrowserContextManager) {
+    super();
+  }
+
+  async execute(input: {
+    selector?: string;
+    text?: string;
+    x?: number;
+    y?: number;
+    button?: "left" | "right" | "middle";
+    double_click?: boolean;
+  }): Promise<ToolResult> {
+    const page = this.browserCtx.getPage();
+    const clickOptions = { button: input.button ?? "left" };
+
+    try {
+      if (input.x !== undefined && input.y !== undefined) {
+        // 坐标点击（从截图分析出的位置）
+        if (input.double_click) {
+          await page.mouse.dblclick(input.x, input.y);
+        } else {
+          await page.mouse.click(input.x, input.y, clickOptions);
+        }
+        return {
+          success: true,
+          content: `已点击坐标 (${input.x}, ${input.y})`,
+        };
+      }
+
+      if (input.text) {
+        // 文字匹配点击
+        const locator = page.getByText(input.text, { exact: false });
+        await locator.first().click(clickOptions);
+        return { success: true, content: `已点击含文字"${input.text}"的元素` };
+      }
+
+      if (input.selector) {
+        await page.click(input.selector, clickOptions);
+        return { success: true, content: `已点击选择器: ${input.selector}` };
+      }
+
+      return {
+        success: false,
+        content: "必须提供 selector、text 或坐标之一",
+        error: "INVALID_INPUT",
+      };
+    } catch (err) {
+      return { success: false, content: String(err), error: "CLICK_FAILED" };
+    }
+  }
+}
+
+// ── DOM 提取工具（结构化数据提取）───────────────────────────
+export class BrowserExtractTool extends Tool {
+  name = "browser_extract";
+  description = `
+    从当前页面提取结构化数据。支持：
+    - 提取文本内容
+    - 提取表格数据（自动转 JSON）
+    - 提取所有链接
+    - 提取表单字段信息
+    - 自定义 JavaScript 提取逻辑
+  `;
+
+  inputSchema = {
+    type: "object" as const,
+    properties: {
+      type: {
+        type: "string",
+        enum: ["text", "table", "links", "form", "custom"],
+        description: "提取类型",
+      },
+      selector: { type: "string", description: "CSS 选择器，限定提取范围" },
+      script: {
+        type: "string",
+        description: "type=custom 时的 JS 代码，返回值将被序列化",
+      },
+      attribute: {
+        type: "string",
+        description: "提取元素的特定属性，如 href、src",
+      },
+    },
+    required: ["type"],
+  };
+
+  constructor(private readonly browserCtx: BrowserContextManager) {
+    super();
+  }
+
+  async execute(input: {
+    type: "text" | "table" | "links" | "form" | "custom";
+    selector?: string;
+    script?: string;
+    attribute?: string;
+  }): Promise<ToolResult> {
+    const page = this.browserCtx.getPage();
+
+    try {
+      let data: unknown;
+
+      switch (input.type) {
+        case "text":
+          data = await page.evaluate((sel) => {
+            const el = sel ? document.querySelector(sel) : document.body;
+            return el?.innerText ?? "";
+          }, input.selector);
+          break;
+
+        case "table":
+          // 自动解析 HTML 表格为 JSON 数组
+          data = await page.evaluate((sel) => {
+            const table = document.querySelector<HTMLTableElement>(
+              sel ?? "table",
+            );
+            if (!table) return [];
+            const headers = Array.from(table.querySelectorAll("th")).map((th) =>
+              th.innerText.trim(),
+            );
+            return Array.from(table.querySelectorAll("tbody tr")).map((row) => {
+              const cells = Array.from(row.querySelectorAll("td")).map((td) =>
+                td.innerText.trim(),
+              );
+              return Object.fromEntries(headers.map((h, i) => [h, cells[i]]));
+            });
+          }, input.selector);
+          break;
+
+        case "links":
+          data = await page.evaluate((sel) => {
+            const container = sel ? document.querySelector(sel) : document;
+            return Array.from(container!.querySelectorAll("a")).map((a) => ({
+              text: a.innerText.trim(),
+              href: a.href,
+            }));
+          }, input.selector);
+          break;
+
+        case "custom":
+          if (!input.script) throw new Error("custom 类型需要提供 script");
+          data = await page.evaluate(input.script);
+          break;
+      }
+
+      return {
+        success: true,
+        content:
+          typeof data === "string" ? data : JSON.stringify(data, null, 2),
+      };
+    } catch (err) {
+      return { success: false, content: String(err), error: "EXTRACT_FAILED" };
+    }
+  }
+}
+
+// ── 等待工具 ─────────────────────────────────────────────────
+export class BrowserWaitTool extends Tool {
+  name = "browser_wait";
+  description = "等待特定条件满足后继续。避免因页面未加载完成导致的操作失败";
+
+  inputSchema = {
+    type: "object" as const,
+    properties: {
+      selector: { type: "string", description: "等待该 CSS 选择器的元素出现" },
+      text: { type: "string", description: "等待页面中出现该文字" },
+      url_contains: {
+        type: "string",
+        description: "等待 URL 中包含该字符串（用于等待路由跳转）",
+      },
+      timeout_ms: { type: "number", description: "超时时间，默认 10000ms" },
+    },
+    required: [],
+  };
+
+  constructor(private readonly browserCtx: BrowserContextManager) {
+    super();
+  }
+
+  async execute(input: {
+    selector?: string;
+    text?: string;
+    url_contains?: string;
+    timeout_ms?: number;
+  }): Promise<ToolResult> {
+    const page = this.browserCtx.getPage();
+    const timeout = input.timeout_ms ?? 10_000;
+
+    try {
+      if (input.selector) {
+        await page.waitForSelector(input.selector, { timeout });
+        return { success: true, content: `元素已出现: ${input.selector}` };
+      }
+      if (input.text) {
+        await page.waitForFunction(
+          (text) => document.body.innerText.includes(text),
+          input.text,
+          { timeout },
+        );
+        return { success: true, content: `文字已出现: ${input.text}` };
+      }
+      if (input.url_contains) {
+        await page.waitForURL(`**${input.url_contains}**`, { timeout });
+        return {
+          success: true,
+          content: `URL 已跳转至包含: ${input.url_contains}`,
+        };
+      }
+      return {
+        success: false,
+        content: "需要提供等待条件",
+        error: "NO_CONDITION",
+      };
+    } catch (err) {
+      return {
+        success: false,
+        content: `等待超时: ${String(err)}`,
+        error: "WAIT_TIMEOUT",
+      };
+    }
+  }
+}
+```
+
+---
+
+## 8. OpenCLI 工具设计
+
+### 8.1 CLI 执行工具
+
+```typescript
+// ============================================================
+// opencli-tools.ts - CLI 工具实现
+// ============================================================
+
+import { spawn } from "child_process";
+import * as path from "path";
+import * as fs from "fs/promises";
+
+export class OpenCliExecTool extends Tool {
+  name = "opencli_exec";
+  description = `
+    在隔离环境中执行 shell 命令。
+    适用于：数据处理、文件操作、调用 CLI 工具、运行脚本。
+    输出限制：最多返回 10000 字符（超出部分截断并提示）。
+    不可执行：交互式命令、后台守护进程。
+  `;
+
+  inputSchema = {
+    type: "object" as const,
+    properties: {
+      command: { type: "string", description: "Shell 命令" },
+      workdir: { type: "string", description: "工作目录，默认 /workspace" },
+      timeout_ms: { type: "number", description: "超时，默认 30000" },
+      env: {
+        type: "object",
+        description: "额外环境变量",
+        additionalProperties: { type: "string" },
+      },
+      stdin: { type: "string", description: "标准输入内容" },
+    },
+    required: ["command"],
+  };
+
+  constructor(
+    private readonly workspaceDir: string,
+    private readonly sandbox?: DockerSandbox,
+  ) {
+    super();
+  }
+
+  async execute(input: {
+    command: string;
+    workdir?: string;
+    timeout_ms?: number;
+    env?: Record<string, string>;
+    stdin?: string;
+  }): Promise<ToolResult> {
+    const workdir = input.workdir
+      ? path.resolve(this.workspaceDir, input.workdir)
+      : this.workspaceDir;
+
+    const timeout = input.timeout_ms ?? 30_000;
+
+    try {
+      const { stdout, stderr, exitCode } = await this.runCommand(
+        input.command,
+        workdir,
+        input.env ?? {},
+        input.stdin,
+        timeout,
+      );
+
+      const MAX_OUTPUT = 10_000;
+      const rawOutput = [
+        stdout && `stdout:\n${stdout}`,
+        stderr && `stderr:\n${stderr}`,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      const truncated = rawOutput.length > MAX_OUTPUT;
+      const output = truncated
+        ? rawOutput.slice(0, MAX_OUTPUT) +
+          `\n...[输出超过 ${MAX_OUTPUT} 字符，已截断]`
+        : rawOutput;
+
+      return {
+        success: exitCode === 0,
+        content: output || "(命令执行完毕，无输出)",
+        metadata: { exitCode, truncated },
+        error: exitCode !== 0 ? "NON_ZERO_EXIT" : undefined,
+      };
+    } catch (err) {
+      return { success: false, content: String(err), error: "EXEC_FAILED" };
+    }
+  }
+
+  private runCommand(
+    command: string,
+    cwd: string,
+    env: Record<string, string>,
+    stdin: string | undefined,
+    timeout: number,
+  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+    return new Promise((resolve, reject) => {
+      const child = spawn("bash", ["-c", command], {
+        cwd,
+        env: { ...process.env, ...env },
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+
+      let stdout = "";
+      let stderr = "";
+      const timer = setTimeout(() => {
+        child.kill("SIGTERM");
+        reject(new Error(`命令超时 (${timeout}ms): ${command}`));
+      }, timeout);
+
+      child.stdout.on("data", (d: Buffer) => {
+        stdout += d.toString();
+      });
+      child.stderr.on("data", (d: Buffer) => {
+        stderr += d.toString();
+      });
+
+      if (stdin) child.stdin.end(stdin);
+
+      child.on("close", (code) => {
+        clearTimeout(timer);
+        resolve({ stdout, stderr, exitCode: code ?? -1 });
+      });
+
+      child.on("error", (err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+    });
+  }
+}
+
+// ── 文件操作工具 ─────────────────────────────────────────────
+export class FileWriteTool extends Tool {
+  name = "file_write";
+  description = "写入或创建文件，支持文本和 JSON 内容";
+
+  inputSchema = {
+    type: "object" as const,
+    properties: {
+      path: { type: "string", description: "文件路径（相对于工作区）" },
+      content: { type: "string", description: "文件内容" },
+      mode: {
+        type: "string",
+        enum: ["overwrite", "append", "create_only"],
+        description: "写入模式，默认 overwrite",
+      },
+      encoding: { type: "string", description: "编码，默认 utf8" },
+    },
+    required: ["path", "content"],
+  };
+
+  constructor(private readonly workspaceDir: string) {
+    super();
+  }
+
+  async execute(input: {
+    path: string;
+    content: string;
+    mode?: "overwrite" | "append" | "create_only";
+    encoding?: string;
+  }): Promise<ToolResult> {
+    const fullPath = path.resolve(this.workspaceDir, input.path);
+
+    // 安全检查：不允许写到工作区以外
+    if (!fullPath.startsWith(this.workspaceDir)) {
+      return {
+        success: false,
+        content: "路径越界：不允许写入工作区以外的位置",
+        error: "PATH_ESCAPE",
+      };
+    }
+
+    try {
+      await fs.mkdir(path.dirname(fullPath), { recursive: true });
+
+      if (input.mode === "create_only") {
+        try {
+          await fs.access(fullPath);
+          return {
+            success: false,
+            content: `文件已存在: ${input.path}`,
+            error: "FILE_EXISTS",
+          };
+        } catch {}
+      }
+
+      const flag = input.mode === "append" ? "a" : "w";
+      await fs.writeFile(fullPath, input.content, {
+        encoding: (input.encoding ?? "utf8") as BufferEncoding,
+        flag,
+      });
+
+      return {
+        success: true,
+        content: `已写入 ${input.content.length} 字符到: ${input.path}`,
+      };
+    } catch (err) {
+      return { success: false, content: String(err), error: "WRITE_FAILED" };
+    }
+  }
+}
+```
+
+---
+
+## 9. Browser + OpenCLI 任务编排
+
+<figure className="my-8">
+  <img
+    src={browserOpencliOrchestration.src}
+    alt="Browser + OpenCLI 编排：Task Planner 分解目标，Browser Engine 与 OpenCLI Engine 并行执行，共享 Shared Task State"
+    className="mx-auto w-full rounded-lg border border-neutral-200 dark:border-neutral-800"
+  />
+  <figcaption className="mt-2 text-xs text-center text-muted-foreground">
+    <strong>Task Planner</strong> 把用户目标拆成步骤队列，Browser 和 OpenCLI
+    各自执行页面操作与命令行任务，通过 <strong>Shared Task State</strong> 传递
+    cookies、提取数据和中间结果。
+  </figcaption>
+</figure>
+
+### 9.1 Shared State（共享状态）
+
+Browser 和 CLI 工具需要共享状态，比如浏览器提取的数据需要被 CLI 工具处理：
+
+```typescript
+// ============================================================
+// shared-state.ts - 跨工具共享状态
+// ============================================================
+
+export interface SharedTaskState {
+  // 浏览器状态
+  browser: {
+    currentUrl: string;
+    pageTitle: string;
+    cookies: Record<string, string>;
+    localStorage: Record<string, string>;
+  };
+
+  // 任务数据
+  extractedData: Record<string, unknown>; // browser_extract 的结果
+  downloadedFiles: string[]; // CLI 下载的文件列表
+  processedResults: unknown[]; // CLI 处理后的数据
+
+  // 任务元数据
+  taskId: string;
+  stepCount: number;
+  errors: Array<{ step: number; error: string; tool: string }>;
+  checkpoints: Array<{ step: number; snapshot: Partial<SharedTaskState> }>;
+}
+
+export class StateManager {
+  private state: SharedTaskState;
+
+  constructor(taskId: string) {
+    this.state = {
+      browser: { currentUrl: "", pageTitle: "", cookies: {}, localStorage: {} },
+      extractedData: {},
+      downloadedFiles: [],
+      processedResults: [],
+      taskId,
+      stepCount: 0,
+      errors: [],
+      checkpoints: [],
+    };
+  }
+
+  get<K extends keyof SharedTaskState>(key: K): SharedTaskState[K] {
+    return this.state[key];
+  }
+
+  set<K extends keyof SharedTaskState>(
+    key: K,
+    value: SharedTaskState[K],
+  ): void {
+    this.state[key] = value;
+  }
+
+  // 设置检查点（用于错误恢复）
+  checkpoint(): void {
+    this.state.checkpoints.push({
+      step: this.state.stepCount,
+      snapshot: {
+        extractedData: structuredClone(this.state.extractedData),
+        downloadedFiles: [...this.state.downloadedFiles],
+        browser: { ...this.state.browser },
+      },
+    });
+  }
+
+  // 恢复到上一个检查点
+  rollback(): boolean {
+    const last = this.state.checkpoints.pop();
+    if (!last) return false;
+    Object.assign(this.state, last.snapshot);
+    return true;
+  }
+
+  toSystemPromptAddition(): string {
+    // 将关键状态注入系统提示，帮助 LLM 维持上下文
+    return `
+## 当前任务状态
+- 当前页面：${this.state.browser.currentUrl}
+- 已提取数据键：${Object.keys(this.state.extractedData).join(", ") || "无"}
+- 已下载文件：${this.state.downloadedFiles.join(", ") || "无"}
+- 已执行步骤数：${this.state.stepCount}
+    `.trim();
+  }
+}
+```
+
+### 9.2 任务规划层（Task Planner）
+
+对于复杂任务，在主 Agent Loop 之上增加一个规划层：
+
+```typescript
+// ============================================================
+// task-planner.ts - 复杂任务分解
+// ============================================================
+
+export interface TaskStep {
+  id: string;
+  description: string;
+  toolHint?: string; // 建议使用的工具
+  dependsOn?: string[]; // 依赖哪些步骤完成
+  retryCount?: number; // 失败时重试次数
+  checkpoint?: boolean; // 执行后是否打检查点
+}
+
+export class TaskPlanner {
+  constructor(private readonly llmClient: LLMClient) {}
+
+  async decompose(userGoal: string): Promise<TaskStep[]> {
+    const response = await this.llmClient.complete({
+      model: "claude-opus-4-5",
+      system: `
+        你是一个任务规划专家。将用户的目标分解为可执行的步骤列表。
+        每个步骤应该：
+        1. 足够小，可以被单个工具完成
+        2. 有明确的成功判断标准
+        3. 按照依赖关系排序
+        
+        返回 JSON 格式的步骤列表。
+      `,
+      messages: [
+        {
+          role: "user",
+          content: `
+            请将以下任务分解为步骤列表，以 JSON 格式返回：
+            
+            任务：${userGoal}
+            
+            可用工具类型：
+            - browser_navigate（导航到网页）
+            - browser_click（点击元素）
+            - browser_type（输入文字）
+            - browser_screenshot（截图）
+            - browser_extract（提取数据）
+            - browser_wait（等待元素）
+            - opencli_exec（执行命令）
+            - file_write（写入文件）
+            
+            返回格式：
+            {"steps": [{"id": "step1", "description": "...", "toolHint": "browser_navigate", "checkpoint": true}]}
+          `,
+        },
+      ],
+      max_tokens: 2048,
+    });
+
+    const parsed = JSON.parse(extractText(response));
+    return parsed.steps as TaskStep[];
+  }
+}
+```
+
+### 9.3 完整编排器（Orchestrator）
+
+```typescript
+// ============================================================
+// orchestrator.ts - 主编排器，整合所有组件
+// ============================================================
+
+export class BrowserCliOrchestrator {
+  private stateManager: StateManager;
+  private agent: CodexAgent;
+
+  constructor(
+    private readonly llmClient: LLMClient,
+    private readonly browserCtx: BrowserContextManager,
+    private readonly workspaceDir: string,
+  ) {
+    const taskId = `task-${Date.now()}`;
+    this.stateManager = new StateManager(taskId);
+
+    // 构建工具注册表（整合 browser + CLI）
+    const registry = new ToolRegistry()
+      .register(new BrowserNavigateTool(browserCtx))
+      .register(new BrowserClickTool(browserCtx))
+      .register(new BrowserTypeTool(browserCtx))
+      .register(new BrowserScreenshotTool(browserCtx))
+      .register(new BrowserExtractTool(browserCtx))
+      .register(new BrowserWaitTool(browserCtx))
+      .register(new OpenCliExecTool(workspaceDir))
+      .register(new FileWriteTool(workspaceDir));
+
+    // 构建 Context（注入共享状态）
+    const contextBuilder = new ContextBuilder(
+      BROWSER_AGENT_SYSTEM_PROMPT,
+      registry,
+      { stateManager: this.stateManager },
+    );
+
+    this.agent = new CodexAgent(
+      llmClient,
+      registry,
+      new SelectiveApprovalGate(),
+      contextBuilder,
+      { maxIterations: 100 },
+    );
+  }
+
+  async execute(goal: string): Promise<ExecutionResult> {
+    console.log(`[Orchestrator] 开始执行任务: ${goal}`);
+
+    try {
+      // 可选：先规划再执行（适合复杂多步任务）
+      const planner = new TaskPlanner(this.llmClient);
+      const steps = await planner.decompose(goal);
+      console.log(`[Orchestrator] 规划出 ${steps.length} 个步骤`);
+
+      // 将规划结果注入 Agent 的首条消息
+      const enrichedGoal = `
+目标：${goal}
+
+建议执行步骤（可根据实际情况调整）：
+${steps.map((s, i) => `${i + 1}. ${s.description}${s.toolHint ? ` [工具建议: ${s.toolHint}]` : ""}`).join("\n")}
+
+请按步骤执行，每步操作后截图确认结果。
+      `.trim();
+
+      const result = await this.agent.run(enrichedGoal);
+
+      return {
+        success: true,
+        output: result,
+        state: this.stateManager.get("extractedData"),
+        files: this.stateManager.get("downloadedFiles"),
+        stepCount: this.stateManager.get("stepCount"),
+      };
+    } catch (err) {
+      // 错误恢复：尝试从最近检查点恢复
+      const recovered = this.stateManager.rollback();
+      console.error(`[Orchestrator] 执行失败: ${err}. 恢复: ${recovered}`);
+
+      return {
+        success: false,
+        output: String(err),
+        state: this.stateManager.get("extractedData"),
+        files: this.stateManager.get("downloadedFiles"),
+        stepCount: this.stateManager.get("stepCount"),
+      };
+    }
+  }
+}
+```
+
+---
+
+## 10. 完整实现示例
+
+### 10.1 系统提示（System Prompt）
+
+System Prompt 是影响 Agent 行为质量最关键的因素，需要精心设计：
+
+```typescript
+export const BROWSER_AGENT_SYSTEM_PROMPT = `
+你是一个专业的浏览器自动化 Agent，能够通过操作浏览器和执行命令行来完成复杂的网页任务。
+
+## 核心原则
+
+1. **先观察，后行动**：每次关键操作（点击/导航/提交）前后都要截图确认
+2. **逐步执行**：不要尝试在一步内完成多个操作，保持清晰的步骤边界
+3. **容错处理**：操作失败时分析截图，理解原因，换策略重试
+4. **状态确认**：导航后确认页面标题和 URL，确保到达正确位置
+
+## 工具使用优先级
+
+浏览器操作：
+- 进入页面 → browser_navigate
+- 操作前定位 → browser_screenshot（看清楚再操作）
+- 点击 → 优先 browser_click(text=...)，其次 selector，最后坐标
+- 等待 → 操作后若页面会变化，先 browser_wait 再截图
+- 提取 → 表格用 table 类型，链接用 links 类型，复杂场景用 custom
+
+命令行操作：
+- 数据处理（csv/json转换）→ opencli_exec(command="python3 ...")
+- 文件保存 → file_write 或 opencli_exec
+- 调用外部 API → opencli_exec(command="curl ...")
+
+## 错误处理规则
+
+- 元素找不到 → 截图查看当前状态，可能需要等待或滚动
+- 导航超时 → 检查网络，尝试简化 URL
+- 命令失败 → 查看 stderr，修正命令再重试
+- 数据提取为空 → 确认选择器正确，尝试更宽泛的选择器
+
+## 数据传递规则
+
+浏览器提取的数据 → opencli_exec 处理时，通过 stdin 或 file_write 临时文件传递：
+1. 先 file_write 写入临时 JSON
+2. 再 opencli_exec 读取处理
+3. 结果 file_write 写入最终文件
+`;
+```
+
+### 10.2 端到端使用示例
+
+```typescript
+// ============================================================
+// main.ts - 完整使用示例
+// ============================================================
+
+async function main() {
+  // 初始化浏览器
+  const browserCtx = new BrowserContextManager();
+  await browserCtx.initialize({ headless: false, width: 1440, height: 900 });
+
+  // 创建 LLM 客户端（这里使用 Anthropic）
+  const llmClient = new AnthropicClient(process.env.ANTHROPIC_API_KEY!);
+
+  // 创建编排器
+  const orchestrator = new BrowserCliOrchestrator(
+    llmClient,
+    browserCtx,
+    "/workspace",
+  );
+
+  // ── 示例1：登录并提取数据 ────────────────────────────────
+  const result1 = await orchestrator.execute(`
+    登录到 https://example.com/admin
+    账号：admin@example.com
+    密码：从环境变量 SITE_PASSWORD 中读取
+
+    登录后：
+    1. 进入 "Reports > Sales" 页面
+    2. 选择日期范围：上个月
+    3. 提取销售数据表格
+    4. 保存为 /workspace/sales_report.csv
+    5. 用命令行计算总销售额并输出
+  `);
+
+  console.log("任务完成:", result1.success);
+  console.log("提取的数据:", result1.state);
+
+  // ── 示例2：批量操作 ──────────────────────────────────────
+  const result2 = await orchestrator.execute(`
+    打开 https://api.example.com/docs
+    找到所有 API 端点列表（GET/POST/PUT/DELETE）
+    提取为 JSON 格式并保存到 /workspace/api_endpoints.json
+    然后用 Python 脚本统计各 HTTP 方法的数量并输出报告
+  `);
+
+  await browserCtx.close();
+}
+
+main().catch(console.error);
+```
+
+### 10.3 关键设计决策总结
+
+| 决策点          | Codex 的选择         | 原因                                    |
+| --------------- | -------------------- | --------------------------------------- |
+| 循环控制        | while + stop_reason  | 简单可靠，LLM 自己决定何时停止          |
+| 并发工具调用    | 支持（Promise.all）  | 提升效率，LLM 可一次调用多工具          |
+| Context 策略    | 保留完整 content 块  | tool_use ID 引用完整性                  |
+| 截图频率        | 关键操作前后         | 视觉反馈是浏览器 Agent 最可靠的观测手段 |
+| 错误处理        | 工具返回错误而非抛出 | 让 LLM 看到错误信息并自行恢复           |
+| Approval 默认值 | ask（高风险操作）    | 平衡效率与安全                          |
+| Sandbox         | Docker / 工作区隔离  | 防止 CLI 工具越权操作                   |
+| 历史压缩        | 保留头+尾，摘要中间  | 在 token 限制内保留最关键上下文         |

@@ -35,8 +35,19 @@ import { PaperGuideCover } from "@/app/blog/cs-paper-guide/cover";
 import { BlogRecommenderCover } from "@/app/blog/blog-recommender/cover";
 import { EmbodiedRobotCover } from "@/app/blog/embodied-robot/cover";
 import { ObsessionCover } from "@/app/blog/obsession/cover";
+import { CodexAgentCover } from "@/app/blog/codex-agent/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "codex-agent",
+    title: "Codex Agent 技术实现原理详解",
+    date: "2026-06-12",
+    tag: "大模型",
+    summary:
+      "Agent Loop、工具注册、上下文裁剪——ReAct 循环怎么跑，流式输出和安全审批怎么接，附浏览器自动化与 OpenCLI 编排示例。",
+    cover: <CodexAgentCover />,
+    coverShape: "square",
+  },
   {
     slug: "obsession",
     title: "脑锁：如何摆脱强迫症",
