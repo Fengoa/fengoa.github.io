@@ -21,7 +21,7 @@ const TAG_CONFIG: { id: string; label: string }[] = [
   { id: "ml", label: "机器学习" },
   { id: "math", label: "数学" },
   { id: "resources", label: "资源" },
-  { id: "dev", label: "建站" },
+  { id: "dev", label: "人文" },
 ];
 
 const TAGS = TAG_CONFIG.map((t) => t.id);

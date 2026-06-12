@@ -36,8 +36,19 @@ import { BlogRecommenderCover } from "@/app/blog/blog-recommender/cover";
 import { EmbodiedRobotCover } from "@/app/blog/embodied-robot/cover";
 import { ObsessionCover } from "@/app/blog/obsession/cover";
 import { CodexAgentCover } from "@/app/blog/codex-agent/cover";
+import { CodexAgentReactCover } from "@/app/blog/codex-agent-ReAct/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "codex-agent-ReAct",
+    title: "Codex Agent 设计原理",
+    date: "2026-06-12",
+    tag: "大模型",
+    summary:
+      "从第一性原理拆解 Agent 的十个设计决策：ReAct 循环、工具合约、上下文记忆、观测编码、审批信任、视觉接地与任务分解。",
+    cover: <CodexAgentReactCover />,
+    coverShape: "circle",
+  },
   {
     slug: "codex-agent",
     title: "Codex Agent 技术实现原理详解",
@@ -52,7 +63,7 @@ export const posts: PostData[] = [
     slug: "obsession",
     title: "脑锁：如何摆脱强迫症",
     date: "2026-06-11",
-    tag: "心理学",
+    tag: "人文",
     summary: "大脑用你自己的语言威胁你自己。整理自《脑锁》：两扇门之外还有第三道门，四步骤把「我」和「它」分开。",
     cover: <ObsessionCover />,
     coverShape: "circle",
@@ -329,7 +340,7 @@ export const posts: PostData[] = [
     slug: "blog-recommender",
     title: "纯前端博客推荐系统：TF-IDF + 阅读历史",
     date: "2026-01-21",
-    tag: "建站",
+    tag: "人文",
     summary:
       "构建时计算 TF-IDF 余弦相似度矩阵，运行时读 localStorage 做个性化。零后端、零依赖、31 篇文章 100ms 搞定。",
     cover: <BlogRecommenderCover />,
@@ -339,7 +350,7 @@ export const posts: PostData[] = [
     slug: "craft-oriensx",
     title: "搭建这个网站",
     date: "2026-01-04",
-    tag: "建站",
+    tag: "人文",
     summary:
       "搭建这个网站的过程是一场关于秩序的实验，我努力追求一种克制的、美丽优雅的呈现。这种美不为悦人，而为自洽。",
     cover: <CraftCover />,

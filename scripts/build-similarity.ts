@@ -213,7 +213,7 @@ function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): numbe
 const MANUAL_OVERRIDES: Record<string, string[]> = {
   // 孤立文章 + TF-IDF 效果差的
   "craft-oriensx": [
-    "blog-recommender",       // 同属建站类
+    "blog-recommender",       // 同属人文类
     "engineering-recommender", // 都是工程化/搭建
     "llm-deploy",             // 部署上线
     "polar-starry-resources", // 非技术内容

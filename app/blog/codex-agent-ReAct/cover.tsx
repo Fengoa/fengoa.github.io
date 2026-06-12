@@ -4,11 +4,12 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 const CX = 50;
-const CY = 52;
-const R = 24;
-const DOT_R = 3.2;
+const CY = 54;
+const R = 22;
+const DOT_R = 3;
 const LABEL_GAP = 7;
 
+/** 等边三角形三顶点：顶角 -90°，底角 150° / 30° */
 function vertex(angleDeg: number) {
   const rad = (angleDeg * Math.PI) / 180;
   return {
@@ -18,19 +19,16 @@ function vertex(angleDeg: number) {
 }
 
 const NODES = [
-  { ...vertex(-90), label: "Think", color: "#818cf8", labelSide: "top" as const },
-  { ...vertex(150), label: "Act", color: "#34d399", labelSide: "bottom" as const },
-  { ...vertex(30), label: "Obs", color: "#fbbf24", labelSide: "bottom" as const },
+  { ...vertex(-90), label: "推理", color: "#6366f1", labelSide: "top" as const },
+  { ...vertex(150), label: "行动", color: "#059669", labelSide: "bottom" as const },
+  { ...vertex(30), label: "观测", color: "#d97706", labelSide: "bottom" as const },
 ];
-
-const BOX_W = 28;
-const BOX_H = 18;
 
 function labelY(node: (typeof NODES)[number]) {
   return node.labelSide === "top" ? node.y - LABEL_GAP - DOT_R : node.y + LABEL_GAP + DOT_R;
 }
 
-export function CodexAgentCover({ className }: { className?: string }) {
+export function CodexAgentReactCover({ className }: { className?: string }) {
   const [t, setT] = useState(0);
   const [mounted, setMounted] = useState(false);
 
@@ -40,21 +38,19 @@ export function CodexAgentCover({ className }: { className?: string }) {
     return () => clearInterval(timer);
   }, []);
 
-  const activeEdge = Math.floor(t / 30) % NODES.length;
-  const from = NODES[activeEdge];
-  const to = NODES[(activeEdge + 1) % NODES.length];
+  const active = Math.floor(t / 30) % NODES.length;
+  const from = NODES[active];
+  const to = NODES[(active + 1) % NODES.length];
   const prog = (t % 30) / 30;
 
   return (
     <div
       className={cn(
-        "relative aspect-square w-full overflow-hidden rounded-2xl",
-        "bg-[#0c0c0f] dark:bg-[#050507]",
+        "relative aspect-square w-full overflow-hidden rounded-full",
+        "bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800",
         className
       )}
     >
-      <div className="absolute inset-0 pointer-events-none opacity-25 bg-[linear-gradient(90deg,#27272a_1px,transparent_1px),linear-gradient(#27272a_1px,transparent_1px)] bg-size-[10px_10px]" />
-
       <svg
         className="absolute inset-0 w-full h-full"
         viewBox="0 0 100 100"
@@ -62,9 +58,10 @@ export function CodexAgentCover({ className }: { className?: string }) {
       >
         {mounted && (
           <>
+            {/* 三角边 */}
             {NODES.map((node, i) => {
               const next = NODES[(i + 1) % NODES.length];
-              const isActive = i === activeEdge;
+              const on = i === active;
               return (
                 <line
                   key={`edge-${node.label}`}
@@ -72,72 +69,52 @@ export function CodexAgentCover({ className }: { className?: string }) {
                   y1={node.y}
                   x2={next.x}
                   y2={next.y}
-                  stroke={isActive ? node.color : "#3f3f46"}
-                  strokeWidth={isActive ? 1.1 : 0.5}
-                  opacity={isActive ? 0.85 : 0.35}
+                  stroke={on ? node.color : "#d4d4d8"}
+                  strokeWidth={on ? 1.1 : 0.6}
+                  opacity={on ? 0.75 : 0.4}
                   strokeLinecap="round"
-                  strokeDasharray={isActive ? "none" : "2 2"}
                 />
               );
             })}
 
-            <rect
-              x={CX - BOX_W / 2}
-              y={CY - BOX_H / 2}
-              width={BOX_W}
-              height={BOX_H}
-              rx="2.5"
-              fill="#18181b"
-              stroke="#52525b"
-              strokeWidth="0.5"
-            />
+            {/* 中心标题 */}
             <text
               x={CX}
-              y={CY - 2.5}
+              y={CY}
               textAnchor="middle"
               dominantBaseline="central"
-              className="text-[3.5px] font-mono font-semibold"
+              className="text-[5px] font-mono font-semibold"
               fill="#a1a1aa"
             >
-              LLM
-            </text>
-            <text
-              x={CX}
-              y={CY + 3.5}
-              textAnchor="middle"
-              dominantBaseline="central"
-              className="text-[3px] font-mono"
-              fill="#52525b"
-            >
-              + Tools
+              ReAct
             </text>
 
+            {/* 顶点 + 标签 */}
             {NODES.map((node, i) => {
-              const isActive =
-                i === activeEdge || i === (activeEdge + 1) % NODES.length;
+              const on = i === active;
               return (
                 <g key={node.label}>
                   <circle
                     cx={node.x}
                     cy={node.y}
-                    r={isActive ? 7.5 : 5.5}
+                    r={on ? 7 : 5.5}
                     fill={node.color}
-                    opacity={isActive ? 0.2 : 0.08}
+                    opacity={on ? 0.18 : 0.1}
                   />
                   <circle
                     cx={node.x}
                     cy={node.y}
                     r={DOT_R}
                     fill={node.color}
-                    opacity={isActive ? 1 : 0.55}
+                    opacity={on ? 1 : 0.55}
                   />
                   <text
                     x={node.x}
                     y={labelY(node)}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    className="text-[3.5px] font-mono"
-                    fill={isActive ? "#a1a1aa" : "#52525b"}
+                    className="text-[5px] font-sans"
+                    fill={on ? "#52525b" : "#a1a1aa"}
                   >
                     {node.label}
                   </text>
@@ -145,6 +122,7 @@ export function CodexAgentCover({ className }: { className?: string }) {
               );
             })}
 
+            {/* 沿边运动的脉冲点 */}
             <circle
               cx={from.x + (to.x - from.x) * prog}
               cy={from.y + (to.y - from.y) * prog}
@@ -152,18 +130,6 @@ export function CodexAgentCover({ className }: { className?: string }) {
               fill={from.color}
               opacity={0.95}
             />
-
-            <text
-              x={CX}
-              y="92"
-              textAnchor="middle"
-              dominantBaseline="central"
-              className="text-[4px] font-mono"
-              fill="#52525b"
-              opacity="0.7"
-            >
-              ReAct loop
-            </text>
           </>
         )}
       </svg>

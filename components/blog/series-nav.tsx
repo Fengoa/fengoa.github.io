@@ -21,6 +21,13 @@ const SERIES: Record<string, { title: string; posts: { slug: string; title: stri
       { slug: "rec-llm-bridge", title: "推荐系统 × 大模型：四层重叠与五大范式" },
     ],
   },
+  agent: {
+    title: "Codex Agent 系列",
+    posts: [
+      { slug: "codex-agent-ReAct", title: "Codex Agent 设计原理" },
+      { slug: "codex-agent", title: "Codex Agent 技术实现详解" },
+    ],
+  },
   llm: {
     title: "大模型系列",
     posts: [
