@@ -1,5 +1,6 @@
 /**
  * 博客文章元数据（不含 React Cover 组件，供多处复用）
+ * 与 app/posts.tsx 保持同步
  */
 
 export interface PostMeta {
@@ -10,6 +11,10 @@ export interface PostMeta {
 }
 
 export const postsMeta: PostMeta[] = [
+  { slug: "codex-agent-ReAct", title: "Codex Agent 设计原理", tag: "大模型", date: "2026-06-12" },
+  { slug: "codex-agent", title: "Codex Agent 技术实现原理详解", tag: "大模型", date: "2026-06-12" },
+  { slug: "obsession", title: "脑锁：如何摆脱强迫症", tag: "人文", date: "2026-06-11" },
+  { slug: "embodied-robot", title: "具身机器人全景研究报告", tag: "资源", date: "2026-06-03" },
   { slug: "ml-core-concepts", title: "机器学习的 7 个核心概念", tag: "机器学习", date: "2026-05-09" },
   { slug: "linear-algebra-for-dl", title: "线性代数：深度学习用到的那些", tag: "机器学习", date: "2026-05-06" },
   { slug: "rec-llm-bridge", title: "推荐系统 × 大模型：四层重叠与五大范式", tag: "推荐系统", date: "2026-05-28" },
@@ -39,6 +44,6 @@ export const postsMeta: PostMeta[] = [
   { slug: "minimal-recommender", title: "从零搭建一个推荐系统", tag: "推荐系统", date: "2026-02-01" },
   { slug: "polar-starry-resources", title: "极地星空 / 宇宙主题资源清单", tag: "资源", date: "2026-01-18" },
   { slug: "cs-paper-guide", title: "计算机学术论文：从哪找、怎么看、哪些值得看", tag: "资源", date: "2026-01-13" },
-  { slug: "blog-recommender", title: "纯前端博客推荐系统：TF-IDF + 阅读历史", tag: "人文", date: "2026-01-21" },
+  { slug: "blog-recommender", title: "纯前端博客推荐系统：TF-IDF + 阅读历史", tag: "机器学习", date: "2026-04-21" },
   { slug: "craft-oriensx", title: "搭建这个网站", tag: "人文", date: "2026-01-04" },
 ];

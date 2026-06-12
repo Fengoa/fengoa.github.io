@@ -244,6 +244,18 @@ const MANUAL_OVERRIDES: Record<string, string[]> = {
     "llm-landscape",             // 同"全景图"模式
     "minimal-recommender",       // 推荐系统入门引导
   ],
+  "codex-agent-ReAct": [
+    "codex-agent",
+    "llm-rag",
+    "llm-deploy",
+    "llm-sft",
+  ],
+  "codex-agent": [
+    "codex-agent-ReAct",
+    "llm-deploy",
+    "llm-rag",
+    "engineering-recommender",
+  ],
 };
 
 // ==============================================================================

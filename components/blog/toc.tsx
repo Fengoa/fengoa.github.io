@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,18 @@ interface TocItem {
 export function TableOfContents() {
   const [headings, setHeadings] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
+  const [fadeTop, setFadeTop] = useState(false);
+  const [fadeBottom, setFadeBottom] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const updateFades = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const overflow = scrollHeight > clientHeight + 2;
+    setFadeTop(overflow && scrollTop > 4);
+    setFadeBottom(overflow && scrollTop + clientHeight < scrollHeight - 4);
+  }, []);
 
   useEffect(() => {
     const updateHeadings = () => {
@@ -56,9 +68,23 @@ export function TableOfContents() {
     };
   }, []);
 
+  useEffect(() => {
+    updateFades();
+    const el = scrollRef.current;
+    if (!el) return;
+
+    el.addEventListener("scroll", updateFades, { passive: true });
+    const ro = new ResizeObserver(updateFades);
+    ro.observe(el);
+
+    return () => {
+      el.removeEventListener("scroll", updateFades);
+      ro.disconnect();
+    };
+  }, [headings, updateFades]);
+
   return (
     <nav className="flex flex-col gap-6">
-      {/* 返回按钮 */}
       <Link
         href="/"
         className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
@@ -77,40 +103,69 @@ export function TableOfContents() {
         </svg>
         <span>博客</span>
       </Link>
-      {/* 目录列表 */}
+
       {headings.length > 0 && (
-        <div className="flex flex-col gap-2.5">
-          {headings.map((heading) => (
-            <a
-              key={heading.id}
-              href={`#${heading.id}`}
-              title={heading.text}
-              className={cn(
-                "text-xs transition-all hover:text-foreground truncate",
-                heading.level === 3
-                  ? "pl-3 text-muted-foreground"
-                  : "font-medium",
-                activeId === heading.id
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              onClick={(e) => {
-                e.preventDefault();
-                const element = document.getElementById(heading.id);
-                if (element) {
-                  const yOffset = -100;
-                  const y =
-                    element.getBoundingClientRect().top +
-                    window.pageYOffset +
-                    yOffset;
-                  window.scrollTo({ top: y, behavior: "smooth" });
-                  window.history.pushState(null, "", `#${heading.id}`);
-                }
-              }}
-            >
-              {heading.text}
-            </a>
-          ))}
+        <div className="relative">
+          <div
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-x-0 top-0 z-10 h-14",
+              "transition-opacity duration-200",
+              fadeTop ? "opacity-100" : "opacity-0"
+            )}
+            style={{
+              background:
+                "linear-gradient(to bottom, var(--background) 0%, var(--background) 18%, transparent 58%)",
+            }}
+          />
+          <div
+            ref={scrollRef}
+            className="flex flex-col gap-2.5 max-h-[min(50vh,28rem)] overflow-y-auto scrollbar-hide"
+          >
+            {headings.map((heading) => (
+              <a
+                key={heading.id}
+                href={`#${heading.id}`}
+                title={heading.text}
+                className={cn(
+                  "text-xs transition-all hover:text-foreground truncate shrink-0",
+                  heading.level === 3
+                    ? "pl-3 text-muted-foreground"
+                    : "font-medium",
+                  activeId === heading.id
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                  const element = document.getElementById(heading.id);
+                  if (element) {
+                    const yOffset = -100;
+                    const y =
+                      element.getBoundingClientRect().top +
+                      window.pageYOffset +
+                      yOffset;
+                    window.scrollTo({ top: y, behavior: "smooth" });
+                    window.history.pushState(null, "", `#${heading.id}`);
+                  }
+                }}
+              >
+                {heading.text}
+              </a>
+            ))}
+          </div>
+          <div
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-x-0 bottom-0 z-10 h-14",
+              "transition-opacity duration-200",
+              fadeBottom ? "opacity-100" : "opacity-0"
+            )}
+            style={{
+              background:
+                "linear-gradient(to top, var(--background) 0%, var(--background) 18%, transparent 58%)",
+            }}
+          />
         </div>
       )}
     </nav>
