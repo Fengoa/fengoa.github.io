@@ -171,7 +171,7 @@ export function OpenSourceModelsScatter() {
           </>
         ) : (
           <div className="text-xs text-muted-foreground leading-relaxed">
-            实心气泡是模型总参数量。MoE 模型多画一个虚线气泡表示每次实际激活的参数——同样 671B，DeepSeek-V3 每次只跑 37B，成本接近 7B 模型。
+            实心气泡是模型总参数量。MoE 模型多画一个虚线气泡表示每次实际激活的参数——同为 671B，DeepSeek-V3 每次仅激活 37B，成本接近 7B 模型。
           </div>
         )}
       </div>

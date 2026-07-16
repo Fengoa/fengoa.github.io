@@ -9,7 +9,7 @@ const TEXT = `Transformer 是一种基于自注意力的神经网络架构。它
 
 Transformer 的关键创新是自注意力机制。它允许模型在处理一个 token 时同时考虑序列中的其他所有 token。这比 RNN 的顺序处理更高效。
 
-注意力权重是动态计算的。Q、K、V 三个矩阵决定了每个位置看哪里。这是模型学到的，而不是硬编码的。`;
+注意力权重是动态计算的。Q、K、V 三个矩阵决定了每个位置看哪里。这是模型学到的，属于可学习权重。`;
 
 type Chunk = { text: string; tag?: string };
 
@@ -57,7 +57,7 @@ function chunkSemantic(): Chunk[] {
   return [
     { text: "Transformer 是一种基于自注意力的神经网络架构。它由编码器和解码器组成。每个编码器层包含两个子层：多头自注意力和前馈网络。", tag: "架构" },
     { text: "Transformer 的关键创新是自注意力机制。它允许模型在处理一个 token 时同时考虑序列中的其他所有 token。这比 RNN 的顺序处理更高效。", tag: "自注意力" },
-    { text: "注意力权重是动态计算的。Q、K、V 三个矩阵决定了每个位置看哪里。这是模型学到的，而不是硬编码的。", tag: "权重" },
+    { text: "注意力权重是动态计算的。Q、K、V 三个矩阵决定了每个位置看哪里。这是模型学到的，属于可学习权重。", tag: "权重" },
   ];
 }
 
@@ -65,7 +65,7 @@ const STRATEGIES = [
   {
     key: "fixed",
     name: "定长切分",
-    desc: "每 80 字符一刀",
+    desc: "每 80 字符一段",
     pros: "实现最简单，速度快",
     cons: "容易切到句子或词中间",
     build: (t: string) => chunkFixed(t, 80),

@@ -7,7 +7,7 @@ const LAYERS = [
   { label: "系统提示", share: 12, note: "行为准则，始终置顶" },
   { label: "环境信息", share: 8, note: "URL、步骤数、工作目录" },
   { label: "工具 Schema", share: 18, note: "完整工具列表" },
-  { label: "对话历史", share: 62, note: "最贵，也最容易撑爆" },
+  { label: "对话历史", share: 62, note: "token 消耗最大，最易超出容量" },
 ];
 
 export function ContextLayers() {

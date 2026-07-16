@@ -6,16 +6,16 @@ import {
 } from "./visuals";
 
 export const metadata = {
-  title: "SFT：教模型听话",
+  title: "SFT：监督微调",
 }
 
-# SFT：教模型听话
+# SFT：监督微调
 
 <SeriesNav series="llm" />
 
-预训练完成后的模型只会一件事：根据前文续写下一个 token。问它 "What is 2+2?"，它不会答 "4"，而是把这句话当成某段练习题的开头，继续生成 "What is 3+3? What is..."。它没有「回答问题」这个概念，只是在重复训练数据里的统计模式。
+预训练完成后的模型只会一件事：根据前文续写下一个 token。问它 "What is 2+2?"，它会把这句话当成某段练习题的开头，继续生成 "What is 3+3? What is..."，停在续写模式里，不会给出 "4"。它没有「回答问题」这个概念，只是在重复训练数据里的统计模式。
 
-SFT（Supervised Fine-Tuning）解决的就是这件事。用一批指令-回复对（instruction–response pairs）继续训练，模型逐渐学会一种新的格式：看到问题就停下来给答案，而不是一路续写下去。
+SFT（Supervised Fine-Tuning）解决的就是这件事。用一批指令-回复对（instruction–response pairs）继续训练，模型逐渐学会一种新的格式：看到问题就给出答案，并终止一路续写。
 
 <BeforeAfterSftDemo />
 
@@ -23,9 +23,9 @@ SFT（Supervised Fine-Tuning）解决的就是这件事。用一批指令-回复
 
 底层目标完全一样，都是预测下一个 token。变的只有训练数据的样子。
 
-预训练吃的是大段连续文本，比如「The cat sat on the mat. The dog...」。模型学会的是给定一段前文，预测下一个字符出现的概率。
+预训练采用大段连续文本，比如「The cat sat on the mat. The dog...」。模型学会的是给定一段前文，预测下一个字符出现的概率。
 
-SFT 吃的是结构化的对话样本，长这样：
+SFT 采用结构化的对话样本，格式如下：
 
 ```text
 ### Instruction:
@@ -35,7 +35,7 @@ What is the capital of France?
 The capital of France is Paris.
 ```
 
-格式里出现了「Instruction」「Response」这两个标记。模型在这种数据上继续训，不是在学新的语言知识，而是在学一个新的模式——遇到 `### Instruction:` 这种开头的字符串时，正确的延续不是再编一道题，而是在 `### Response:` 后面给出回答。
+格式里出现了「Instruction」「Response」这两个标记。模型在这种数据上继续训练，重点在于学习一种新的模式——遇到 `### Instruction:` 这种开头的字符串时，正确的延续是在 `### Response:` 后面给出回答。
 
 换句话说，SFT 教会模型的是「在指令模板里扮演 assistant 角色」这件事。
 
@@ -49,9 +49,9 @@ The capital of France is Paris.
 
 ## LoRA：只动 1% 的参数
 
-7B 模型全参数微调要约 28GB 显存——参数本身、梯度、Adam 优化器的一阶和二阶动量各占一份。一张 24GB 的 4090 跑不动，更不用说想试好几组超参的人。
+7B 模型全参数微调要约 28GB 显存——参数本身、梯度、Adam 优化器的一阶和二阶动量各占一份。单张 24GB 的 4090 无法完成全参数微调，更难以并行尝试多组超参。
 
-LoRA 的想法很朴素：原始权重 <Math>{`W`}</Math> 不动，在它旁边并联一个低秩的增量 <Math>{`\\Delta W = BA`}</Math>，只训这两个小矩阵。
+LoRA 的想法很朴素：原始权重 <Math>{`W`}</Math> 不动，在它旁边并联一个低秩的增量 <Math>{`\\Delta W = BA`}</Math>，只训练这两个小矩阵。
 
 <Math block>{`y = Wx + \\Delta W \\cdot x = Wx + BAx`}</Math>
 
@@ -65,33 +65,33 @@ LoRA 的想法很朴素：原始权重 <Math>{`W`}</Math> 不动，在它旁边�
 
 LoRA 论文做过一组实验，在 GPT-3 上把 <Math>{`r`}</Math> 从 1 调到 64，验证集表现的差距其实没那么大。简单分类、风格迁移这类任务，<Math>{`r=4`}</Math> 就够；让模型学一种全新领域的写作风格，再加到 <Math>{`r=16`}</Math> 或 <Math>{`r=32`}</Math>；继续往上调收益迅速衰减。一个常见的经验值是从 <Math>{`r=8`}</Math> 起手，看看效果，再决定要不要加大。
 
-社区还有一个有用的发现：LoRA 应该加在所有的注意力投影矩阵上（<Math>{`W_q`}</Math>、<Math>{`W_k`}</Math>、<Math>{`W_v`}</Math>、<Math>{`W_o`}</Math>），而不是只加在 <Math>{`W_q`}</Math> 和 <Math>{`W_v`}</Math> 上。覆盖面更广比单纯调大 <Math>{`r`}</Math> 更划算。
+社区还有一个有用的发现：LoRA 应加在所有的注意力投影矩阵上（<Math>{`W_q`}</Math>、<Math>{`W_k`}</Math>、<Math>{`W_v`}</Math>、<Math>{`W_o`}</Math>）。全覆盖比只作用于 <Math>{`W_q`}</Math> 和 <Math>{`W_v`}</Math>、单纯调大 <Math>{`r`}</Math> 更划算。
 
 ### QLoRA：把显存再压一档
 
-LoRA 已经把训练量降下来了，但原始权重 <Math>{`W`}</Math> 仍然以 FP16 占着显存，7B 模型光这部分就 14GB。QLoRA 的思路是把 <Math>{`W`}</Math> 量化到 4-bit 存着，前向传播时再反量化成 BF16 参与计算，LoRA 的两个矩阵 <Math>{`B`}</Math> 和 <Math>{`A`}</Math> 仍然是 BF16。这样 7B 模型微调能塞进 24GB 显卡，65B 模型塞进 48GB 显卡。
+LoRA 已经把训练量降下来了，但原始权重 <Math>{`W`}</Math> 仍然以 FP16 占着显存，7B 模型光这部分就 14GB。QLoRA 的思路是把 <Math>{`W`}</Math> 量化到 4-bit 存着，前向传播时再反量化成 BF16 参与计算，LoRA 的两个矩阵 <Math>{`B`}</Math> 和 <Math>{`A`}</Math> 仍然是 BF16。这样 7B 模型微调可在 24GB 显卡上完成，65B 模型可在 48GB 显卡上完成。
 
 QLoRA 还引入了 NF4（normal float 4-bit）这种针对正态分布权重设计的量化格式，比常规的 INT4 误差更小。论文里 65B 模型 QLoRA 微调 24 小时后，性能达到 ChatGPT 水平的 99.3%——一张消费级显卡能复现接近闭源模型的效果，这是 2023 年开源社区的一次能力跃迁。
 
 ## 灾难性遗忘
 
-模型在 SFT 数据上训得越久，指令遵循能力越强，但写作的灵动性、长文连贯性、世界知识这些预训练阶段学到的东西会同步退化。这就是灾难性遗忘——为了适应新分布，原来的能力被覆盖掉了。
+模型在 SFT 数据上训练越久，指令遵循能力越强，但写作的灵动性、长文连贯性、世界知识这些预训练阶段学到的东西会同步退化。这就是灾难性遗忘——为了适应新分布，原来的能力被覆盖掉了。
 
 <CatastrophicForgettingPlot />
 
-实践里有几条经验。SFT 不要训太久，几十到几百个 step 通常够，损失刚开始平台化就该停。LoRA 因为不动原始权重，灾难性遗忘比全参数微调轻很多，这也是它流行的另一个原因。如果非要全参数微调，可以在 SFT 数据里混一小部分预训练数据继续训，把模型拽回原来的分布附近。
+实践里有几条经验。SFT 训练周期不宜过长，几十到几百个 step 通常够，损失刚开始平台化就该停。LoRA 因为不动原始权重，灾难性遗忘比全参数微调轻很多，这也是它流行的另一个原因。如果非要全参数微调，可以在 SFT 数据里混一小部分预训练数据继续训练，把模型拉回原来的分布附近。
 
 LIMA 那篇论文做过一个更极端的实验：1000 条精挑细选的指令样本，胜过 50000 条 GPT-4 生成的低质量样本。SFT 阶段数据质量比数量重要得多。模型在预训练阶段已经学了几乎所有它需要的知识，SFT 只是在唤醒「按指令回答」这个行为模式。
 
-## 动手跑一遍
+## 动手实践
 
-最小代码在 `minimal-llm/src/sft.py`，包含 LoRA 实现、SFT 训练循环、训练前后的对比生成。想在 Colab 上跑：
+最小代码位于 `minimal-llm/src/sft.py`，包含 LoRA 实现、SFT 训练循环及训练前后对比生成。可在 Colab 中运行：
 
 ```bash
 python sft.py
 ```
 
-[在 Colab 里跑这一篇](https://colab.research.google.com/)
+[在 Colab 中运行本篇](https://colab.research.google.com/)
 
 {/* TODO: 替换为真实 Colab 链接 */}
 

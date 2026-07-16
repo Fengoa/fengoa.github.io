@@ -19,7 +19,7 @@ GPT-2 的做法挺直接：开一个 `(ctx, n_embd)` 的位置 embedding 表，�
 
 <PositionEmbeddingFailure />
 
-RoPE 换了个思路：不再把位置当成一个要学的向量“加”上去，而是让位置变成 Q、K 在做内积之前要“转”过的角度。这样位置信息进了几何里，外推也就自然了。
+RoPE 换了一种做法：把位置编码进 Q、K 内积前的旋转角，位置信息由此进入几何结构，外推也随之自然成立。
 
 ## 绝对位置编码到底卡在哪
 
@@ -47,7 +47,7 @@ RoPE 不动 embedding，它动 Q 和 K。每个位置对应一个旋转矩阵 <M
 
 ## 旋转的几何直觉
 
-二维平面上一个向量逆时针转 <Math>{`\\theta`}</Math>，矩阵长这样：
+二维平面上一个向量逆时针转 <Math>{`\\theta`}</Math>，对应旋转矩阵为：
 
 <Math block>{`R(\\theta) = \\begin{bmatrix} \\cos\\theta & -\\sin\\theta \\\\ \\sin\\theta & \\cos\\theta \\end{bmatrix}`}</Math>
 
@@ -59,7 +59,7 @@ RoPE 把 <Math>{`d`}</Math> 维向量两两配对，每对就是一个二维平�
 
 <Rope2dRotation />
 
-这一组频率刚好像一组钟表的指针。秒针跑得快，每分钟一圈，分辨细节；时针几乎不动，分辨大段。看一眼三根针，时刻是确定的。
+这一组频率类似一组钟表的指针。秒针转速快，每分钟一圈，用于分辨细节；时针几乎不动，用于分辨大段区间。观察三根指针即可确定时刻。
 
 <RopeFrequencyClock />
 
@@ -82,11 +82,11 @@ def apply_rotary_emb(q, k, freqs):
     return torch.view_as_real(q_out).flatten(-2), torch.view_as_real(k_out).flatten(-2)
 ```
 
-预计算频率表只在初始化时跑一次，每步前向只花一次复数乘。它没有可学参数，也没有 lookup table，长度就不再是硬约束。
+预计算频率表仅在初始化时执行一次，每步前向仅需一次复数乘法。无可学参数，无 lookup table，序列长度不再构成硬约束。
 
 ## 同一个模型，三种位置编码
 
-用 2 层 128 维的小模型在 Tiny Shakespeare 上跑 5000 步，分别开关位置编码。表里 RoPE 参数最少（不需要存位置 embedding 表的 8192 个参数），val loss 还最低：
+以 2 层 128 维小模型在 Tiny Shakespeare 上训练 5000 步，分别开关位置编码。RoPE 参数量最少（无需存储 8192 个位置 embedding 参数），val loss 亦最低：
 
 | 位置编码 | 参数量 | val loss | 与 RoPE 差 |
 |---|---:|---:|---:|
@@ -101,15 +101,15 @@ def apply_rotary_emb(q, k, freqs):
 
 <ExtrapolationComparison />
 
-绝对学习从 1.65 涨到 2.5+，基本生成不出连贯文本。RoPE 从 1.58 涨到 1.65，肉眼可见的稳定。正弦编码介于中间，能撑一段，远了也撑不住。
+绝对学习从 1.65 涨到 2.5+，基本生成不出连贯文本。RoPE 从 1.58 涨到 1.65，外推表现稳定。正弦编码介于两者之间：短序列外推尚可，超出训练长度后性能迅速衰减。
 
 ## 工业界为什么全部转向 RoPE
 
-LLaMA、Qwen、Mistral、GPT-NeoX、DeepSeek 等公开权重的开源模型，几乎清一色用 RoPE。原因不是哪一条特别突出，而是它在几个维度上同时占便宜。
+LLaMA、Qwen、Mistral、GPT-NeoX、DeepSeek 等公开权重的开源模型，几乎清一色用 RoPE。原因在于它在多个维度上同时占优。
 
 不需要额外参数，位置信息编码进旋转角；天然只依赖相对位置；和 Flash Attention 兼容（旋转可以 fuse 进 kernel，无需改 attention 主体）；远距离 token 的旋转角差大，点积幅度自然衰减，相当于自带一种局部性归纳偏置。
 
-外推能力是它压倒性的卖点。从 LLaMA 2 的 4K 一路往上，到 LLaMA 3 的 8K、Qwen 2.5 的 128K，背后都是 RoPE 的几何性质支撑。具体的扩展手段——NTK-aware Scaling、YaRN、Position Interpolation——本质上都在调旋转频率的底数 <Math>{`\\theta`}</Math> 或频段，而不是改公式本身。
+外推能力是它压倒性的卖点。从 LLaMA 2 的 4K 一路往上，到 LLaMA 3 的 8K、Qwen 2.5 的 128K，背后都是 RoPE 的几何性质支撑。具体的扩展手段——NTK-aware Scaling、YaRN、Position Interpolation——本质上都在调旋转频率的底数 <Math>{`\\theta`}</Math> 或频段，公式本身保持不变。
 
 ## 和工业界的距离
 
@@ -122,9 +122,9 @@ LLaMA、Qwen、Mistral、GPT-NeoX、DeepSeek 等公开权重的开源模型，�
 
 数学骨架完全一致。差别在于工业界要把 RoPE 推到训练时几十倍的长度，需要在频率分配和插值方式上做更精细的设计。
 
-## 跑一遍
+## 动手实践
 
-跟着这份笔记把三种位置编码在 Tiny Shakespeare 上各训一次，再做一次外推测试，能直接看到 loss 曲线分叉。
+跟着这份笔记把三种位置编码在 Tiny Shakespeare 上各训练一次，再做一次外推测试，能直接看到 loss 曲线分叉。
 
 [Colab: rope-vs-learned-vs-sinusoidal.ipynb](https://colab.research.google.com/github/TODO) — 三种位置编码同条件训练 + 外推 loss 对比
 

@@ -45,7 +45,7 @@ const STEPS: Step[] = [
   {
     id: "res1",
     label: "残差连接",
-    desc: "把原始 x 加回来，attention 只是“增量”，原信息不丢",
+    desc: "把原始 x 加回来，attention 只是“增量”，原信息得以保留",
     active: ["x", "attn", "res1"],
     flow: [
       { from: "attn", to: "res1" },

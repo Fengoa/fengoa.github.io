@@ -35,7 +35,7 @@ const VARIANTS: Variant[] = [
     finalLoss: 1.91,
     delta: 0.21,
     decay: 3.4,
-    blurb: "缺少把 attention 输出再揉一次的位置",
+    blurb: "缺少对 attention 输出做进一步非线性变换的模块",
   },
   {
     key: "no-residual",

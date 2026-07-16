@@ -21,8 +21,8 @@ const STATIC_REQS = [
   { len: 5, color: "#f59e0b" }, // amber
 ];
 
-// static：等到本批 8 步全跑完才能放新请求 → R4 必须等 t=8 才能进
-// continuous：每步都重新组 batch，R2 在 t=3 跑完后槽位空出，R4 在 t=4 进入
+// static：本批 8 步全部完成后才接纳新请求 → R4 须等待至 t=8
+// continuous：每步重新组 batch，R2 在 t=3 完成后释放槽位，R4 在 t=4 进入
 
 const T = 12;
 
@@ -78,7 +78,7 @@ export function ContinuousBatchingTimeline() {
       <div className="space-y-6">
         <Section
           title="static batching"
-          subtitle="新请求必须等当前批最长那个跑完"
+          subtitle="新请求须等待当前批次最长请求完成"
           util={`${staticUsed} / ${3 * T} = ${Math.round((staticUsed / (3 * T)) * 100)}% 利用率`}
           grid={staticGrid}
           visibleT={visibleT}

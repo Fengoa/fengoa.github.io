@@ -128,7 +128,7 @@ export function MLPvsAttention() {
                 MLP
               </span>
               <span className="font-mono text-xs text-muted-foreground">
-                position-wise，权重训练完就固定
+                position-wise，权重在训练完成后固定
               </span>
             </div>
             <Bars weights={MLP_WEIGHTS} active />

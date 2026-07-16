@@ -35,7 +35,7 @@ export function RlhfVsDpoPipeline() {
         />
 
         <p className="text-xs text-muted-foreground/80 font-mono text-center">
-          RLHF 还要在训练循环里在线采样 rollouts，DPO 直接吃静态偏好对
+          RLHF 需在训练循环中在线采样 rollouts，DPO 直接使用静态偏好对
         </p>
       </div>
     </VisualFrame>

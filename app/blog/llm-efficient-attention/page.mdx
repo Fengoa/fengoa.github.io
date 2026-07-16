@@ -15,7 +15,7 @@ export const metadata = {
 
 标准 Self-Attention 在序列长度上是平方级的：长度翻倍，矩阵翻 4 倍。训练 1024 token 还能忍，推理时一边自回归生成 4096 token，一边把过去所有 token 的 K、V 重算一遍——又慢、又费显存，长一点就直接顶满 GPU。
 
-把这件事拆开看，问题分布在三个地方。一是推理时大量重复计算，本来不必算的过去 token 又被算了一遍，KV Cache 解决它；二是即使缓存了 KV，序列变长后显存还是吃不消，GQA 在结构上动刀子；三是计算本身的瓶颈不是浮点而是 HBM 来回搬数据，Flash Attention 改写算法让数据待在片上 SRAM。
+把这件事拆开看，问题分布在三个地方。一是推理时大量重复计算，本来不必算的过去 token 又被算了一遍，KV Cache 解决它；二是即使缓存了 KV，序列变长后显存压力仍然很大，GQA 从结构上缩减 KV head；三是计算瓶颈在于 HBM 来回搬数据，Flash Attention 改写算法让数据待在片上 SRAM。
 
 三个方法叠在一起，是当前所有线上推理框架的默认配方。
 
@@ -48,7 +48,7 @@ step 3: 输入 "The cat sat"  → 算 K1,V1,K2,V2,K3,V3 → 预测 "on"
 
 ## GQA：让多个 Q 共享 KV
 
-KV Cache 解决了重复算的问题，代价是要把所有历史 K、V 都摆在显存里。LLaMA-2 70B 这种规模的模型，单条序列就能吃掉惊人的一块。
+KV Cache 解决了重复算的问题，代价是要把所有历史 K、V 都摆在显存里。LLaMA-2 70B 这种规模的模型，单条序列就能占用惊人的一块显存。
 
 KV Cache 的显存占用可以直接写出来：
 
@@ -75,7 +75,7 @@ GQA-4 显存减半，loss 反而略好一点（可以看作一种正则化）。
 
 ## Flash Attention：把瓶颈移出 HBM
 
-到这里显存已经省了不少，但 attention 的计算速度还有问题——不是因为 GPU 算不过来，而是数据搬运不够快。
+到这里显存已经省了不少，但 attention 的计算速度还有问题——根因是数据搬运带宽不足，瓶颈不在 GPU 算力。
 
 H100 的 FP16 算力是 989 TFLOPS，HBM 带宽是 3 TB/s。算一个 attention 矩阵 N=4K，要在 HBM 里来回写一张 64MB 的中间结果，瓶颈就卡在带宽上，算力被白白浪费。
 
@@ -109,7 +109,7 @@ CUDA 可用时会自动走 Flash 路径。
 
 <AttentionMemoryRoofline />
 
-朴素方案在 8K 就开始爆，加 KV Cache 能撑到 32K，再上 GQA 能撑到 128K 附近，最后 Flash Attention 把激活那一份也吃掉。线上推理框架（vLLM、TensorRT-LLM、TGI）默认都把这三件事打包起来。
+朴素方案在 8K 就开始显存不足，加 KV Cache 能扩展到 32K，再上 GQA 能扩展到 128K 附近，最后 Flash Attention 把激活那一份也压下去。线上推理框架（vLLM、TensorRT-LLM、TGI）默认都把这三件事打包起来。
 
 | 优化 | 解决什么 | 量级 |
 |---|---|---|
@@ -131,9 +131,9 @@ Flash Attention 也在快速演进。FA-2 重写了反向传播减少非矩阵 G
 | 序列长度 | 64–256 | 128K+ |
 | 并发 | 单请求 | Continuous Batching |
 
-## 跑一遍
+## 动手实践
 
-KV Cache 的速度对比、GQA 的 head 分组实验，都能在小模型上几分钟跑完。
+KV Cache 的速度对比、GQA 的 head 分组实验，均可在小模型上于数分钟内完成。
 
 [Colab: efficient-attention-walkthrough.ipynb](https://colab.research.google.com/github/TODO) — KV Cache 加速 + GQA / MQA / MHA loss 对比
 

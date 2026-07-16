@@ -46,7 +46,7 @@ export const metadata = {
 
 本文使用 [Tiny Shakespeare](https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt) 数据集，该数据集从莎士比亚全集中截取，大小为 1MB，约含 100 万字符。整个文件仅包含 65 种不同字符，包括大小写字母、常见标点、空格和换行——前文提到的 `vocab_size = 65` 即源于此。
 
-数据片段大概长这样：
+数据片段示例如下：
 
 ```text
 First Citizen:
@@ -278,7 +278,7 @@ Your come bote yet for his true.
 
 两者架构实质相同，均为 Token Embedding + 若干层 Transformer Block + 输出头。差异仅在于规模。
 
-下一篇文章将字符级编码替换为 BPE 子词。token 不再仅为单个字母，而是 "the"、"ing"、"tion" 等具备语义的片段，模型每步可获取的信息量显著增加。
+下一篇文章将字符级编码替换为 BPE 子词。token 变为 "the"、"ing"、"tion" 等具备语义的片段，模型每步可获取的信息量显著增加。
 
 
 ## 动手实践

@@ -66,7 +66,7 @@ export const posts: PostData[] = [
     date: "2026-06-12",
     tag: "大模型",
     summary:
-      "Agent Loop、工具注册、上下文裁剪——ReAct 循环怎么跑，流式输出和安全审批怎么接，附浏览器自动化与 OpenCLI 编排示例。",
+      "Agent Loop、工具注册、上下文裁剪——ReAct 循环的工作方式，流式输出和安全审批的接入方式，附浏览器自动化与 OpenCLI 编排示例。",
     cover: <CodexAgentCover />,
     coverShape: "square",
   },
@@ -113,7 +113,7 @@ export const posts: PostData[] = [
     date: "2026-05-28",
     tag: "推荐系统",
     summary:
-      "两个领域不是平行的，而是深度交织的。从完全共享到直接融合，四层递进关系全景。核心矛盾只有一个：ID vs Text。",
+      "推荐系统与大模型深度交织。从完全共享到直接融合，四层递进关系全景。核心矛盾只有一个：ID vs Text。",
     cover: <LandscapeCover />,
   },
   {
@@ -145,7 +145,7 @@ export const posts: PostData[] = [
   },
   {
     slug: "llm-inference",
-    title: "推理优化：让模型跑得更快",
+    title: "推理优化：提升模型推理速度",
     date: "2026-04-16",
     tag: "大模型",
     summary: "量化（FP16→INT4）、Speculative Decoding、Continuous Batching。组合起来推理速度提升 10-50 倍。",
@@ -165,7 +165,7 @@ export const posts: PostData[] = [
     title: "SFT：教模型听话",
     date: "2026-04-14",
     tag: "大模型",
-    summary: "用指令-回复对微调，让模型从「续写」变成「回答」。LoRA 只训 1% 参数，效果接近全参数微调。",
+    summary: "用指令-回复对微调，让模型从「续写」转为「回答」。LoRA 仅微调 1% 参数，效果接近全参数微调。",
     cover: <SFTCover />,
     coverShape: "square",
   },
@@ -183,7 +183,7 @@ export const posts: PostData[] = [
     title: "位置编码：RoPE",
     date: "2026-03-21",
     tag: "大模型",
-    summary: "不加位置 embedding，而是旋转 Q/K 向量编码位置。优雅的数学技巧让模型能外推到训练时没见过的长度。",
+    summary: "不加位置 embedding，通过旋转 Q/K 向量编码位置。优雅的数学技巧让模型能外推到训练时没见过的长度。",
     cover: <RoPECover />,
   },
   {
@@ -254,7 +254,7 @@ export const posts: PostData[] = [
     date: "2026-02-21",
     tag: "推荐系统",
     summary:
-      "Docker 一键启动、PostgreSQL 持久化、Redis 缓存、结构化日志、模型热切换。把能跑的 demo 变成能部署的服务。",
+      "Docker 一键启动、PostgreSQL 持久化、Redis 缓存、结构化日志、模型热切换。把可运行的 demo 变成可部署的服务。",
     cover: <EngineeringCover />,
   },
   {

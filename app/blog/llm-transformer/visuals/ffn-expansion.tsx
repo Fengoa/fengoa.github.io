@@ -188,7 +188,7 @@ export function FFNExpansion() {
           >
             <GeluCurve />
             <div className="font-mono text-xs text-muted-foreground">
-              GELU(x) = x · Φ(x)，负值不会一刀切到 0，而是平滑衰减
+              GELU(x) = x · Φ(x)，负值平滑衰减，不会直接截断为 0
             </div>
           </motion.div>
         )}

@@ -13,21 +13,21 @@ export const metadata = {
 
 <SeriesNav series="llm" />
 
-模型训完了、压量化完了、推理也优化过了，但这些都是单机能跑起来的事。要让它真正服务用户，得包成一个 HTTP 服务——别人发个请求，几秒钟拿到回答。这一篇就讲这件事怎么做。
+模型训练完成、量化完成、推理也优化过之后，这些都还只是单机可运行的状态。要让它真正服务用户，需要封装成一个 HTTP 服务——别人发个请求，几秒钟拿到回答。这一篇就讲这件事怎么做。
 
-整套流程和推荐系统工程化那篇思路完全一样：把「能跑」变成「能用」。挑框架、起服务、做 streaming、上 Docker、做监控、算账。重要的不是哪个工具最炫，而是搭出来的东西稳定、便宜、好换。
+整套流程和推荐系统工程化那篇思路完全一样：把「可运行」变成「可用」。挑框架、起服务、做 streaming、上 Docker、做监控、算账。重点在于搭出稳定、成本可控、易于替换的服务。
 
 ## 推理框架挑哪个
 
-vLLM、TGI、llama.cpp、Ollama，名字都听过。它们各自的位置其实很清楚——做生产服务首选 vLLM 或 TGI，本地玩或者部署到边缘设备就走 llama.cpp 系。Ollama 是 llama.cpp 的傻瓜壳，命令行 `ollama run llama3` 就能起来，开发机上调试很省心。
+vLLM、TGI、llama.cpp、Ollama 是四类常见推理框架。选型原则如下：生产服务优先 vLLM 或 TGI；本地开发或边缘部署选用 llama.cpp 系。Ollama 是 llama.cpp 的简化封装，执行 `ollama run llama3` 即可启动，适合开发机调试。
 
 <InferenceFrameworkRadar />
 
-雷达图把这件事画得直观：vLLM 在吞吐和生态上最强，代价是配置略多；llama.cpp 极省资源、量化方案最齐，但单卡吞吐打不过 vLLM；Ollama 用起来最舒服，但生产场景吃不消。
+雷达图对比如下：vLLM 在吞吐和生态上领先，代价是配置项较多；llama.cpp 资源占用低、量化方案齐全，但单卡吞吐不及 vLLM；Ollama 上手简便，但难以承载生产负载。
 
 ## vLLM 起服务
 
-工业界生产线上 90% 跑 vLLM。安装、起服务、调用，三件事加起来三行：
+工业界生产线约 90% 采用 vLLM。安装、启动服务、调用，三步合计三行：
 
 ```bash
 pip install vllm
@@ -54,11 +54,11 @@ for chunk in response:
 
 这种 OpenAI 协议的兼容性是有意义的。Cursor、Continue、LangChain、各种 SDK 都默认走这套接口，自己的服务做成兼容格式，整个生态的工具链立刻能用上。换模型只是改 `model` 字段，业务代码零改动。
 
-## Streaming 不是花活
+## Streaming 的必要性
 
 用户从输入框点回车到看到第一个字的延迟，叫 TTFT（Time To First Token）。这个数字的体感比总生成时间重要得多。
 
-如果一次请求要生成 200 个 token、每个 token 40 ms，总生成 8 秒。Batch 模式下用户得等满 8 秒才看到回答；Streaming 把每个 token 边生成边推给前端，第一个字 40 ms 就到了，剩下的字慢慢续。同样的总耗时，前者像是卡住了，后者像是有人在打字。
+如果一次请求要生成 200 个 token、每个 token 40 ms，总生成 8 秒。Batch 模式下用户须等待全部 token 生成完毕才看到回答；Streaming 将每个 token 边生成边推送给前端，首字 40 ms 即可呈现，后续内容逐步输出。总耗时相同，前者体验类似请求停滞，后者类似逐字显示。
 
 <StreamingVsBatchDemo />
 
@@ -66,7 +66,7 @@ for chunk in response:
 
 ## Docker 包起来
 
-直接 `pip install` 部署在生产机上不可控——驱动版本、CUDA 版本、Python 包版本任何一个不对都跑不起来。包成 Docker 镜像才是正经做法：
+直接 `pip install` 部署在生产机上不可控——驱动版本、CUDA 版本、Python 包版本任一不匹配均可能导致服务无法启动。封装为 Docker 镜像是标准做法：
 
 ```dockerfile
 FROM vllm/vllm-openai:latest
@@ -92,27 +92,27 @@ services:
       --max-model-len 4096
 ```
 
-部署到任意一台带 GPU 的机器，`docker compose up -d` 就能拉起来。换机器、加副本、滚动升级，都是这一套。
+部署至任意带 GPU 的机器，执行 `docker compose up -d` 即可启动服务。迁移机器、扩展副本、滚动升级均沿用同一流程。
 
 ## 一个能扩的架构
 
 单机起服务很容易，但单机扛不住任何意义上的“流量”。一台 L4 显卡正常压测大概 10-20 并发请求就饱和了，更多的请求要么排队要么超时。
 
-到底能撑多少并发，不是猜的。粗算一下显存预算就清楚——模型权重 + 每条请求的 KV Cache：
+并发上限可通过显存预算估算——模型权重 + 每条请求的 KV Cache：
 
 <Math block>{`\\text{VRAM} \\approx P \\cdot b_w + B \\cdot L \\cdot 2 \\cdot n_{\\text{layer}} \\cdot d_{\\text{kv}} \\cdot b_{kv}`}</Math>
 
 `P` 是参数量、`b_w` 是权重每个数占的字节数（FP16 是 2，INT4 是 0.5），后半段 `B · L · ...` 是 batch 大小乘上序列长度、每层 K + V 两份缓存。LLaMA-3-8B AWQ 量化后权重 4 GB，剩下的 20 GB 在 4K context 下大概能塞 20 来个并发——这就是单卡的天花板。
 
-生产架构的最小单元长这样：
+生产架构的最小单元如下：
 
 <DeploymentArchitectureDiagram />
 
-入口是 Nginx 做 TLS、限流、按 token 鉴权。后端是几个 vLLM 实例，每个跑在一张 GPU 上，模型权重统一放在 S3 或共享 NFS 上。Nginx 把请求轮询分发，某个实例挂了直接摘掉，新实例拉起来从 S3 把权重拉一遍就能上。
+入口为 Nginx，负责 TLS、限流与 token 鉴权。后端为多个 vLLM 实例，各部署于一张 GPU，模型权重统一存放于 S3 或共享 NFS。Nginx 轮询分发请求，实例故障时摘除，新实例启动后从 S3 加载权重即可上线。
 
 监控这块至少得有 Prometheus 抓 vLLM 的 metrics——QPS、TTFT、P99 延迟、KV Cache 占用率、运行中的请求数。Grafana 搭个 dashboard，凌晨三点哪个实例 OOM 了能立刻知道。
 
-业内常用的压测工具是 `wrk` 或 `locust`。一张 L4 跑 LLaMA-3-8B AWQ 量化版本，连续批处理打开，正常能稳定到 200-300 tokens/s 总吞吐，P99 单 token 延迟 60-80 ms。开两副本翻倍，开三副本基本就能覆盖一个中等规模的内部应用。
+业内常用压测工具为 `wrk` 或 `locust`。单张 L4 部署 LLaMA-3-8B AWQ 量化版本并启用连续批处理，总吞吐可稳定至 200–300 tokens/s，P99 单 token 延迟 60–80 ms。两副本吞吐翻倍，三副本可覆盖中等规模内部应用。
 
 ## 算清楚成本
 
@@ -124,7 +124,7 @@ services:
 
 每月用量在 50M 以下的应用，自部署完全没必要——付 \$500 月租维护一台机器，比 \$125 的 API 账单贵 4 倍，还得自己运维。每月 1B tokens 以上的场景，自部署成本只有 API 的 1/5，规模再大就更悬殊。绝大多数 toC 应用都在前面那个区间，所以即便国内有完整的开源模型选择，多数团队仍然在用 API。
 
-真正适合自部署的场景不外乎几种：数据出不了内网（合规）、调用量已经稳定大到每月数亿 token（成本）、对延迟有严格要求（API 排队不可控）、需要做特定微调（API 不让训）。
+真正适合自部署的场景不外乎几种：数据出不了内网（合规）、调用量已经稳定大到每月数亿 token（成本）、对延迟有严格要求（API 排队不可控）、需要做特定微调（API 不支持微调）。
 
 ## 和工业界的距离
 
@@ -141,9 +141,9 @@ services:
 
 下一篇是这个系列最后一篇——大模型全景图。把前面 13 篇放一起回头看，哪些是核心骨架，哪些是当前的工程实现，哪些方向还在快速变化。
 
-## 动手跑一遍
+## 动手实践
 
-整理了一个 Colab notebook，从 vLLM 起服务到 Docker 打包到压测全流程，跑完能在自己的 GPU 上拉起一个 OpenAI 兼容的 LLaMA 服务：
+整理了一个 Colab notebook，从 vLLM 起服务到 Docker 打包到压测全流程，执行完毕后能在自己的 GPU 上拉起一个 OpenAI 兼容的 LLaMA 服务：
 
 [在 Google Colab 上打开](https://colab.research.google.com/drive/TODO_DEPLOY_NOTEBOOK)
 

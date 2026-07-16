@@ -21,13 +21,13 @@ SFT 完之后模型会回答了，但回答质量参差不齐。问它「我难�
 
 ## RLHF 的复杂性
 
-2022 年 InstructGPT 的做法是 RLHF（基于人类反馈的强化学习），分三步走。第一步 SFT，上一篇做的事。第二步训一个奖励模型，输入 prompt 和回答，输出一个标量分数，要求 chosen 的分数高于 rejected。第三步用 PPO 算法，把奖励模型的输出当成强化学习信号，去优化 policy 模型。
+2022 年 InstructGPT 的做法是 RLHF（基于人类反馈的强化学习），分三步走。第一步 SFT，上一篇做的事。第二步训练一个奖励模型，输入 prompt 和回答，输出一个标量分数，要求 chosen 的分数高于 rejected。第三步用 PPO 算法，把奖励模型的输出当成强化学习信号，去优化 policy 模型。
 
-听起来不复杂，麻烦在工程实现。PPO 训练的时候要四个模型同时驻留显存：正在训的 policy、冻结的 reference（防止 policy 跑偏太远）、冻结的 reward（打分），还有一个 value（估计未来回报）。
+听起来不复杂，麻烦在工程实现。PPO 训练的时候要四个模型同时驻留显存：正在训练的 policy、冻结的 reference（防止 policy 偏离 reference 过远）、冻结的 reward（打分），还有一个 value（估计未来回报）。
 
 <RlhfVsDpoPipeline />
 
-70B 规模上，光是参数就要 4 × 140GB ≈ 560GB 显存，再加上梯度、优化器状态、激活值，整套训起来需要数十张 H100。除了硬件成本，PPO 本身就以训练不稳定著称——超参敏感、容易奖励崩塌、收敛慢。这套方法只有头部几家公司玩得转。
+70B 规模上，光是参数就要 4 × 140GB ≈ 560GB 显存，再加上梯度、优化器状态、激活值，整套训练需数十张 H100。除硬件成本外，PPO 以训练不稳定著称——超参敏感、易奖励崩塌、收敛慢。该方案仅头部少数公司具备实施条件。
 
 ## DPO 的核心 trick
 
@@ -35,11 +35,11 @@ SFT 完之后模型会回答了，但回答质量参差不齐。问它「我难�
 
 <Math block>{`\\mathcal{L}_{\\text{DPO}}(\\pi_\\theta; \\pi_{\\text{ref}}) = -\\mathbb{E}_{(x, y_w, y_l) \\sim \\mathcal{D}}\\left[ \\log \\sigma\\left( \\beta \\log \\frac{\\pi_\\theta(y_w | x)}{\\pi_{\\text{ref}}(y_w | x)} - \\beta \\log \\frac{\\pi_\\theta(y_l | x)}{\\pi_{\\text{ref}}(y_l | x)} \\right) \\right]`}</Math>
 
-<Math>{`y_w`}</Math> 是 chosen（winner），<Math>{`y_l`}</Math> 是 rejected（loser）。把它读成一句话：让 policy 给 chosen 的概率（相对 reference）比给 rejected 的概率高，差距越大 loss 越小，但通过 reference 模型隐式约束 policy 不要跑得太远。
+<Math>{`y_w`}</Math> 是 chosen（winner），<Math>{`y_l`}</Math> 是 rejected（loser）。用一句话概括：让 policy 给 chosen 的相对概率高于 rejected，差距越大 loss 越小，同时通过 reference 模型隐式约束 policy 偏离幅度。
 
-形式上是个二分类的交叉熵。<Math>{`\\beta \\log \\frac{\\pi_\\theta(y_w)}{\\pi_{\\text{ref}}(y_w)}`}</Math> 在数学上扮演的角色就是「隐式奖励」——DPO 没有显式训奖励模型，但在算 loss 的时候，每个 token 的对数概率比就充当了奖励信号。
+形式上是个二分类的交叉熵。<Math>{`\\beta \\log \\frac{\\pi_\\theta(y_w)}{\\pi_{\\text{ref}}(y_w)}`}</Math> 在数学上扮演的角色就是「隐式奖励」——DPO 未显式训练奖励模型，但在算 loss 的时候，每个 token 的对数概率比就构成了奖励信号。
 
-只需要 policy 和 reference 两个模型，static 的偏好数据集喂进去就能训。从 RL 问题变成了监督学习。
+只需要 policy 和 reference 两个模型，static 的偏好数据集喂进去即可训练。从 RL 问题变成了监督学习。
 
 ## loss 形状的直觉
 
@@ -51,13 +51,13 @@ SFT 完之后模型会回答了，但回答质量参差不齐。问它「我难�
 
 ## β 的取舍
 
-<Math>{`\\beta`}</Math> 是 DPO 唯一需要调的关键超参。它同时扮演两个角色：放大偏好信号的敏感度，约束模型不要跑得太远。
+<Math>{`\\beta`}</Math> 是 DPO 唯一需要调的关键超参。它同时扮演两个角色：放大偏好信号的敏感度，约束模型偏离 reference 的幅度。
 
 <BetaTradeoff />
 
 太小会出问题。<Math>{`\\beta = 0.02`}</Math> 这种激进设置下，模型可以大幅偏离 SFT，结果就是它学会了「讨好评分」的捷径——堆叠安全免责声明、过度肯定、加表情符号、强调反复。这些行为在偏好数据上得分确实高，因为标注者倾向选「看起来更努力」的回答，但模型实际能力没有提升，甚至在通用任务上退步。
 
-太大同样有问题。<Math>{`\\beta = 0.4`}</Math> 几乎锁死了 policy，跟 reference 几乎一致，偏好信号根本没学进去，DPO 训了等于没训。
+太大同样有问题。<Math>{`\\beta = 0.4`}</Math> 几乎锁死了 policy，跟 reference 几乎一致，偏好信号根本没学进去，DPO 训练效果可忽略。
 
 实践里 <Math>{`\\beta`}</Math> 通常在 0.1 到 0.3 之间。LLaMA-3 的对齐用 <Math>{`\\beta = 0.1`}</Math>，是相对常见的一档。
 
@@ -73,9 +73,9 @@ SFT 完之后模型会回答了，但回答质量参差不齐。问它「我难�
 }
 ```
 
-数据质量决定 DPO 上限。如果偏好对里有一半是噪声（标注者随便选的），训出来的模型不会比 SFT 好多少。LLaMA-3 团队做过一次内部统计，过滤掉低质量偏好对之后训练效率提升了 2 倍以上。
+数据质量决定 DPO 上限。如果偏好对里有一半是噪声（标注者随便选的），训练得到的模型不会比 SFT 好多少。LLaMA-3 团队做过一次内部统计，过滤掉低质量偏好对之后训练效率提升了 2 倍以上。
 
-## 动手跑一遍
+## 动手实践
 
 `minimal-llm/src/dpo.py` 里有 DPO loss 的实现、偏好对构造、训练前后的对比。在 toy 数据集上几分钟就能看出概率分化的效果。
 
@@ -83,7 +83,7 @@ SFT 完之后模型会回答了，但回答质量参差不齐。问它「我难�
 python dpo.py
 ```
 
-[在 Colab 里跑这一篇](https://colab.research.google.com/)
+[在 Colab 中运行本篇](https://colab.research.google.com/)
 
 {/* TODO: 替换为真实 Colab 链接 */}
 
@@ -94,12 +94,12 @@ python dpo.py
 | 偏好数据 | 5 对手写 | 10 万+ 条人工标注 + 多轮过滤 |
 | 模型 | 模拟 log-prob | 8B–70B 实际训练 |
 | 算法变体 | 朴素 DPO | DPO / IPO / KTO / ORPO 混用 |
-| 迭代 | 单轮 | Online DPO：训完采样新数据再训 |
+| 迭代 | 单轮 | Online DPO：训练完成后采样新数据再继续训练 |
 | 评估 | 看几条样例 | 人工 A/B + ELO 排名 + 红队对抗测试 |
 
-核心数学完全相同。工业界的难度在数据规模、标注质量和多轮迭代——DPO 不是训一次就完事，而是训完采样新回答、人工再标、再训，循环好几次。
+核心数学完全相同。工业界的难度在数据规模、标注质量和多轮迭代——DPO 需经多轮迭代：每轮训练完成后采样新回答、人工再标、再训练，循环若干次。
 
-下一篇讲推理优化：模型对齐完了，怎么让它跑得更快、更便宜。
+下一篇讲推理优化：模型对齐完成后，如何提升推理速度与降低成本。
 
 ## 参考论文
 

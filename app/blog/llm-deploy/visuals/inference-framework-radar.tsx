@@ -30,7 +30,7 @@ const FRAMEWORKS = [
     name: "Ollama",
     color: "#0ea5e9",
     scores: [2, 3, 5, 5, 4],
-    desc: "llama.cpp 的傻瓜封装，本地玩最方便",
+    desc: "llama.cpp 的简化封装，本地开发最便捷",
   },
 ];
 

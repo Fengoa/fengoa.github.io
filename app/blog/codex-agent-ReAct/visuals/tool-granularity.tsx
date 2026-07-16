@@ -29,7 +29,7 @@ export function ToolGranularity() {
   const [active, setActive] = useState("intent");
 
   return (
-    <VisualFrame title="工具粒度：以「用户意图」为边界，而不是「技术动作」">
+    <VisualFrame title="工具粒度：以「用户意图」为边界，不以「技术动作」为边界">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {MODES.map((m) => (
           <button

@@ -13,13 +13,13 @@ export const metadata = {
 
 <SeriesNav series="llm" />
 
-上一篇训练好的 MiniGPT 输入 “KING RICHARD:”，能续出一段像样的台词。模型一边吐字，一边在内部做一件事：每写下一个新字符，都回头看看前面已经有的几十个字符，给每个位置打分，再决定这次主要参考哪几个。这个“回头看”的机制就是 self-attention。
+上一篇训练好的 MiniGPT 输入 “KING RICHARD:”，能续出一段像样的台词。模型一边生成字符，一边在内部做一件事：每写下一个新字符，都回头看看前面已经有的几十个字符，给每个位置打分，再决定这次主要参考哪几个。这个“回头看”的机制就是 self-attention。
 
-把它放在更小的场景里看会更直观。生成 “his ___” 时，对预测最有帮助的是 “king” 和 “said”，而 “the”、“to” 几乎没什么信息量。MLP 那一篇是按位置给固定权重，第 1 个位置永远是同一份贡献，第 16 个位置也是。Attention 换了个思路：每次根据当前在写的内容，临时决定哪些位置权重高、哪些可以略过。
+把它放在更小的场景里看会更直观。生成 “his ___” 时，对预测最有帮助的是 “king” 和 “said”，而 “the”、“to” 几乎没什么信息量。MLP 那一篇是按位置给固定权重，第 1 个位置永远是同一份贡献，第 16 个位置也是。Attention 换了一种做法：每次根据当前在写的内容，临时决定哪些位置权重高、哪些可以略过。
 
 <MLPvsAttention />
 
-差别看起来不大，影响却很关键。窗口可以放得很长，不必担心远处位置被一视同仁地稀释；同样一段历史，写不同的下一个词时也能切到不同的关注分布。
+差别看起来不大，影响却很关键。窗口可以放得很长，不必担心远处位置被一视同仁地稀释；同样一段历史，写不同的下一个词时也能得到不同的关注分布。
 
 ## Q、K、V 是什么
 
@@ -31,11 +31,11 @@ export const metadata = {
 
 <Math block>{`Q = X W_q, \\quad K = X W_k, \\quad V = X W_v`}</Math>
 
-`W_q`、`W_k`、`W_v` 都是可学习参数。模型不会一开始就知道哪种 query 该匹配哪种 key，是训练把这三套矩阵磨出来的。同一个 embedding 走完三条线，就拥有了三种身份，可以分别参与后面的匹配和加权。
+`W_q`、`W_k`、`W_v` 都是可学习参数。模型不会一开始就知道哪种 query 该匹配哪种 key，这三套矩阵由训练习得。同一个 embedding 走完三条线，就拥有了三种身份，可以分别参与后面的匹配和加权。
 
 ## 一次 attention 计算
 
-继续用 “I am a cat” 这四个 token 走一遍流程。先算每对位置的匹配分，再加 mask，再 softmax，最后按权重去拿 value。这三步可以在下面这张表里直接切换：
+继续用 “I am a cat” 这四个 token 演示完整流程。先算每对位置的匹配分，再加 mask，再 softmax，最后按权重聚合 value。这三步可以在下面这张表里直接切换：
 
 <AttentionScoreMatrix />
 
@@ -76,7 +76,7 @@ def attention(Q, K, V, mask):
 
 MiniGPT 用 4 个 head，每个 head 32 维，拼起来正好是 128 维 embedding 大小。参数量和单头 128 维基本一致，但表达能力强很多。
 
-把训好的 MiniGPT 拿出来，输入 “KING RICHARD:”，看每个 head 在做什么：
+取训练完成的 MiniGPT，输入 “KING RICHARD:”，观察每个 head 在做什么：
 
 <MultiHeadPatterns />
 
@@ -88,18 +88,18 @@ MiniGPT 用 4 个 head，每个 head 32 维，拼起来正好是 128 维 embeddi
 
 MLP 也能算两个位置之间的关系：把窗口里所有 embedding 拼起来送进全连接，权重之间的耦合就是某种关系。但这种关系是“位置×位置”的，针对位置编号固定下来的。换一段输入，第 1 个位置和第 16 个位置之间的处理方式不变。
 
-Attention 把这件事换成了“内容×内容”。两个位置之间的权重由它们各自的 query 和 key 临时决定，所以同一个位置在不同句子里、对不同的下一个词，都可以呈现出不同的关注分布。这也是为什么 attention 能撑起长上下文：它的代价随长度增长，但表达能力没有像 MLP 那样被位置框死。
+Attention 采用“内容×内容”的匹配方式。两个位置之间的权重由它们各自的 query 和 key 临时决定，所以同一个位置在不同句子里、对不同的下一个词，都可以呈现出不同的关注分布。因此 attention 可扩展至长上下文：其计算代价随长度增长，但表达能力不会像 MLP 那样被位置编号固定。
 
 ## 代码组织
 
 ```text
 minimal-llm/src/
   attention_explained.py    # 一步步推 Q/K/V/score/mask/softmax
-  visualize_attention.py    # 加载训好的 MiniGPT，导出每一层每一个 head 的注意力权重
+  visualize_attention.py    # 加载训练完成的 MiniGPT，导出每一层每一个 head 的注意力权重
   model.py                  # SelfAttention / MultiHeadAttention 的真正实现
 ```
 
-跑两条命令就能复现这一篇里所有的可视化数据：
+执行以下两条命令即可复现本篇全部可视化数据：
 
 ```bash
 python attention_explained.py
@@ -119,13 +119,13 @@ python visualize_attention.py --text "To be or not"
 
 公式部分一字不差，差的全是工程：怎么算得更快、存得更少、看得更远。后续几篇会一个一个讲清楚。
 
-下一篇要把 attention 装进完整的 Transformer block，看看 LayerNorm、残差连接、FFN 各自填了哪个坑。
+下一篇要把 attention 装进完整的 Transformer block，看看 LayerNorm、残差连接、FFN 各自解决了什么问题。
 
-## 动手跑一遍
+## 动手实践
 
 [在 Google Colab 上打开](https://colab.research.google.com/) （TODO：补上 visualize_attention notebook 链接）
 
-打开后选 GPU runtime，从上往下跑完即可拿到自己模型的注意力热力图。
+打开后选 GPU runtime，按从上到下的顺序执行完毕，即可得到自己模型的注意力热力图。
 
 ## 参考论文
 
