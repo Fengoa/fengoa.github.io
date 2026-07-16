@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   /**
@@ -34,6 +38,11 @@ const nextConfig: NextConfig = {
     mdxRs: {
       mdxType: "gfm",
     },
+  },
+
+  // 锁定 Turbopack 根目录，避免向上找到 ~/package.json 导致 tailwindcss 解析失败
+  turbopack: {
+    root: projectRoot,
   },
 };
 

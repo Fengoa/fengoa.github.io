@@ -232,8 +232,15 @@ const MANUAL_OVERRIDES: Record<string, string[]> = {
   ],
   "minimal-llm": [
     "minimal-recommender",       // 跨主题从零搭建
+    "minqin-asr",                // 端到端项目实战
     "llm-landscape",             // LLM 全景图
     "recommender-landscape",     // 推荐系统全景图（跨主题入门）
+  ],
+  "minqin-asr": [
+    "minimal-llm",
+    "llm-sft",
+    "llm-training",
+    "llm-landscape",
   ],
   // 全景图互相推荐
   "llm-landscape": [

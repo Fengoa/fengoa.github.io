@@ -37,8 +37,19 @@ import { EmbodiedRobotCover } from "@/app/blog/embodied-robot/cover";
 import { ObsessionCover } from "@/app/blog/obsession/cover";
 import { CodexAgentCover } from "@/app/blog/codex-agent/cover";
 import { CodexAgentReactCover } from "@/app/blog/codex-agent-ReAct/cover";
+import { MinqinASRCover } from "@/app/blog/minqin-asr/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "minqin-asr",
+    title: "民勤话语音识别：Whisper 微调流水线",
+    date: "2026-07-03",
+    tag: "大模型",
+    summary:
+      "民勤话口音导致通用 Whisper 识别失败；基于 Whisper-small 微调，将民勤话语音转写为普通话文字，覆盖本地数据整理、Colab 训练、CER 评估与增量微调。",
+    cover: <MinqinASRCover />,
+    coverShape: "circle",
+  },
   {
     slug: "codex-agent-ReAct",
     title: "Codex Agent 设计原理",

@@ -1,0 +1,111 @@
+import { DataPipeline } from "./visuals";
+
+export const metadata = {
+  title: "民勤话语音识别：Whisper 微调流水线",
+};
+
+# 民勤话语音识别：Whisper 微调流水线
+
+甘肃武威的民勤话，本地人交流顺畅，外地人往往难以听清。口音差距明显，现成的普通话 ASR 几乎无法使用。目标很具体：把**民勤话语音**转成**普通话文字**，留下一份外地人也能阅读的记录。
+
+OpenAI Whisper 在多语种数据上完成过预训练，但民勤话几乎没有进入训练集。直接用于识别时，输出经常是乱码式普通话，或者完全偏离原意。微调要补足的正是这一块：向模型提供足够多的「民勤话 wav + 对应普通话句子」，使它学会把家乡话的声学模式映射到普通话 token。
+
+基座采用 `openai/whisper-small`（244M），`language=chinese`、`task=transcribe`。整条流水线在本地整理数据，在 Colab T4 上完成训练；训练结束后可以做单条推理，也可以通过 Gradio 进行网页试听。
+
+<DataPipeline />
+
+## 问题来源：通用模型无法识别家乡话
+
+Whisper 的 encoder 接收梅尔频谱，decoder 输出文字 token。预训练对齐的是「常见口音 → 对应语言的文字」。民勤话的声母、韵母、语调落在另一套分布上：频谱能够对齐，文字却无法对应——这就是微调的入口。
+
+监督信号必须是**普通话**。标注写成「你从哪里来的」这类普通话句子；模型学习的是跨口音映射。
+
+## 本地：从带字幕的视频到一张总表
+
+原始素材是带硬字幕的口语视频——画面上已经有普通话字幕。流水线包含三个步骤；缺少任一步骤，后续训练都会出现问题。
+
+### 1. 提取文字与时间轴
+
+硬字幕 OCR 后得到 `.txt`（整段普通话）和 `.srt`（每句起止秒数）。
+
+只有 txt、没有 srt 时，长音频只能按**字数比例**硬性切分文字。曾经出现过这种结果：26 秒视频被切成 6 段，每段文字却是同一句开头——模型等于在学习重复样本。有了 srt 之后，切分按时间对齐：第 12–18 秒的 wav，只附带 12–18 秒对应的文字。
+
+### 2. 分离伴奏
+
+Demucs 把人声轨单独导出成 wav。若不做分离，BGM 的节奏容易被 encoder 当成语音特征，识别结果里会出现与内容无关的重复字符。
+
+### 3. 按 Whisper 上限切分
+
+模型一次大约处理 **30 秒**音频；decoder 标签上限 **448** 个 token。规则是：总长 ≤30 秒则整段保留；超过则在静音处切开，每段 ≤30 秒并附带对应文字。修复「未判断时长就切分」的问题之后，短片一律保留完整。空标注大约 **20 条**，单独写入 `empty-subtitles.txt`，不进入训练集。
+
+`prepare-all.py` 把上述三步串联起来。新素材放入批次目录后即可增量运行。产物就是后续要上传的 `audio/` + `metadata.csv`。
+
+## 训练数据的结构
+
+Whisper 微调需要两样输入：音频目录，以及一张两列表。
+
+```text
+file_name,text
+batch_a/clip_001.wav,你从哪里来的
+batch_a/clip_002.wav,今天天气很好
+```
+
+`file_name` 是相对 `audio/` 的路径；`text` 是这句民勤话应对应的**普通话**。
+
+当前这批扫描出 **741** 条有效索引，wav 总时长约 **3 小时**。单条平均约 **20 秒**、中位约 **23 秒**，九成在 **30 秒以内**；普通话标注平均约 **54 字**。这个量级足以在 Colab T4 上完成训练和验证。经验上，总时长达到 **3–5 小时**、说话人和场景更丰富时，验证集 CER 会更稳定。
+
+上传 Google Drive 时保持结构不变：`MyDrive/minqin_asr/audio/`、`MyDrive/minqin_asr/metadata.csv`。notebook 第 4 步会逐行校验文件是否存在，缺失的条目会被跳过并打印路径，避免训练进行到一半才发现路径错误。
+
+## Colab：模型在学习什么
+
+打开 `train_whisper_minqin.ipynb`，运行时选择 **T4 GPU**，按从上到下的顺序执行。第一次若只想确认流程是否通畅，第 3 步可先设 `MAX_SAMPLES = 20`，正式训练再改回 `None`。
+
+### 读取数据时的两个问题
+
+1. 不要使用 `Dataset.from_pandas`。pandas 字符串列会变成 `large_string`，后续 cast 成 Audio 时 pyarrow 会直接报错。正确做法是用普通 Python list 调用 `Dataset.from_dict`。
+2. 不要安装 `torchcodec`。音频用 `soundfile` + `librosa` 读取；`Audio(decode=False)` 只保存路径，预处理时再读入文件。Colab 上 torchcodec 常因 CUDA 版本不匹配而导致读取失败。
+
+### 单条样本如何进入模型
+
+每条 wav 重采样到 **16 kHz** 单声道 → `WhisperFeatureExtractor` 转换成 **80 维**梅尔频谱（encoder 输入）→ 普通话句子 tokenize 成 id（decoder 监督信号）。若音频仍超过 30 秒，则截断波形，并按时长比例截短文字；标签超过 448 token 则硬截到 448。
+
+700+ 条数据做 `dataset.map` 时**不能开启多进程**（`num_proc`），否则 Colab 子进程容易 OOM，报 `ConnectionResetError`。notebook 里拆成 train / test 两次 map，`writer_batch_size=32`。
+
+### 训练循环在计算什么
+
+每个 step：取一个 batch 的梅尔频谱送入 encoder；decoder 自回归预测普通话 token，与标签计算交叉熵。padding 位置标记为 **-100**，loss 自动忽略。`gradient_checkpointing` + `fp16` 把显存控制在 T4 的 16GB 以内。
+
+T4 上实测过的超参：`NUM_EPOCHS=30`，`BATCH_SIZE=4`，`GRAD_ACCUM=4`（等效 batch **16**），`LEARNING_RATE=1e-5`。warmup 按总 step 的 10% 自动计算。741 条大约每 epoch **46** 步，30 epoch 共 **~1380** 步，全程约 **2–4 小时**。若出现 OOM，把 `BATCH_SIZE` 改成 2，或改用 `whisper-tiny`。
+
+### 用 CER 评估效果
+
+每个 epoch 结束，在 10% 验证集上运行一遍生成，计算**字错率 CER**：对预测句与参考句逐字做编辑距离，再除以参考字数。中文按字统计更稳定，因此选用 CER。
+
+举例：参考「今天天气很好」，识别成「今天天汽很好」，5 字中错 1 字，CER = 20%。Trainer 开启 `load_best_model_at_end=True`，按验证集 **CER 最低**的 checkpoint 保存。
+
+训练完成后，第 12 步把 `trainer.save_model` 写入 Drive 的 `whisper-minqin-final/`（processor 一并保存）。中间 checkpoint 位于 Colab 本地 `/content/whisper-minqin-checkpoints/`，会话中断后会丢失，最终权重必须保存到 Drive。
+
+## 训练完成后的推理与试听
+
+**单条对比（第 13 步）。** 加载 `FINAL_MODEL_DIR`，把 `test_audio_path` 换成一条 wav。`transcribe()` 依次完成 16 kHz 重采样 → 特征提取 → `model.generate(language='chinese', task='transcribe')` → 解码成字符串。打印识别结果，与 metadata 中同文件的 `text` 对照。尽量使用训练集里**未出现过**的新录音，否则评估会偏乐观。
+
+**网页试听（第 14 步）。** Gradio `share=True` 会给出临时公网链接，手机开启麦克风说民勤话，页面输出普通话。链接随 Colab 会话结束而失效。
+
+**继续增加数据。** 将新 wav 和更新后的 `metadata.csv` 上传 Drive，第 3 步 `MODEL_NAME` 改成上次的 `whisper-minqin-final`，再运行一遍即可增量微调。
+
+**CER 如何解读。** 验证集 CER **&lt; 30%** 大致可用，**&lt; 15%** 较为理想。若训练集 CER 很低、新录音效果很差，说明说话人或场景过于单一，补充数据比增加 epoch 更有效。若训练集本身 CER 也偏高，先检查标注是否与音频对齐（时间轴错位最常见），再考虑加大 `NUM_EPOCHS`。
+
+## 当前进度
+
+整条链路已经可用：本地整理（人声分离 + 时间轴切分 + 总表）→ 上传 Drive → notebook 完整训练 → 权重保存到 Drive → 单条推理与 Gradio 试听。30 秒 / 448 token 限制、Colab 内存问题、数据集类型问题，都已写入 notebook，按单元格顺序执行即可复现。
+
+约 3 小时、700+ 条微调后，民勤话口音能够稳定映射到普通话句式，日常试听和单条对照均已跑通。继续增加数据、改用 `whisper-medium`，或把总时长扩展到 5 小时以上，CER 还会进一步下降。
+
+与工业方言 ASR 采用同一套范式（声学编码器 + 文本解码器 + 监督微调）。工业系统通常还有更大规模的标注、专用前端和端侧部署；这里留下的是一套可以反复增加数据、继续训练的 notebook。
+
+## 参考论文
+
+| 论文 | 说明 |
+|------|------|
+| [Whisper · Radford et al., 2022](https://arxiv.org/abs/2212.04356) | 基座：弱监督多语种预训练，微调接口即 `WhisperForConditionalGeneration` |
+| [Attention Is All You Need · Vaswani, 2017](https://arxiv.org/abs/1706.03762) | Encoder-Decoder 骨干 |
