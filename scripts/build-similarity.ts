@@ -242,6 +242,12 @@ const MANUAL_OVERRIDES: Record<string, string[]> = {
     "llm-training",
     "llm-landscape",
   ],
+  "relation-llm": [
+    "llm-rag",
+    "codex-agent-ReAct",
+    "minqin-asr",
+    "llm-landscape",
+  ],
   // 全景图互相推荐
   "llm-landscape": [
     "recommender-landscape",     // 同"全景图"模式

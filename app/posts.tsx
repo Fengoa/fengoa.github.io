@@ -38,8 +38,19 @@ import { ObsessionCover } from "@/app/blog/obsession/cover";
 import { CodexAgentCover } from "@/app/blog/codex-agent/cover";
 import { CodexAgentReactCover } from "@/app/blog/codex-agent-ReAct/cover";
 import { MinqinASRCover } from "@/app/blog/minqin-asr/cover";
+import { RelationLLMCover } from "@/app/blog/relation-llm/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "relation-llm",
+    title: "非结构化关系记忆：口语笔记到可查询图谱",
+    date: "2026-07-16",
+    tag: "大模型",
+    summary:
+      "形式化三类记忆形状，详述两遍抽取、实体解析、农历查询时换算、递归邻域与向量召回，以及置信度闸门与关联发现。",
+    cover: <RelationLLMCover />,
+    coverShape: "circle",
+  },
   {
     slug: "minqin-asr",
     title: "民勤话语音识别：Whisper 微调流水线",

@@ -6,8 +6,8 @@
     "llm-rag",
     "rec-llm-bridge",
     "llm-tokenizer",
-    "codex-agent-ReAct",
-    "minimal-llm"
+    "minimal-llm",
+    "codex-agent-ReAct"
   ],
   "codex-agent": [
     "codex-agent-ReAct",
@@ -17,7 +17,7 @@
     "llm-landscape",
     "llm-inference",
     "minimal-llm",
-    "llm-sft"
+    "llm-transformer"
   ],
   "codex-agent-ReAct": [
     "codex-agent",
@@ -26,8 +26,8 @@
     "llm-sft",
     "llm-landscape",
     "minimal-llm",
-    "llm-inference",
-    "llm-attention"
+    "minqin-asr",
+    "llm-inference"
   ],
   "craft-oriensx": [
     "blog-recommender",
@@ -36,8 +36,8 @@
     "polar-starry-resources",
     "obsession",
     "codex-agent-ReAct",
-    "llm-inference",
-    "llm-landscape"
+    "llm-landscape",
+    "llm-inference"
   ],
   "cs-paper-guide": [
     "embodied-robot",
@@ -45,9 +45,9 @@
     "llm-landscape",
     "codex-agent-ReAct",
     "llm-rag",
-    "vector-recall",
     "two-tower-recall",
-    "rec-llm-bridge"
+    "rec-llm-bridge",
+    "vector-recall"
   ],
   "deepfm-ranking": [
     "hard-negative-eval",
@@ -61,8 +61,8 @@
   ],
   "din-sequence": [
     "deepfm-ranking",
-    "vector-recall",
     "two-tower-recall",
+    "vector-recall",
     "reranking-diversity",
     "mmoe-multitask",
     "hard-negative-eval",
@@ -73,8 +73,8 @@
     "polar-starry-resources",
     "cs-paper-guide",
     "llm-landscape",
-    "codex-agent-ReAct",
     "llm-deploy",
+    "codex-agent-ReAct",
     "recommender-landscape",
     "ml-core-concepts",
     "rec-llm-bridge"
@@ -93,20 +93,20 @@
     "deepfm-ranking",
     "two-tower-recall",
     "reranking-diversity",
-    "vector-recall",
     "recommender-landscape",
+    "vector-recall",
     "din-sequence",
     "engineering-recommender",
-    "minimal-recommender"
+    "rec-llm-bridge"
   ],
   "linear-algebra-for-dl": [
     "llm-rope",
     "ml-core-concepts",
-    "blog-recommender",
     "vector-recall",
+    "blog-recommender",
     "two-tower-recall",
-    "llm-attention",
     "llm-transformer",
+    "llm-attention",
     "llm-sft"
   ],
   "llm-attention": [
@@ -116,8 +116,8 @@
     "llm-efficient-attention",
     "llm-landscape",
     "llm-tokenizer",
-    "llm-inference",
-    "llm-training"
+    "llm-training",
+    "llm-inference"
   ],
   "llm-deploy": [
     "llm-inference",
@@ -125,8 +125,8 @@
     "llm-efficient-attention",
     "codex-agent-ReAct",
     "llm-rag",
-    "llm-attention",
     "engineering-recommender",
+    "minimal-llm",
     "llm-sft"
   ],
   "llm-dpo": [
@@ -136,8 +136,8 @@
     "llm-training",
     "llm-transformer",
     "llm-rag",
-    "llm-attention",
-    "codex-agent-ReAct"
+    "minimal-llm",
+    "llm-attention"
   ],
   "llm-efficient-attention": [
     "llm-inference",
@@ -153,41 +153,41 @@
     "llm-deploy",
     "llm-efficient-attention",
     "llm-landscape",
+    "codex-agent-ReAct",
     "llm-sft",
-    "llm-attention",
+    "minimal-llm",
     "llm-rag",
-    "llm-transformer",
-    "codex-agent-ReAct"
+    "llm-attention"
   ],
   "llm-landscape": [
     "recommender-landscape",
     "minimal-llm",
     "llm-deploy",
     "llm-efficient-attention",
+    "llm-sft",
     "llm-inference",
     "llm-scaling-law",
-    "llm-transformer",
-    "llm-sft"
+    "llm-dpo"
   ],
   "llm-rag": [
     "llm-landscape",
-    "llm-inference",
     "llm-deploy",
+    "llm-inference",
     "llm-sft",
-    "llm-tokenizer",
-    "llm-transformer",
     "minqin-asr",
-    "llm-attention"
+    "minimal-llm",
+    "llm-tokenizer",
+    "codex-agent-ReAct"
   ],
   "llm-rope": [
     "linear-algebra-for-dl",
-    "llm-attention",
     "llm-transformer",
+    "llm-attention",
     "llm-landscape",
+    "minimal-llm",
     "llm-efficient-attention",
     "llm-scaling-law",
-    "minimal-llm",
-    "llm-inference"
+    "llm-training"
   ],
   "llm-scaling-law": [
     "llm-training",
@@ -197,34 +197,34 @@
     "llm-tokenizer",
     "llm-dpo",
     "llm-sft",
-    "llm-inference"
+    "minimal-llm"
   ],
   "llm-sft": [
     "llm-landscape",
     "llm-dpo",
     "llm-training",
-    "llm-inference",
     "minimal-llm",
-    "llm-transformer",
+    "llm-inference",
+    "minqin-asr",
     "llm-attention",
     "llm-rag"
   ],
   "llm-tokenizer": [
     "minimal-llm",
     "llm-training",
-    "llm-landscape",
     "llm-attention",
-    "llm-scaling-law",
-    "llm-transformer",
+    "llm-landscape",
     "llm-efficient-attention",
+    "llm-scaling-law",
+    "llm-inference",
     "llm-rag"
   ],
   "llm-training": [
     "llm-scaling-law",
+    "minimal-llm",
     "llm-landscape",
     "llm-tokenizer",
     "llm-sft",
-    "minimal-llm",
     "llm-transformer",
     "llm-attention",
     "llm-inference"
@@ -237,7 +237,7 @@
     "llm-efficient-attention",
     "llm-training",
     "llm-scaling-law",
-    "llm-inference"
+    "llm-sft"
   ],
   "minimal-llm": [
     "minimal-recommender",
@@ -254,8 +254,8 @@
     "recommender-landscape",
     "llm-landscape",
     "vector-recall",
-    "rec-llm-bridge",
     "engineering-recommender",
+    "rec-llm-bridge",
     "two-tower-recall",
     "deepfm-ranking"
   ],
@@ -264,8 +264,8 @@
     "llm-sft",
     "llm-training",
     "llm-landscape",
-    "llm-rag",
     "codex-agent-ReAct",
+    "llm-rag",
     "llm-tokenizer",
     "llm-inference"
   ],
@@ -274,10 +274,10 @@
     "llm-training",
     "blog-recommender",
     "llm-scaling-law",
-    "llm-landscape",
     "deepfm-ranking",
+    "llm-landscape",
     "llm-transformer",
-    "llm-dpo"
+    "minimal-llm"
   ],
   "mmoe-multitask": [
     "din-sequence",
@@ -293,10 +293,10 @@
     "craft-oriensx",
     "codex-agent-ReAct",
     "llm-landscape",
-    "llm-rag",
-    "llm-training",
     "llm-attention",
+    "llm-rag",
     "llm-transformer",
+    "llm-training",
     "ml-core-concepts"
   ],
   "polar-starry-resources": [
@@ -311,13 +311,13 @@
   ],
   "rec-llm-bridge": [
     "recommender-landscape",
-    "minimal-recommender",
     "vector-recall",
+    "minimal-recommender",
     "mmoe-multitask",
     "reranking-diversity",
     "engineering-recommender",
     "din-sequence",
-    "hard-negative-eval"
+    "llm-landscape"
   ],
   "recommender-landscape": [
     "llm-landscape",
@@ -326,8 +326,18 @@
     "reranking-diversity",
     "two-tower-recall",
     "hard-negative-eval",
-    "vector-recall",
-    "deepfm-ranking"
+    "deepfm-ranking",
+    "vector-recall"
+  ],
+  "relation-llm": [
+    "llm-rag",
+    "codex-agent-ReAct",
+    "minqin-asr",
+    "llm-landscape",
+    "llm-deploy",
+    "codex-agent",
+    "llm-inference",
+    "minimal-llm"
   ],
   "reranking-diversity": [
     "recommender-landscape",
@@ -336,8 +346,8 @@
     "deepfm-ranking",
     "din-sequence",
     "two-tower-recall",
-    "rec-llm-bridge",
-    "engineering-recommender"
+    "mmoe-multitask",
+    "rec-llm-bridge"
   ],
   "two-tower-recall": [
     "vector-recall",
@@ -357,6 +367,6 @@
     "hard-negative-eval",
     "recommender-landscape",
     "minimal-recommender",
-    "linear-algebra-for-dl"
+    "rec-llm-bridge"
   ]
 }
