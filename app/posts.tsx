@@ -39,8 +39,19 @@ import { CodexAgentCover } from "@/app/blog/codex-agent/cover";
 import { CodexAgentReactCover } from "@/app/blog/codex-agent-ReAct/cover";
 import { MinqinASRCover } from "@/app/blog/minqin-asr/cover";
 import { RelationLLMCover } from "@/app/blog/relation-llm/cover";
+import { AiNativeCompanyCover } from "./blog/ai-native-company/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "ai-native-company",
+    title: "从 AI Agent 到 AI Company：下一代组织形态探索",
+    date: "2026-07-21",
+    tag: "大模型",
+    summary:
+      "如果生产力不再绑定于人的数量，公司应该如何重新组织？",
+    cover: <AiNativeCompanyCover />,
+    coverShape: "square",
+  },
   {
     slug: "relation-llm",
     title: "非结构化关系记忆：口语笔记到可查询图谱",

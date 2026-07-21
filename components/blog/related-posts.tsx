@@ -47,7 +47,7 @@ function RelatedPostsInner({ currentSlug, currentTag }: { currentSlug: string; c
   if (related.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-2.5 mt-8 pt-6 border-t border-border/50">
+    <div className="flex flex-col gap-2.5">
       <span className="text-xs font-mono text-muted-foreground/60 tracking-wider uppercase">
         推荐阅读
       </span>

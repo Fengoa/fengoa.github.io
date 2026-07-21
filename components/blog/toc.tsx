@@ -83,11 +83,29 @@ export function TableOfContents() {
     };
   }, [headings, updateFades]);
 
+  const numberedHeadings = (() => {
+    let h2 = 0;
+    let h3 = 0;
+    return headings.map((heading) => {
+      let number: string;
+      if (heading.level === 2) {
+        h2 += 1;
+        h3 = 0;
+        number = `${h2}.`;
+      } else {
+        if (h2 === 0) h2 = 1;
+        h3 += 1;
+        number = `${h2}.${h3}`;
+      }
+      return { ...heading, number };
+    });
+  })();
+
   return (
     <nav className="flex flex-col gap-6">
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit pt-1"
       >
         <svg
           className="size-3.5"
@@ -104,7 +122,7 @@ export function TableOfContents() {
         <span>博客</span>
       </Link>
 
-      {headings.length > 0 && (
+      {numberedHeadings.length > 0 && (
         <div className="relative">
           <div
             aria-hidden
@@ -122,13 +140,13 @@ export function TableOfContents() {
             ref={scrollRef}
             className="flex flex-col gap-2.5 max-h-[min(50vh,28rem)] overflow-y-auto scrollbar-hide"
           >
-            {headings.map((heading) => (
+            {numberedHeadings.map((heading) => (
               <a
                 key={heading.id}
                 href={`#${heading.id}`}
                 title={heading.text}
                 className={cn(
-                  "text-xs transition-all hover:text-foreground truncate shrink-0",
+                  "text-xs transition-all hover:text-foreground truncate shrink-0 flex gap-1.5",
                   heading.level === 3
                     ? "pl-3 text-muted-foreground"
                     : "font-medium",
@@ -150,7 +168,10 @@ export function TableOfContents() {
                   }
                 }}
               >
-                {heading.text}
+                <span className="shrink-0 font-mono tabular-nums text-muted-foreground/60">
+                  {heading.number}
+                </span>
+                <span className="truncate">{heading.text}</span>
               </a>
             ))}
           </div>

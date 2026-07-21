@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -49,29 +50,48 @@ const SERIES: Record<string, { title: string; posts: { slug: string; title: stri
   },
 };
 
-interface SeriesNavProps {
-  series: keyof typeof SERIES;
+function findSeriesBySlug(slug: string) {
+  for (const [key, config] of Object.entries(SERIES)) {
+    const index = config.posts.findIndex((p) => p.slug === slug);
+    if (index >= 0) return { key, config, index };
+  }
+  return null;
 }
 
-export function SeriesNav({ series }: SeriesNavProps) {
-  const pathname = usePathname();
-  const currentSlug = pathname.replace(/^\/blog\//, "").replace(/\/$/, "");
-  const config = SERIES[series];
-  if (!config) return null;
-
+function SeriesNavPanel({
+  config,
+  currentSlug,
+  currentIndex,
+  className,
+  defaultOpen = true,
+}: {
+  config: (typeof SERIES)[string];
+  currentSlug: string;
+  currentIndex: number;
+  className?: string;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   const total = config.posts.length;
-  const currentIndex = config.posts.findIndex((p) => p.slug === currentSlug);
   const positionLabel =
     currentIndex >= 0
-      ? `第 ${currentIndex + 1} / ${total} 篇`
-      : `共 ${total} 篇`;
+      ? `第${currentIndex + 1}/${total}篇`
+      : `共${total}篇`;
 
   return (
-    <details className="group mb-8 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-card/40">
-      <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer select-none list-none text-sm text-secondary-foreground hover:bg-accent/40 rounded-lg transition-colors">
-        <span className="flex items-center gap-2 min-w-0">
-          <span className="shrink-0 text-muted-foreground">本文是</span>
-          <span className="font-medium truncate">「{config.title}」</span>
+    <details
+      open={open}
+      className={`group rounded-lg border border-neutral-200 dark:border-neutral-800 ${className ?? ""}`}
+    >
+      <summary
+        className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer select-none list-none text-xs text-secondary-foreground hover:bg-accent/40 rounded-lg transition-colors"
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((v) => !v);
+        }}
+      >
+        <span className="flex items-center gap-1.5 min-w-0">
+          <span className="font-medium truncate">{config.title}</span>
           <span className="shrink-0 text-muted-foreground font-mono tabular-nums">
             {positionLabel}
           </span>
@@ -84,7 +104,7 @@ export function SeriesNav({ series }: SeriesNavProps) {
         </span>
       </summary>
       <ol
-        className="px-4 pb-3 pt-1 list-none"
+        className="px-3 pb-2 pt-0.5 list-none text-xs"
         style={{ counterReset: "counts 0" }}
       >
         {config.posts.map((post) => {
@@ -92,10 +112,10 @@ export function SeriesNav({ series }: SeriesNavProps) {
           return (
             <li
               key={post.slug}
-              className="flex mb-2 last:mb-0 before:content-[counter(counts)_'._'] before:pr-4 before:font-mono before:font-medium before:text-muted-foreground"
+              className="flex mb-1.5 last:mb-0 before:content-[counter(counts)_'._'] before:pr-2 before:font-mono before:font-medium before:text-muted-foreground"
               style={{ counterIncrement: "counts 1" }}
             >
-              <div className="flex-1 text-secondary-foreground">
+              <div className="flex-1 min-w-0 text-secondary-foreground">
                 {isCurrent ? (
                   <strong className="font-semibold text-secondary-foreground underline decoration-dotted decoration-current underline-offset-4">
                     {post.title}
@@ -114,5 +134,47 @@ export function SeriesNav({ series }: SeriesNavProps) {
         })}
       </ol>
     </details>
+  );
+}
+
+interface SeriesNavProps {
+  series: keyof typeof SERIES;
+}
+
+/** 正文内联：窄屏显示；xl 由侧栏接管 */
+export function SeriesNav({ series }: SeriesNavProps) {
+  const pathname = usePathname();
+  const currentSlug = pathname.replace(/^\/blog\//, "").replace(/\/$/, "");
+  const config = SERIES[series];
+  if (!config) return null;
+
+  const currentIndex = config.posts.findIndex((p) => p.slug === currentSlug);
+
+  return (
+    <SeriesNavPanel
+      config={config}
+      currentSlug={currentSlug}
+      currentIndex={currentIndex}
+      className="mb-8 xl:hidden"
+      defaultOpen
+    />
+  );
+}
+
+/** 右侧栏：按当前 slug 自动识别系列，默认展开 */
+export function SeriesNavSidebar() {
+  const pathname = usePathname();
+  const currentSlug = pathname.replace(/^\/blog\//, "").replace(/\/$/, "");
+  const hit = findSeriesBySlug(currentSlug);
+  if (!hit) return null;
+
+  return (
+    <SeriesNavPanel
+      key={hit.key}
+      config={hit.config}
+      currentSlug={currentSlug}
+      currentIndex={hit.index}
+      defaultOpen
+    />
   );
 }
