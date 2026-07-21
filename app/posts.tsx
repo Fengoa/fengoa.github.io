@@ -44,11 +44,11 @@ import { AiNativeCompanyCover } from "./blog/ai-native-company/cover";
 export const posts: PostData[] = [
   {
     slug: "ai-native-company",
-    title: "从 AI Agent 到 AI Company：下一代组织形态探索",
+    title: "AI 原生公司：以目标、能力与实验重构组织",
     date: "2026-07-21",
     tag: "大模型",
     summary:
-      "如果生产力不再绑定于人的数量，公司应该如何重新组织？",
+      "生产力与人数解绑后，组织以能力与实验环为基本单位；从 OpenAI / Anthropic 线索到 AIOS 五层职责与落地闭环。",
     cover: <AiNativeCompanyCover />,
     coverShape: "square",
   },

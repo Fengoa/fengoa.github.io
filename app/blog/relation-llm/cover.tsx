@@ -1,72 +1,11 @@
-"use client";
-
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
-
-const CX = 50;
-const CY = 52;
-const R = 24;
-const DOT_R = 2.8;
-
-function vertex(angleDeg: number) {
-  const rad = (angleDeg * Math.PI) / 180;
-  return {
-    x: CX + R * Math.cos(rad),
-    y: CY + R * Math.sin(rad),
-  };
-}
-
-/** 顶：人；左下：关系边；右下：事实 */
-const NODES = [
-  {
-    ...vertex(-90),
-    label: "老高",
-    sub: "entity",
-    color: "#059669",
-    labelSide: "top" as const,
-  },
-  {
-    ...vertex(150),
-    label: "小张",
-    sub: "介绍来",
-    color: "#0ea5e9",
-    labelSide: "bottom" as const,
-  },
-  {
-    ...vertex(30),
-    label: "生日",
-    sub: "农历·六·八",
-    color: "#d97706",
-    labelSide: "bottom" as const,
-  },
-];
-
-function labelY(node: (typeof NODES)[number], offset = 8) {
-  return node.labelSide === "top"
-    ? node.y - offset - DOT_R
-    : node.y + offset + DOT_R;
-}
 
 export function RelationLLMCover({ className }: { className?: string }) {
-  const [t, setT] = useState(0);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const timer = setInterval(() => setT((v) => (v + 1) % 90), 50);
-    return () => clearInterval(timer);
-  }, []);
-
-  const active = Math.floor(t / 30) % NODES.length;
-  const from = NODES[active];
-  const to = NODES[(active + 1) % NODES.length];
-  const prog = (t % 30) / 30;
-
   return (
     <div
       className={cn(
         "relative aspect-square w-full overflow-hidden rounded-full",
-        "border border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950",
+        "bg-[#2926e8]",
         className
       )}
     >
@@ -75,113 +14,142 @@ export function RelationLLMCover({ className }: { className?: string }) {
         viewBox="0 0 100 100"
         aria-hidden
       >
-        {mounted && (
-          <>
-            {/* 淡底环：记忆边界 */}
-            <circle
-              cx={CX}
-              cy={CY}
-              r={R + 6}
-              fill="none"
-              stroke="#e5e5e5"
-              strokeWidth="0.4"
-              strokeDasharray="1.2 1.6"
-              className="dark:stroke-neutral-800"
+        <defs>
+          <pattern
+            id="relation-paper-lines"
+            width="7"
+            height="7"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(25)"
+          >
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="7"
+              stroke="#ffffff"
+              strokeWidth="0.5"
+              opacity="0.12"
             />
-
-            {/* 三角边：口语 → 结构化边 */}
-            {NODES.map((node, i) => {
-              const next = NODES[(i + 1) % NODES.length];
-              const on = i === active;
-              return (
-                <line
-                  key={`edge-${node.label}`}
-                  x1={node.x}
-                  y1={node.y}
-                  x2={next.x}
-                  y2={next.y}
-                  stroke={on ? node.color : "#d4d4d8"}
-                  strokeWidth={on ? 1.05 : 0.55}
-                  opacity={on ? 0.8 : 0.35}
-                  strokeLinecap="round"
-                />
-              );
-            })}
-
-            {/* 中心：抽取标记 */}
-            <text
-              x={CX}
-              y={CY - 1.5}
-              textAnchor="middle"
-              dominantBaseline="central"
-              className="fill-neutral-400 font-mono text-[4.5px] font-semibold dark:fill-neutral-500"
-            >
-              extract
-            </text>
-            <text
-              x={CX}
-              y={CY + 4.5}
-              textAnchor="middle"
-              dominantBaseline="central"
-              className="fill-neutral-300 font-mono text-[3.2px] dark:fill-neutral-600"
-            >
-              口语 → 结构
-            </text>
-
-            {/* 节点 */}
-            {NODES.map((node, i) => {
-              const on = i === active;
-              return (
-                <g key={node.label}>
-                  <circle
-                    cx={node.x}
-                    cy={node.y}
-                    r={on ? 7.2 : 5.8}
-                    fill={node.color}
-                    opacity={on ? 0.16 : 0.08}
-                  />
-                  <circle
-                    cx={node.x}
-                    cy={node.y}
-                    r={DOT_R}
-                    fill={node.color}
-                    opacity={on ? 1 : 0.55}
-                  />
-                  <text
-                    x={node.x}
-                    y={labelY(node, 7.5)}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    className="font-sans text-[4.5px]"
-                    fill={on ? "#3f3f46" : "#a1a1aa"}
-                  >
-                    {node.label}
-                  </text>
-                  <text
-                    x={node.x}
-                    y={labelY(node, 12.2)}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    className="font-mono text-[3px]"
-                    fill={on ? node.color : "#c4c4c8"}
-                    opacity={0.9}
-                  >
-                    {node.sub}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* 沿边脉冲：信息写入 */}
-            <circle
-              cx={from.x + (to.x - from.x) * prog}
-              cy={from.y + (to.y - from.y) * prog}
-              r="1.8"
-              fill={from.color}
-              opacity={0.95}
+          </pattern>
+          <filter id="relation-card-shadow" x="-20%" y="-20%" width="140%" height="160%">
+            <feDropShadow
+              dx="0"
+              dy="2"
+              stdDeviation="1.5"
+              floodColor="#0d0b57"
+              floodOpacity="0.35"
             />
-          </>
-        )}
+          </filter>
+        </defs>
+
+        <circle cx="50" cy="50" r="50" fill="url(#relation-paper-lines)" />
+
+        <text
+          x="3"
+          y="34"
+          className="font-sans text-[42px] font-black"
+          fill="#a9a7ff"
+          opacity="0.55"
+        >
+          “
+        </text>
+
+        <g
+          transform="rotate(-5 50 29)"
+          filter="url(#relation-card-shadow)"
+        >
+          <rect x="13" y="13" width="75" height="33" rx="3" fill="#fff4dc" />
+          <text
+            x="19"
+            y="25"
+            className="font-sans text-[5px] font-semibold"
+            fill="#171334"
+          >
+            老高的生日是
+          </text>
+          <text
+            x="19"
+            y="37"
+            className="font-sans text-[9px] font-black"
+            fill="#171334"
+            letterSpacing="-0.25"
+          >
+            农历六月初八
+          </text>
+          <path
+            d="M19 40 C31 38.8 44 41.2 61 39.8"
+            fill="none"
+            stroke="#ff4b45"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+          />
+          <circle cx="80" cy="20" r="3" fill="#ff4b45" />
+          <path
+            d="M78.5 20 L79.6 21.2 L81.7 18.8"
+            fill="none"
+            stroke="#fff4dc"
+            strokeWidth="0.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+
+        <path
+          d="M63 43 C69 49 60 51 66 57"
+          fill="none"
+          stroke="#ff4b45"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeDasharray="2 2"
+        />
+
+        <g
+          transform="rotate(4 52 66)"
+          filter="url(#relation-card-shadow)"
+        >
+          <rect x="20" y="52" width="65" height="27" rx="3" fill="#bdf6c8" />
+          <rect x="25" y="58" width="13" height="8" rx="1.5" fill="#171334" />
+          <text
+            x="31.5"
+            y="63.6"
+            textAnchor="middle"
+            className="font-sans text-[4px] font-bold"
+            fill="#bdf6c8"
+          >
+            小张
+          </text>
+          <text
+            x="41"
+            y="63.8"
+            className="font-sans text-[4.5px] font-semibold"
+            fill="#171334"
+          >
+            是老高介绍来的
+          </text>
+          <line x1="25" y1="71" x2="78" y2="71" stroke="#171334" strokeWidth="0.5" />
+          <text
+            x="25"
+            y="76"
+            className="font-mono text-[2.8px] font-semibold"
+            fill="#171334"
+            letterSpacing="0.25"
+          >
+            RELATIONSHIP / CONFIRMED
+          </text>
+        </g>
+
+        <rect x="14" y="84" width="72" height="9" rx="4.5" fill="#171334" />
+        <text
+          x="50"
+          y="90.2"
+          textAnchor="middle"
+          className="font-sans text-[4.6px] font-bold"
+          fill="#ffffff"
+          letterSpacing="0.2"
+        >
+          口语记录 → 可查询记忆
+        </text>
       </svg>
     </div>
   );

@@ -1,97 +1,14 @@
-"use client";
-
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
-
-const CX = 50;
-const CY = 48;
-const R = 26;
-const DOT_R = 2.8;
-
-function vertex(angleDeg: number) {
-  const rad = (angleDeg * Math.PI) / 180;
-  return {
-    x: CX + R * Math.cos(rad),
-    y: CY + R * Math.sin(rad),
-  };
-}
-
-/** Goal → Capability → Experiment → Result 学习环 */
-const NODES = [
-  {
-    ...vertex(-90),
-    label: "Goal",
-    sub: "目标",
-    color: "#0d9488",
-    labelSide: "top" as const,
-  },
-  {
-    ...vertex(0),
-    label: "Capability",
-    sub: "能力",
-    color: "#0284c7",
-    labelSide: "right" as const,
-  },
-  {
-    ...vertex(90),
-    label: "Experiment",
-    sub: "实验",
-    color: "#d97706",
-    labelSide: "bottom" as const,
-  },
-  {
-    ...vertex(180),
-    label: "Result",
-    sub: "结果",
-    color: "#059669",
-    labelSide: "left" as const,
-  },
-];
-
-function labelPos(node: (typeof NODES)[number]) {
-  const gap = 8.5;
-  switch (node.labelSide) {
-    case "top":
-      return { x: node.x, y: node.y - gap - DOT_R, anchor: "middle" as const };
-    case "bottom":
-      return { x: node.x, y: node.y + gap + DOT_R, anchor: "middle" as const };
-    case "left":
-      return { x: node.x - gap - DOT_R, y: node.y, anchor: "end" as const };
-    case "right":
-      return { x: node.x + gap + DOT_R, y: node.y, anchor: "start" as const };
-  }
-}
-
-function subPos(node: (typeof NODES)[number]) {
-  const base = labelPos(node);
-  const dy =
-    node.labelSide === "top" ? -4.2 : node.labelSide === "bottom" ? 4.2 : 0;
-  const dx =
-    node.labelSide === "left" ? -0.5 : node.labelSide === "right" ? 0.5 : 0;
-  return { x: base.x + dx, y: base.y + dy, anchor: base.anchor };
-}
 
 /**
- * AI-native Company 封面：组织基本单位从「员工」换成 Goal×Capability×实验环。
+ * AI-native Company 封面：以高对比印刷海报表现组织操作系统。
  */
 export function AiNativeCompanyCover({ className }: { className?: string }) {
-  const [t, setT] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => setT((v) => (v + 1) % 120), 50);
-    return () => clearInterval(timer);
-  }, []);
-
-  const active = Math.floor(t / 30) % NODES.length;
-  const from = NODES[active];
-  const to = NODES[(active + 1) % NODES.length];
-  const prog = (t % 30) / 30;
-
   return (
     <div
       className={cn(
         "relative aspect-square w-full overflow-hidden rounded-2xl",
-        "border border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950",
+        "bg-[#ff4b1f]",
         className
       )}
     >
@@ -100,119 +17,124 @@ export function AiNativeCompanyCover({ className }: { className?: string }) {
         viewBox="0 0 100 100"
         aria-hidden
       >
-        {/* 外环：能力平台边界 */}
-        <circle
-          cx={CX}
-          cy={CY}
-          r={R + 7}
+        <defs>
+          <pattern
+            id="ai-company-grid"
+            width="4"
+            height="4"
+            patternUnits="userSpaceOnUse"
+          >
+            <circle cx="0.8" cy="0.8" r="0.28" fill="#120d0b" opacity="0.22" />
+          </pattern>
+          <clipPath id="ai-company-frame">
+            <rect x="6" y="6" width="88" height="88" rx="1.5" />
+          </clipPath>
+        </defs>
+
+        <rect width="100" height="100" fill="url(#ai-company-grid)" />
+        <rect
+          x="6"
+          y="6"
+          width="88"
+          height="88"
+          rx="1.5"
           fill="none"
-          stroke="#e5e5e5"
-          strokeWidth="0.4"
-          strokeDasharray="1.4 1.8"
-          className="dark:stroke-neutral-800"
+          stroke="#120d0b"
+          strokeWidth="0.8"
         />
 
-        {/* 四边：目标→能力→实验→结果 */}
-        {NODES.map((node, i) => {
-          const next = NODES[(i + 1) % NODES.length];
-          const on = i === active;
-          return (
-            <line
-              key={`edge-${node.label}`}
-              x1={node.x}
-              y1={node.y}
-              x2={next.x}
-              y2={next.y}
-              stroke={on ? node.color : "#d4d4d8"}
-              strokeWidth={on ? 1.1 : 0.55}
-              opacity={on ? 0.85 : 0.35}
-              strokeLinecap="round"
-            />
-          );
-        })}
+        <g clipPath="url(#ai-company-frame)">
+          <circle cx="88" cy="18" r="18" fill="#ffd7c9" />
+          <circle cx="88" cy="18" r="10.5" fill="#fff0eb" />
+          <path
+            d="M88 4 A14 14 0 0 1 98 8"
+            fill="none"
+            stroke="#ff4b1f"
+            strokeWidth="2.2"
+          />
 
-        {/* 中心：AIOS */}
-        <text
-          x={CX}
-          y={CY - 2}
-          textAnchor="middle"
-          dominantBaseline="central"
-          className="fill-neutral-500 font-mono text-[5px] font-semibold dark:fill-neutral-400"
-        >
-          AIOS
-        </text>
-        <text
-          x={CX}
-          y={CY + 4}
-          textAnchor="middle"
-          dominantBaseline="central"
-          className="fill-neutral-400 font-mono text-[3px] dark:fill-neutral-600"
-        >
-          Goal × Capability
-        </text>
+          <text
+            x="10"
+            y="15"
+            className="font-mono text-[3.2px] font-semibold"
+            fill="#120d0b"
+            letterSpacing="0.55"
+          >
+            ORGANIZATION / OPERATING SYSTEM
+          </text>
 
-        {/* 节点 */}
-        {NODES.map((node, i) => {
-          const on = i === active;
-          const lp = labelPos(node);
-          const sp = subPos(node);
-          return (
-            <g key={node.label}>
-              <circle
-                cx={node.x}
-                cy={node.y}
-                r={on ? 7 : 5.6}
-                fill={node.color}
-                opacity={on ? 0.16 : 0.08}
-              />
-              <circle
-                cx={node.x}
-                cy={node.y}
-                r={DOT_R}
-                fill={node.color}
-                opacity={on ? 1 : 0.5}
-              />
-              <text
-                x={lp.x}
-                y={lp.y}
-                textAnchor={lp.anchor}
-                dominantBaseline="central"
-                className="font-mono text-[3.8px] font-medium"
-                fill={on ? "#3f3f46" : "#a1a1aa"}
-              >
-                {node.label}
-              </text>
-              <text
-                x={sp.x}
-                y={sp.y}
-                textAnchor={sp.anchor}
-                dominantBaseline="central"
-                className="font-sans text-[3px]"
-                fill={on ? node.color : "#c4c4c8"}
-                opacity={0.95}
-              >
-                {node.sub}
-              </text>
-            </g>
-          );
-        })}
+          <text
+            x="7.5"
+            y="48"
+            className="font-sans text-[43px] font-black"
+            fill="#120d0b"
+            letterSpacing="-2.8"
+          >
+            AI
+          </text>
+          <text
+            x="9.5"
+            y="61"
+            className="font-sans text-[13px] font-black"
+            fill="#120d0b"
+            letterSpacing="-0.7"
+          >
+            COMPANY
+          </text>
 
-        {/* 沿环脉冲：学习循环在转 */}
-        <circle
-          cx={from.x + (to.x - from.x) * prog}
-          cy={from.y + (to.y - from.y) * prog}
-          r="1.9"
-          fill={from.color}
-          opacity={0.95}
-        />
+          <rect x="6" y="68" width="88" height="26" fill="#120d0b" />
+          <text
+            x="10"
+            y="76"
+            className="font-mono text-[3.2px] font-semibold"
+            fill="#ff4b1f"
+            letterSpacing="0.35"
+          >
+            GOAL × CAPABILITY
+          </text>
+          <text
+            x="10"
+            y="87"
+            className="font-sans text-[8.5px] font-bold"
+            fill="#fff5f0"
+            letterSpacing="-0.35"
+          >
+            LEARNING LOOP
+          </text>
+
+          <g fill="#fff5f0">
+            <rect x="75" y="73" width="3" height="3" />
+            <rect x="80" y="73" width="3" height="3" opacity="0.7" />
+            <rect x="85" y="73" width="3" height="3" opacity="0.45" />
+            <rect x="90" y="73" width="3" height="3" opacity="0.2" />
+          </g>
+          <g fill="#ff4b1f">
+            <rect x="75" y="81" width="18" height="1" />
+            <rect x="75" y="84" width="12" height="1" />
+            <rect x="75" y="87" width="15" height="1" />
+          </g>
+
+          <text
+            x="91"
+            y="64"
+            textAnchor="end"
+            className="font-mono text-[3px] font-semibold"
+            fill="#120d0b"
+          >
+            01 / ∞
+          </text>
+        </g>
 
         <text
-          x="50"
-          y="94"
+          x="96.5"
+          y="52"
           textAnchor="middle"
-          className="fill-neutral-400 font-mono text-[3.5px] dark:fill-neutral-600"
+          transform="rotate(90 96.5 52)"
+          className="font-mono text-[2.6px] font-semibold"
+          fill="#120d0b"
+          letterSpacing="0.4"
         >
-          AI-native Company
+          MISSION → EXPERIMENT → RESULT
         </text>
       </svg>
     </div>
