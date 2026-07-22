@@ -44,10 +44,10 @@ export function AiNativeOrganizationCover({ className }: { className?: string })
         />
 
         <g clipPath="url(#ai-company-frame)">
-          <circle cx="88" cy="18" r="18" fill="#ffd7c9" />
-          <circle cx="88" cy="18" r="10.5" fill="#fff0eb" />
+          <circle cx="88" cy="16" r="16" fill="#ffd7c9" />
+          <circle cx="88" cy="16" r="9.5" fill="#fff0eb" />
           <path
-            d="M88 4 A14 14 0 0 1 98 8"
+            d="M88 3 A13 13 0 0 1 97 7"
             fill="none"
             stroke="#ff4b1f"
             strokeWidth="2.2"
@@ -55,87 +55,77 @@ export function AiNativeOrganizationCover({ className }: { className?: string })
 
           <text
             x="10"
-            y="15"
-            className="font-mono text-[3.2px] font-semibold"
+            y="14"
+            className="font-mono text-[3px] font-semibold"
             fill="#120d0b"
-            letterSpacing="0.55"
+            letterSpacing="0.4"
           >
-            AI NATIVE ORGANIZATION / IDEAS
+            AINO · Theory
           </text>
-
-          <text
-            x="7.5"
-            y="48"
-            className="font-sans text-[43px] font-black"
-            fill="#120d0b"
-            letterSpacing="-2.8"
-          >
-            AI
-          </text>
-          <text
-            x="9.5"
-            y="61"
-            className="font-sans text-[8.5px] font-black"
-            fill="#120d0b"
-            letterSpacing="-0.35"
-          >
-            LEARNING RATE
-          </text>
-
-          <rect x="6" y="68" width="88" height="26" fill="#120d0b" />
-          <text
-            x="10"
-            y="76"
-            className="font-mono text-[3.2px] font-semibold"
-            fill="#ff4b1f"
-            letterSpacing="0.35"
-          >
-            OBSERVE × TEST × ADAPT
-          </text>
-          <text
-            x="10"
-            y="87"
-            className="font-sans text-[8.5px] font-bold"
-            fill="#fff5f0"
-            letterSpacing="-0.35"
-          >
-            LEARN / ADAPT
-          </text>
-
-          <g fill="#fff5f0">
-            <rect x="75" y="73" width="3" height="3" />
-            <rect x="80" y="73" width="3" height="3" opacity="0.7" />
-            <rect x="85" y="73" width="3" height="3" opacity="0.45" />
-            <rect x="90" y="73" width="3" height="3" opacity="0.2" />
-          </g>
-          <g fill="#ff4b1f">
-            <rect x="75" y="81" width="18" height="1" />
-            <rect x="75" y="84" width="12" height="1" />
-            <rect x="75" y="87" width="15" height="1" />
-          </g>
 
           <text
             x="91"
-            y="64"
+            y="14"
             textAnchor="end"
             className="font-mono text-[3px] font-semibold"
             fill="#120d0b"
           >
-            01 / ∞
+            01
+          </text>
+
+          <text
+            x="13"
+            y="50"
+            className="font-sans text-[36px] font-black"
+            fill="#120d0b"
+            letterSpacing="-1"
+          >
+            OLR
+          </text>
+
+          <rect x="6" y="54" width="88" height="40" fill="#120d0b" />
+
+          <text
+            x="10"
+            y="76.8"
+            className="font-mono text-[8px] font-semibold"
+            fill="#ff4b1f"
+            letterSpacing="0.2"
+          >
+            ∝
+          </text>
+
+          <text
+            x="54"
+            y="68"
+            textAnchor="middle"
+            className="font-mono text-[6px] font-semibold"
+            fill="#ff4b1f"
+            letterSpacing="0.08"
+          >
+            Insight × Adoption
+          </text>
+
+          <line
+            x1="20"
+            y1="74"
+            x2="88"
+            y2="74"
+            stroke="#ff4b1f"
+            strokeWidth="0.7"
+          />
+
+          <text
+            x="54"
+            y="84"
+            textAnchor="middle"
+            className="font-mono text-[6px] font-semibold"
+            fill="#ff4b1f"
+            letterSpacing="0.08"
+          >
+            Cycle Time
           </text>
         </g>
-
-        <text
-          x="96.5"
-          y="52"
-          textAnchor="middle"
-          transform="rotate(90 96.5 52)"
-          className="font-mono text-[2.6px] font-semibold"
-          fill="#120d0b"
-          letterSpacing="0.4"
-        >
-          OBSERVE → TEST → ADAPT
-        </text>
       </svg>
     </div>
   );
