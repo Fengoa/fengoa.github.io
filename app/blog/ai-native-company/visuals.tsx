@@ -315,154 +315,144 @@ export function AnthropicOrganizationMap() {
   );
 }
 
-export function OrganizationStack() {
-  const layers = [
-    { y: 56, width: 300, color: "#fff0eb", title: "使命", detail: "定义方向与边界" },
-    { y: 126, width: 430, color: "#ffd7c9", title: "策略", detail: "选择路径与资源" },
-    { y: 196, width: 560, color: "#fff0eb", title: "能力平台", detail: "组合研究、内容、开发与分析能力" },
-    { y: 266, width: 680, color: "#120d0b", title: "执行层", detail: "连接渠道、工具与业务系统" },
+export function CoreOperatingLoop() {
+  const stages = [
+    { x: 44, title: "使命", detail: "Mission", color: "#fff0eb" },
+    { x: 136, title: "目标", detail: "Goal", color: "#ffd7c9" },
+    { x: 228, title: "策略", detail: "Strategy", color: "#fff0eb" },
+    { x: 320, title: "实验", detail: "Experiment", color: "#ffd7c9" },
+    { x: 412, title: "任务", detail: "Task", color: "#fff0eb" },
+    { x: 504, title: "能力", detail: "Capability", color: "#ffd7c9" },
+    { x: 596, title: "工具", detail: "Tool", color: "#fff0eb" },
+    { x: 688, title: "结果", detail: "Result", color: "#ff4b1f" },
   ];
 
   return (
     <figure className={frameClass}>
       <svg
-        viewBox="0 0 800 390"
-        role="img"
-        aria-label="AI 原生公司的四层组织结构"
-        className="block h-auto w-full"
-      >
-        <defs>
-          <pattern id="stack-dots" width="24" height="24" patternUnits="userSpaceOnUse">
-            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.1" />
-          </pattern>
-        </defs>
-        <rect width="800" height="390" fill="#f3efe7" />
-        <rect width="800" height="390" fill="url(#stack-dots)" />
-        <rect x="22" y="22" width="756" height="346" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
-        <circle cx="400" cy="44" r="17" fill="#120d0b" />
-        <path d="M400 61V340" stroke="#120d0b" strokeWidth="3" strokeDasharray="4 6" />
-        {layers.map((layer) => {
-          const x = (800 - layer.width) / 2;
-          return (
-            <g key={layer.title}>
-              <rect
-                x={x}
-                y={layer.y}
-                width={layer.width}
-                height="54"
-                rx="5"
-                fill={layer.color}
-                stroke="#120d0b"
-                strokeWidth="3"
-              />
-              <text
-                x={x + 20}
-                y={layer.y + 23}
-                fill={layer.title === "执行层" ? "#fff0eb" : "#120d0b"}
-                className="font-mono text-[14px] font-bold"
-              >
-                {layer.title}
-              </text>
-              <text
-                x={x + 20}
-                y={layer.y + 42}
-                fill={layer.title === "执行层" ? "#ffd7c9" : "#5a2b20"}
-                className="font-sans text-[12px]"
-              >
-                {layer.detail}
-              </text>
-              <circle
-                cx={x + layer.width - 24}
-                cy={layer.y + 27}
-                r="6"
-                fill={layer.title === "执行层" ? "#ff4b1f" : "#120d0b"}
-              />
-            </g>
-          );
-        })}
-        <g fill="#120d0b" className="font-mono text-[10px] font-bold">
-          <text x="60" y="348">抽象</text>
-          <text x="705" y="348">执行</text>
-        </g>
-        <path d="M95 344H690" stroke="#120d0b" strokeWidth="2" />
-        <path d="M690 344L679 338V350Z" fill="#120d0b" />
-      </svg>
-      <figcaption className={captionClass}>
-        上层确定方向，中层编排能力，执行层连接真实业务系统。
-      </figcaption>
-    </figure>
-  );
-}
-
-export function ExperimentEngine() {
-  return (
-    <figure className={frameClass}>
-      <svg
         viewBox="0 0 800 420"
         role="img"
-        aria-label="实验评估与资源再分配形成学习循环"
+        aria-label="AI 原生公司的执行链与评估反馈环"
         className="block h-auto w-full"
       >
         <defs>
-          <pattern id="experiment-dots" width="24" height="24" patternUnits="userSpaceOnUse">
+          <pattern id="operating-loop-dots" width="24" height="24" patternUnits="userSpaceOnUse">
             <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.1" />
           </pattern>
+          <marker
+            id="operating-loop-arrow"
+            markerWidth="7"
+            markerHeight="7"
+            refX="6.5"
+            refY="3.5"
+            orient="auto"
+            markerUnits="userSpaceOnUse"
+          >
+            <path d="M0 0L7 3.5L0 7Z" fill="#120d0b" />
+          </marker>
         </defs>
+
         <rect width="800" height="420" fill="#f3efe7" />
-        <rect width="800" height="420" fill="url(#experiment-dots)" />
+        <rect width="800" height="420" fill="url(#operating-loop-dots)" />
         <rect x="22" y="22" width="756" height="376" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
-        <circle cx="112" cy="210" r="49" fill="#fff0eb" stroke="#120d0b" strokeWidth="4" />
-        <text x="112" y="206" textAnchor="middle" fill="#120d0b" className="font-mono text-[13px] font-bold">
-          增长目标
+
+        <text x="44" y="62" fill="#120d0b" className="font-mono text-[16px] font-bold">
+          执行链
         </text>
-        <text x="112" y="226" textAnchor="middle" fill="#7c3323" className="font-mono text-[11px]">
-          +10×
+        <text x="756" y="62" textAnchor="end" fill="#6f3528" className="font-mono text-[11px] font-bold">
+          从方向到可度量结果
         </text>
 
-        <g fill="none" strokeWidth="9" strokeLinecap="round">
-          <path d="M164 190C250 95 355 84 470 106" stroke="#120d0b" />
-          <path d="M164 204C270 166 367 169 470 176" stroke="#ffd7c9" />
-          <path d="M164 218C275 253 365 248 470 246" stroke="#fff0eb" />
-          <path d="M164 232C250 330 358 328 470 316" stroke="#7c2414" />
-        </g>
-        <g className="font-mono text-[11px] font-bold">
-          <text x="286" y="91" fill="#120d0b">实验 A</text>
-          <text x="305" y="159" fill="#120d0b">实验 B</text>
-          <text x="305" y="276" fill="#120d0b">实验 C</text>
-          <text x="286" y="343" fill="#120d0b">实验 D</text>
-        </g>
+        {stages.slice(0, -1).map((stage, index) => (
+          <line
+            key={`arrow-${stage.title}`}
+            x1={stage.x + 76}
+            y1="142"
+            x2={stages[index + 1].x - 5}
+            y2="142"
+            stroke="#120d0b"
+            strokeWidth="2"
+            markerEnd="url(#operating-loop-arrow)"
+          />
+        ))}
 
-        <rect x="470" y="66" width="170" height="290" rx="7" fill="#120d0b" stroke="#120d0b" strokeWidth="3" />
-        <text x="495" y="98" fill="#ff4b1f" className="font-mono text-[12px] font-bold">评估</text>
-        <g>
-          <rect x="495" y="123" width="105" height="16" fill="#4c2118" />
-          <rect x="495" y="123" width="28" height="16" fill="#ff4b1f" />
-          <rect x="495" y="173" width="105" height="16" fill="#4c2118" />
-          <rect x="495" y="173" width="55" height="16" fill="#ffd7c9" />
-          <rect x="495" y="223" width="105" height="16" fill="#4c2118" />
-          <rect x="495" y="223" width="94" height="16" fill="#fff0eb" />
-          <rect x="495" y="273" width="105" height="16" fill="#4c2118" />
-          <rect x="495" y="273" width="39" height="16" fill="#9e321d" />
-        </g>
-        <text x="495" y="326" fill="#fff0eb" className="font-mono text-[12px] font-bold">
-          增加 C 的资源权重
+        {stages.map((stage, index) => (
+          <g key={stage.title}>
+            <rect
+              x={stage.x}
+              y="108"
+              width="72"
+              height="68"
+              rx="4"
+              fill={stage.color}
+              stroke="#120d0b"
+              strokeWidth="2.5"
+            />
+            <text
+              x={stage.x + 36}
+              y="137"
+              textAnchor="middle"
+              fill={index === stages.length - 1 ? "#fff0eb" : "#120d0b"}
+              className="font-sans text-[13px] font-bold"
+            >
+              {stage.title}
+            </text>
+            <text
+              x={stage.x + 36}
+              y="158"
+              textAnchor="middle"
+              fill={index === stages.length - 1 ? "#ffd7c9" : "#6f3528"}
+              className="font-mono text-[8px] font-bold"
+            >
+              {stage.detail}
+            </text>
+          </g>
+        ))}
+
+        <path
+          d="M724 176V292Q724 304 712 304H492"
+          fill="none"
+          stroke="#120d0b"
+          strokeWidth="2.5"
+          markerEnd="url(#operating-loop-arrow)"
+        />
+
+        <rect x="318" y="268" width="164" height="72" rx="5" fill="#120d0b" />
+        <text x="400" y="297" textAnchor="middle" fill="#ff4b1f" className="font-sans text-[14px] font-bold">
+          评估
+        </text>
+        <text x="400" y="320" textAnchor="middle" fill="#fff0eb" className="font-mono text-[10px] font-bold">
+          Evaluation
         </text>
 
         <path
-          d="M640 232C740 232 749 361 604 362H164C93 362 64 318 81 260"
+          d="M350 268V250Q350 238 338 238H278Q264 238 264 224V184"
           fill="none"
           stroke="#120d0b"
-          strokeWidth="3"
-          strokeDasharray="7 7"
+          strokeWidth="2.5"
+          strokeDasharray="7 6"
+          markerEnd="url(#operating-loop-arrow)"
         />
-        <path d="M76 269L80 253L91 264" fill="#120d0b" />
-        <text x="340" y="382" textAnchor="middle" fill="#120d0b" className="font-mono text-[11px] font-bold">
-          结果写回下一轮规划
+        <path
+          d="M450 268V230Q450 218 438 218H370Q356 218 356 204V184"
+          fill="none"
+          stroke="#7c2414"
+          strokeWidth="2.5"
+          strokeDasharray="7 6"
+          markerEnd="url(#operating-loop-arrow)"
+        />
+
+        <text x="44" y="376" fill="#120d0b" className="font-mono text-[11px] font-bold">
+          结果进入独立评估
+        </text>
+        <text x="756" y="376" textAnchor="end" fill="#6f3528" className="font-mono text-[11px] font-bold">
+          反馈调整策略与实验优先级
         </text>
       </svg>
       <figcaption className={captionClass}>
-        实验结果进入独立评估，资源随效果调整，经验再写回下一轮规划。
+        执行链把使命逐层落实为可度量结果；评估结果返回策略与实验层，启动下一轮资源分配。
       </figcaption>
     </figure>
   );
 }
+

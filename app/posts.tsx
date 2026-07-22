@@ -48,7 +48,7 @@ export const posts: PostData[] = [
     date: "2026-07-21",
     tag: "大模型",
     summary:
-      "生产力与人数解绑后，组织以能力与实验环为基本单位；从 OpenAI / Anthropic 线索到 AIOS 五层职责与落地闭环。",
+      "从 OpenAI 与 Anthropic 的公开组织线索出发，推导以目标组织工作、以能力完成任务、以实验和评估持续学习的协调模型。",
     cover: <AiNativeCompanyCover />,
     coverShape: "square",
   },
