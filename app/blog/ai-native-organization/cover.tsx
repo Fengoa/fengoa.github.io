@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * AI-native Company 封面：以高对比印刷海报表现组织操作系统。
+ * AI Native Organization 封面：以高对比印刷海报表现组织学习循环。
  */
 export function AiNativeCompanyCover({ className }: { className?: string }) {
   return (
@@ -60,7 +60,7 @@ export function AiNativeCompanyCover({ className }: { className?: string }) {
             fill="#120d0b"
             letterSpacing="0.55"
           >
-            ORGANIZATION / OPERATING SYSTEM
+            AI NATIVE ORGANIZATION / THEORY
           </text>
 
           <text
@@ -75,11 +75,11 @@ export function AiNativeCompanyCover({ className }: { className?: string }) {
           <text
             x="9.5"
             y="61"
-            className="font-sans text-[13px] font-black"
+            className="font-sans text-[8.5px] font-black"
             fill="#120d0b"
-            letterSpacing="-0.7"
+            letterSpacing="-0.35"
           >
-            COMPANY
+            ORGANIZATION
           </text>
 
           <rect x="6" y="68" width="88" height="26" fill="#120d0b" />
@@ -90,7 +90,7 @@ export function AiNativeCompanyCover({ className }: { className?: string }) {
             fill="#ff4b1f"
             letterSpacing="0.35"
           >
-            GOAL × CAPABILITY
+            GOAL × EXPERIMENT × CAPABILITY
           </text>
           <text
             x="10"
@@ -134,7 +134,7 @@ export function AiNativeCompanyCover({ className }: { className?: string }) {
           fill="#120d0b"
           letterSpacing="0.4"
         >
-          MISSION → EXPERIMENT → RESULT
+          GOAL → EXPERIMENT → LEARNING
         </text>
       </svg>
     </div>

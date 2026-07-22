@@ -11,7 +11,7 @@ export interface PostMeta {
 }
 
 export const postsMeta: PostMeta[] = [
-  { slug: "ai-native-company", title: "从 AI Agent 到 AI Company：下一代组织形态探索", tag: "大模型", date: "2026-07-21" },
+  { slug: "ai-native-organization", title: "AI 原生组织理论：目标、能力与组织学习率", tag: "大模型", date: "2026-07-21" },
   { slug: "relation-llm", title: "非结构化关系记忆：口语笔记到可查询图谱", tag: "大模型", date: "2026-07-16" },
   { slug: "minqin-asr", title: "民勤话语音识别：Whisper 微调流水线", tag: "大模型", date: "2026-07-03" },
   { slug: "codex-agent-ReAct", title: "Codex Agent 设计原理", tag: "大模型", date: "2026-06-12" },

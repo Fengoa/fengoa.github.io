@@ -39,16 +39,16 @@ import { CodexAgentCover } from "@/app/blog/codex-agent/cover";
 import { CodexAgentReactCover } from "@/app/blog/codex-agent-ReAct/cover";
 import { MinqinASRCover } from "@/app/blog/minqin-asr/cover";
 import { RelationLLMCover } from "@/app/blog/relation-llm/cover";
-import { AiNativeCompanyCover } from "./blog/ai-native-company/cover";
+import { AiNativeCompanyCover } from "./blog/ai-native-organization/cover";
 
 export const posts: PostData[] = [
   {
-    slug: "ai-native-company",
-    title: "AI 原生公司：以目标、能力与实验重构组织",
+    slug: "ai-native-organization",
+    title: "AI 原生组织理论：目标、能力与组织学习率",
     date: "2026-07-21",
     tag: "大模型",
     summary:
-      "从 OpenAI 与 Anthropic 的公开组织线索出发，推导以目标组织工作、以能力完成任务、以实验和评估持续学习的协调模型。",
+      "提出 AINO Theory：AI 降低执行成本后，组织绩效更受学习率约束；全文给出因果机制、五项命题、可检验预测与理论边界。",
     cover: <AiNativeCompanyCover />,
     coverShape: "square",
   },
