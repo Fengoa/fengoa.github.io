@@ -105,30 +105,28 @@ export function CoordinationShift() {
   );
 }
 
-export function CoreOperatingLoop() {
+export function LearningRateLoop() {
   const stages = [
-    { x: 48, title: "目标", detail: "Goal", color: "#fff0eb" },
-    { x: 166, title: "实验", detail: "Experiment", color: "#ffd7c9" },
-    { x: 284, title: "能力", detail: "Capability", color: "#fff0eb" },
-    { x: 402, title: "结果", detail: "Result", color: "#ffd7c9" },
-    { x: 520, title: "评估", detail: "Evaluation", color: "#120d0b" },
-    { x: 638, title: "学习", detail: "Learning", color: "#ff4b1f" },
+    { x: 58, title: "感知变化", detail: "OBSERVE", color: "#fff0eb", dark: false },
+    { x: 232, title: "提出判断", detail: "DECIDE", color: "#ffd7c9", dark: false },
+    { x: 406, title: "取得证据", detail: "TEST", color: "#120d0b", dark: true },
+    { x: 580, title: "改变组织", detail: "ADAPT", color: "#ff4b1f", dark: true },
   ];
 
   return (
     <figure className={frameClass}>
       <svg
-        viewBox="0 0 800 460"
+        viewBox="0 0 800 500"
         role="img"
-        aria-label="AI 原生组织以目标、实验、能力、结果、评估与学习构成最小学习循环"
+        aria-label="组织从感知环境变化到改变自身的学习率循环"
         className="block h-auto w-full"
       >
         <defs>
-          <pattern id="operating-loop-dots" width="24" height="24" patternUnits="userSpaceOnUse">
+          <pattern id="learning-rate-dots" width="24" height="24" patternUnits="userSpaceOnUse">
             <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.1" />
           </pattern>
           <marker
-            id="operating-loop-arrow"
+            id="learning-rate-arrow"
             markerWidth="7"
             markerHeight="7"
             refX="6.5"
@@ -140,43 +138,43 @@ export function CoreOperatingLoop() {
           </marker>
         </defs>
 
-        <rect width="800" height="460" fill="#f3efe7" />
-        <rect width="800" height="460" fill="url(#operating-loop-dots)" />
-        <rect x="22" y="22" width="756" height="416" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
+        <rect width="800" height="500" fill="#f3efe7" />
+        <rect width="800" height="500" fill="url(#learning-rate-dots)" />
+        <rect x="22" y="22" width="756" height="456" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
 
-        <rect x="48" y="48" width="704" height="52" rx="4" fill="#120d0b" />
-        <text x="68" y="70" fill="#ff4b1f" className="font-mono text-[12px] font-bold">
-          MISSION
+        <rect x="48" y="48" width="704" height="62" rx="4" fill="#120d0b" />
+        <text x="68" y="73" fill="#ff4b1f" className="font-mono text-[13px] font-bold">
+          ENVIRONMENT
         </text>
-        <text x="68" y="88" fill="#fff0eb" className="font-sans text-[11px]">
-          规定存在理由与不可越过的边界
+        <text x="68" y="94" fill="#fff0eb" className="font-sans text-[11px]">
+          用户 · 市场 · 竞争 · 技术 · 政策
         </text>
-        <text x="732" y="70" textAnchor="end" fill="#ffd7c9" className="font-mono text-[12px] font-bold">
-          STRATEGY
-        </text>
-        <text x="732" y="88" textAnchor="end" fill="#fff0eb" className="font-sans text-[11px]">
-          决定实验组合的选择原则
+        <text x="732" y="83" textAnchor="end" fill="#ffd7c9" className="font-mono text-[11px] font-bold">
+          CHANGE SIGNALS
         </text>
 
-        {stages.slice(0, -1).map((stage, index) => (
-          <line
-            key={`arrow-${stage.title}`}
-            x1={stage.x + 94}
-            y1="176"
-            x2={stages[index + 1].x - 5}
-            y2="176"
-            stroke="#120d0b"
-            strokeWidth="2"
-            markerEnd="url(#operating-loop-arrow)"
-          />
-        ))}
+        <path
+          d="M111 110V159"
+          fill="none"
+          stroke="#120d0b"
+          strokeWidth="2.5"
+          markerEnd="url(#learning-rate-arrow)"
+        />
 
-        {stages.map((stage, index) => (
+        <path
+          d="M174 205H220M348 205H394M522 205H568"
+          fill="none"
+          stroke="#120d0b"
+          strokeWidth="2.5"
+          markerEnd="url(#learning-rate-arrow)"
+        />
+
+        {stages.map((stage) => (
           <g key={stage.title}>
             <rect
               x={stage.x}
-              y="136"
-              width="90"
+              y="165"
+              width="116"
               height="80"
               rx="4"
               fill={stage.color}
@@ -184,20 +182,20 @@ export function CoreOperatingLoop() {
               strokeWidth="2.5"
             />
             <text
-              x={stage.x + 45}
-              y="169"
+              x={stage.x + 58}
+              y="198"
               textAnchor="middle"
-              fill={index >= 4 ? "#fff0eb" : "#120d0b"}
+              fill={stage.dark ? "#fff0eb" : "#120d0b"}
               className="font-sans text-[13px] font-bold"
             >
               {stage.title}
             </text>
             <text
-              x={stage.x + 45}
-              y="193"
+              x={stage.x + 58}
+              y="222"
               textAnchor="middle"
-              fill={index >= 4 ? "#ffd7c9" : "#6f3528"}
-              className="font-mono text-[8px] font-bold"
+              fill={stage.dark ? "#ffd7c9" : "#6f3528"}
+              className="font-mono text-[9px] font-bold"
             >
               {stage.detail}
             </text>
@@ -205,36 +203,27 @@ export function CoreOperatingLoop() {
         ))}
 
         <path
-          d="M683 216V330Q683 344 669 344H108Q93 344 93 329V229"
+          d="M638 245V290Q638 304 624 304H126Q111 304 111 289V258"
           fill="none"
           stroke="#120d0b"
           strokeWidth="2.5"
           strokeDasharray="8 7"
-          markerEnd="url(#operating-loop-arrow)"
+          markerEnd="url(#learning-rate-arrow)"
         />
-        <path
-          d="M683 216V276Q683 290 669 290H343Q329 290 329 276V229"
-          fill="none"
-          stroke="#7c2414"
-          strokeWidth="2.5"
-          strokeDasharray="7 6"
-          markerEnd="url(#operating-loop-arrow)"
-        />
-
-        <text x="116" y="368" fill="#120d0b" className="font-mono text-[11px] font-bold">
-          更新目标与策略
-        </text>
-        <text x="420" y="314" fill="#7c2414" className="font-mono text-[11px] font-bold">
-          升级能力与组织记忆
+        <text x="400" y="328" textAnchor="middle" fill="#120d0b" className="font-mono text-[10px] font-bold">
+          一次完整、可靠的组织修正
         </text>
 
-        <rect x="252" y="382" width="296" height="32" fill="#ffd7c9" stroke="#120d0b" strokeWidth="2" />
-        <text x="400" y="403" textAnchor="middle" fill="#120d0b" className="font-mono text-[11px] font-bold">
+        <rect x="48" y="360" width="704" height="70" rx="4" fill="#120d0b" />
+        <text x="68" y="389" fill="#ff4b1f" className="font-mono text-[13px] font-bold">
           ORGANIZATION LEARNING RATE
+        </text>
+        <text x="68" y="413" fill="#fff0eb" className="font-sans text-[11px]">
+          单位时间内完成可靠组织修正的速度
         </text>
       </svg>
       <figcaption className={captionClass}>
-        目标驱动实验，实验调用能力并产生结果；评估形成学习，再更新目标、能力与组织记忆。
+        Learning Rate 衡量整个循环完成得多快，以及循环产生的结论是否可靠。
       </figcaption>
     </figure>
   );

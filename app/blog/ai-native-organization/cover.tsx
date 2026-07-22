@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 
 /**
- * AI Native Organization 封面：以高对比印刷海报表现组织学习循环。
+ * AI 原生组织封面：以高对比印刷海报表现组织学习率。
  */
-export function AiNativeCompanyCover({ className }: { className?: string }) {
+export function AiNativeOrganizationCover({ className }: { className?: string }) {
   return (
     <div
       className={cn(
@@ -60,7 +60,7 @@ export function AiNativeCompanyCover({ className }: { className?: string }) {
             fill="#120d0b"
             letterSpacing="0.55"
           >
-            AI NATIVE ORGANIZATION / THEORY
+            AI NATIVE ORGANIZATION / IDEAS
           </text>
 
           <text
@@ -79,7 +79,7 @@ export function AiNativeCompanyCover({ className }: { className?: string }) {
             fill="#120d0b"
             letterSpacing="-0.35"
           >
-            ORGANIZATION
+            LEARNING RATE
           </text>
 
           <rect x="6" y="68" width="88" height="26" fill="#120d0b" />
@@ -90,7 +90,7 @@ export function AiNativeCompanyCover({ className }: { className?: string }) {
             fill="#ff4b1f"
             letterSpacing="0.35"
           >
-            GOAL × EXPERIMENT × CAPABILITY
+            OBSERVE × TEST × ADAPT
           </text>
           <text
             x="10"
@@ -99,7 +99,7 @@ export function AiNativeCompanyCover({ className }: { className?: string }) {
             fill="#fff5f0"
             letterSpacing="-0.35"
           >
-            LEARNING LOOP
+            LEARN / ADAPT
           </text>
 
           <g fill="#fff5f0">
@@ -134,7 +134,7 @@ export function AiNativeCompanyCover({ className }: { className?: string }) {
           fill="#120d0b"
           letterSpacing="0.4"
         >
-          GOAL → EXPERIMENT → LEARNING
+          OBSERVE → TEST → ADAPT
         </text>
       </svg>
     </div>

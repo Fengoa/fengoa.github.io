@@ -39,17 +39,17 @@ import { CodexAgentCover } from "@/app/blog/codex-agent/cover";
 import { CodexAgentReactCover } from "@/app/blog/codex-agent-ReAct/cover";
 import { MinqinASRCover } from "@/app/blog/minqin-asr/cover";
 import { RelationLLMCover } from "@/app/blog/relation-llm/cover";
-import { AiNativeCompanyCover } from "./blog/ai-native-organization/cover";
+import { AiNativeOrganizationCover } from "./blog/ai-native-organization/cover";
 
 export const posts: PostData[] = [
   {
     slug: "ai-native-organization",
-    title: "AI 原生组织理论：目标、能力与组织学习率",
+    title: "为什么组织学习率将成为 AI 时代最重要的竞争变量",
     date: "2026-07-21",
     tag: "大模型",
     summary:
-      "提出 AINO Theory：AI 降低执行成本后，组织绩效更受学习率约束；全文给出因果机制、五项命题、可检验预测与理论边界。",
-    cover: <AiNativeCompanyCover />,
+      "AI 让执行变得便宜，也让错误更快扩散。难以复制的竞争优势，是公司发现有效路径并修正自身的速度。",
+    cover: <AiNativeOrganizationCover />,
     coverShape: "square",
   },
   {
