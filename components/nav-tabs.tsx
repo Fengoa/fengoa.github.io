@@ -7,10 +7,11 @@ import { HeartIcon } from "@/components/ui/heart-icon";
 import { AvatarIcon } from "@/components/ui/avatar-icon";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import { useHoverSequence } from "@/hooks/use-hover-sequence";
-import { Search } from "lucide-react";
+import { CalendarDays, Search } from "lucide-react";
 
 const tabs = [
   { id: "blog", label: "博客", href: "/" },
+  { id: "monthly", label: "月刊", href: "/monthly" },
   // { id: "taste", label: "品味", href: "/taste" },
   { id: "product", label: "产品", href: "/product" },
   { id: "me", label: "我的", href: "/me" },
@@ -19,6 +20,7 @@ const tabs = [
 function getActiveTab(pathname: string): string {
   if (pathname === "/") return "blog";
   if (pathname.startsWith("/blog")) return "blog";
+  if (pathname.startsWith("/monthly")) return "monthly";
   if (pathname.startsWith("/taste")) return "taste";
   if (pathname.startsWith("/product")) return "product";
   if (pathname.startsWith("/me")) return "me";
@@ -31,12 +33,14 @@ export function NavTabs() {
   const activeTab = getActiveTab(pathname);
 
   const blog = useHoverSequence();
+  const monthly = useHoverSequence();
   const taste = useHoverSequence();
   const product = useHoverSequence();
   const me = useHoverSequence();
 
   const sequences: Record<string, ReturnType<typeof useHoverSequence>> = {
     blog,
+    monthly,
     taste,
     product,
     me,
@@ -63,6 +67,9 @@ export function NavTabs() {
           >
             {tab.id === "blog" && (
               <BrainIcon ref={seq.iconRef} size={20} isAnimated={false} />
+            )}
+            {tab.id === "monthly" && (
+              <CalendarDays className="size-5" strokeWidth={1.5} />
             )}
             {tab.id === "taste" && (
               <HeartIcon ref={seq.iconRef} size={20} isAnimated={false} />
@@ -104,7 +111,7 @@ export function NavTabs() {
         }}
         aria-label="搜索 (⌘K)"
       >
-        <Search className="size-[20px]" strokeWidth={1.5} />
+        <Search className="size-5" strokeWidth={1.5} />
       </button>
     </div>
   );

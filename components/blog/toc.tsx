@@ -10,7 +10,13 @@ interface TocItem {
   level: number;
 }
 
-export function TableOfContents() {
+export function TableOfContents({
+  backHref = "/",
+  backLabel = "博客",
+}: {
+  backHref?: string;
+  backLabel?: string;
+}) {
   const [headings, setHeadings] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [fadeTop, setFadeTop] = useState(false);
@@ -69,42 +75,46 @@ export function TableOfContents() {
   }, []);
 
   useEffect(() => {
-    updateFades();
+    const frame = requestAnimationFrame(updateFades);
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el) {
+      cancelAnimationFrame(frame);
+      return;
+    }
 
     el.addEventListener("scroll", updateFades, { passive: true });
     const ro = new ResizeObserver(updateFades);
     ro.observe(el);
 
     return () => {
+      cancelAnimationFrame(frame);
       el.removeEventListener("scroll", updateFades);
       ro.disconnect();
     };
   }, [headings, updateFades]);
 
-  const numberedHeadings = (() => {
-    let h2 = 0;
-    let h3 = 0;
-    return headings.map((heading) => {
-      let number: string;
-      if (heading.level === 2) {
-        h2 += 1;
-        h3 = 0;
-        number = `${h2}.`;
-      } else {
-        if (h2 === 0) h2 = 1;
-        h3 += 1;
-        number = `${h2}.${h3}`;
-      }
-      return { ...heading, number };
-    });
-  })();
+  const numberedHeadings = headings.map((heading, index) => {
+    const headingsThroughCurrent = headings.slice(0, index + 1);
+    const h2Count = headingsThroughCurrent.filter(
+      (item) => item.level === 2
+    ).length;
+    const lastH2Index = headingsThroughCurrent.findLastIndex(
+      (item) => item.level === 2
+    );
+    const h3Count = headingsThroughCurrent
+      .slice(lastH2Index + 1)
+      .filter((item) => item.level === 3).length;
+    const sectionNumber = Math.max(h2Count, 1);
+    const number =
+      heading.level === 2 ? `${sectionNumber}.` : `${sectionNumber}.${h3Count}`;
+
+    return { ...heading, number };
+  });
 
   return (
     <nav className="flex flex-col gap-6">
       <Link
-        href="/"
+        href={backHref}
         className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit pt-1"
       >
         <svg
@@ -119,7 +129,7 @@ export function TableOfContents() {
           <path d="M9 14l-4-4 4-4" />
           <path d="M5 10h11a4 4 0 0 1 0 8h-1" />
         </svg>
-        <span>博客</span>
+        <span>{backLabel}</span>
       </Link>
 
       {numberedHeadings.length > 0 && (

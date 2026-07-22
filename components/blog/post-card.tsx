@@ -9,6 +9,7 @@ import { useRef, type ReactNode } from "react";
 
 export type PostData = {
   slug: string;
+  href?: string;
   title: string;
   date: string;
   author?: string;
@@ -28,6 +29,7 @@ function formatDate(dateStr: string) {
 export function PostCard({ post, index, onDislike }: { post: PostData; index: number; onDislike?: (slug: string) => void }) {
   const isEven = index % 2 === 0;
   const router = useRouter();
+  const href = post.href ?? `/blog/${post.slug}`;
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -43,7 +45,7 @@ export function PostCard({ post, index, onDislike }: { post: PostData; index: nu
       const dy = Math.abs(e.clientY - mouseDownPos.current.y);
       if (dx > 5 || dy > 5) return;
     }
-    router.push(`/blog/${post.slug}`);
+    router.push(href);
   };
 
   return (
@@ -119,7 +121,7 @@ export function PostCard({ post, index, onDislike }: { post: PostData; index: nu
             </p>
           </div>
           <Link
-            href={`/blog/${post.slug}`}
+            href={href}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-secondary-foreground hover:text-blue-600 hover:gap-2 transition-all duration-200"
             draggable={false}
           >

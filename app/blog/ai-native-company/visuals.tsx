@@ -14,10 +14,10 @@ export function CoordinationShift() {
       >
         <defs>
           <pattern id="coordination-dots" width="24" height="24" patternUnits="userSpaceOnUse">
-            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.2" />
+            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.1" />
           </pattern>
         </defs>
-        <rect width="800" height="420" fill="#ff4b1f" />
+        <rect width="800" height="420" fill="#f3efe7" />
         <rect width="800" height="420" fill="url(#coordination-dots)" />
         <rect x="22" y="22" width="756" height="376" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
         <path
@@ -67,7 +67,7 @@ export function CoordinationShift() {
         <circle cx="595" cy="205" r="67" fill="#120d0b" />
         <circle cx="595" cy="205" r="30" fill="#fff0eb" />
         <text x="595" y="211" textAnchor="middle" fill="#120d0b" className="font-mono text-[16px] font-bold">
-          GOAL
+          目标
         </text>
 
         <g stroke="#120d0b" strokeWidth="5">
@@ -107,9 +107,9 @@ export function CoordinationShift() {
 
 export function OpenAIOrganizationMap() {
   const squads = [
-    { x: 338, label: "CHATGPT" },
+    { x: 338, label: "ChatGPT" },
     { x: 468, label: "API" },
-    { x: 598, label: "ENTERPRISE" },
+    { x: 598, label: "企业交付" },
   ];
 
   return (
@@ -122,23 +122,23 @@ export function OpenAIOrganizationMap() {
       >
         <defs>
           <pattern id="openai-dots" width="24" height="24" patternUnits="userSpaceOnUse">
-            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.2" />
+            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.1" />
           </pattern>
         </defs>
-        <rect width="800" height="450" fill="#ff4b1f" />
+        <rect width="800" height="450" fill="#f3efe7" />
         <rect width="800" height="450" fill="url(#openai-dots)" />
         <rect x="22" y="22" width="756" height="406" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
 
         <text x="48" y="62" fill="#120d0b" className="font-sans text-[28px] font-black">
-          OPENAI
+          OpenAI
         </text>
-        <text x="680" y="58" textAnchor="end" fill="#120d0b" className="font-mono text-[12px] font-bold">
-          PUBLIC SIGNALS / 01
+        <text x="720" y="58" textAnchor="end" fill="#120d0b" className="font-mono text-[12px] font-bold">
+          公开线索 / 01
         </text>
 
         <rect x="48" y="86" width="238" height="212" rx="5" fill="#fff0eb" stroke="#120d0b" strokeWidth="3" />
         <text x="68" y="116" fill="#120d0b" className="font-mono text-[14px] font-bold">
-          RESEARCH
+          研究
         </text>
         <text x="68" y="140" fill="#6f3528" className="font-sans text-[12px]">
           前沿模型与行为边界
@@ -163,7 +163,7 @@ export function OpenAIOrganizationMap() {
 
         <rect x="316" y="86" width="436" height="212" rx="5" fill="#ffd7c9" stroke="#120d0b" strokeWidth="3" />
         <text x="336" y="116" fill="#120d0b" className="font-mono text-[14px] font-bold">
-          END-TO-END SQUADS
+          端到端小队
         </text>
         <text x="336" y="140" fill="#6f3528" className="font-sans text-[12px]">
           围绕产品结果纵向推进
@@ -186,8 +186,8 @@ export function OpenAIOrganizationMap() {
 
         <path d="M167 298V330M534 298V330" stroke="#120d0b" strokeWidth="4" />
         <rect x="48" y="330" width="704" height="64" rx="4" fill="#120d0b" />
-        <text x="70" y="358" fill="#ff4b1f" className="font-mono text-[13px] font-bold">
-          SHARED MODEL + COMPUTE PLATFORM
+        <text x="70" y="358" fill="#ffd7c9" className="font-mono text-[13px] font-bold">
+          共享模型与算力平台
         </text>
         <text x="70" y="380" fill="#ffd7c9" className="font-sans text-[11px]">
           训练、推理、实时能力与基础设施跨产品复用
@@ -207,11 +207,11 @@ export function OpenAIOrganizationMap() {
 
 export function AnthropicOrganizationMap() {
   const domains = [
-    { x: 54, label: "ALIGNMENT" },
-    { x: 194, label: "INTERPRETABILITY" },
-    { x: 334, label: "RED TEAM" },
-    { x: 474, label: "SOCIETAL" },
-    { x: 614, label: "ECONOMIC" },
+    { x: 54, label: "对齐" },
+    { x: 194, label: "可解释性" },
+    { x: 334, label: "红队" },
+    { x: 474, label: "社会影响" },
+    { x: 614, label: "经济研究" },
   ];
 
   return (
@@ -224,22 +224,22 @@ export function AnthropicOrganizationMap() {
       >
         <defs>
           <pattern id="anthropic-dots" width="24" height="24" patternUnits="userSpaceOnUse">
-            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.2" />
+            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.1" />
           </pattern>
         </defs>
-        <rect width="800" height="450" fill="#ff4b1f" />
+        <rect width="800" height="450" fill="#f3efe7" />
         <rect width="800" height="450" fill="url(#anthropic-dots)" />
         <rect x="22" y="22" width="756" height="406" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
 
         <text x="48" y="62" fill="#120d0b" className="font-sans text-[28px] font-black">
-          ANTHROPIC
+          Anthropic
         </text>
-        <text x="680" y="58" textAnchor="end" fill="#120d0b" className="font-mono text-[12px] font-bold">
-          PUBLIC SIGNALS / 02
+        <text x="720" y="58" textAnchor="end" fill="#120d0b" className="font-mono text-[12px] font-bold">
+          公开线索 / 02
         </text>
 
         <text x="48" y="98" fill="#120d0b" className="font-mono text-[12px] font-bold">
-          RESEARCH PROBLEM DOMAINS
+          研究问题域
         </text>
         {domains.map((domain, index) => (
           <g key={domain.label}>
@@ -268,7 +268,7 @@ export function AnthropicOrganizationMap() {
 
         <rect x="54" y="205" width="684" height="52" rx="4" fill="#120d0b" />
         <text x="76" y="237" fill="#fff0eb" className="font-mono text-[13px] font-bold">
-          MODEL BEHAVIOR · TRAINING · ALIGNMENT
+          模型行为 · 训练 · 对齐
         </text>
         <circle cx="706" cy="231" r="11" fill="#ff4b1f" />
 
@@ -279,9 +279,9 @@ export function AnthropicOrganizationMap() {
           <path d="M186 326H614" />
         </g>
         {[
-          { x: 82, width: 208, title: "CLAUDE", detail: "模型与对话产品" },
+          { x: 82, width: 208, title: "Claude", detail: "模型与对话产品" },
           { x: 296, width: 208, title: "API", detail: "开发者与企业接入" },
-          { x: 510, width: 208, title: "DEPLOYMENT", detail: "规模化行为检验" },
+          { x: 510, width: 208, title: "部署", detail: "规模化行为检验" },
         ].map((item, index) => (
           <g key={item.title}>
             <rect
@@ -304,8 +304,8 @@ export function AnthropicOrganizationMap() {
         ))}
 
         <rect x="82" y="382" width="636" height="28" fill="#120d0b" />
-        <text x="400" y="401" textAnchor="middle" fill="#ff4b1f" className="font-mono text-[11px] font-bold">
-          SAFETY + EVALUATION THROUGHOUT
+        <text x="400" y="401" textAnchor="middle" fill="#ffd7c9" className="font-mono text-[11px] font-bold">
+          安全与评测贯穿全程
         </text>
       </svg>
       <figcaption className={captionClass}>
@@ -317,10 +317,10 @@ export function AnthropicOrganizationMap() {
 
 export function OrganizationStack() {
   const layers = [
-    { y: 56, width: 300, color: "#fff0eb", title: "MISSION", detail: "定义方向与边界" },
-    { y: 126, width: 430, color: "#ffd7c9", title: "STRATEGY", detail: "选择路径与资源" },
-    { y: 196, width: 560, color: "#fff0eb", title: "CAPABILITY PLATFORM", detail: "组合研究、内容、开发与分析能力" },
-    { y: 266, width: 680, color: "#120d0b", title: "EXECUTION", detail: "连接渠道、工具与业务系统" },
+    { y: 56, width: 300, color: "#fff0eb", title: "使命", detail: "定义方向与边界" },
+    { y: 126, width: 430, color: "#ffd7c9", title: "策略", detail: "选择路径与资源" },
+    { y: 196, width: 560, color: "#fff0eb", title: "能力平台", detail: "组合研究、内容、开发与分析能力" },
+    { y: 266, width: 680, color: "#120d0b", title: "执行层", detail: "连接渠道、工具与业务系统" },
   ];
 
   return (
@@ -333,10 +333,10 @@ export function OrganizationStack() {
       >
         <defs>
           <pattern id="stack-dots" width="24" height="24" patternUnits="userSpaceOnUse">
-            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.2" />
+            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.1" />
           </pattern>
         </defs>
-        <rect width="800" height="390" fill="#ff4b1f" />
+        <rect width="800" height="390" fill="#f3efe7" />
         <rect width="800" height="390" fill="url(#stack-dots)" />
         <rect x="22" y="22" width="756" height="346" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
         <circle cx="400" cy="44" r="17" fill="#120d0b" />
@@ -358,7 +358,7 @@ export function OrganizationStack() {
               <text
                 x={x + 20}
                 y={layer.y + 23}
-                fill={layer.title === "EXECUTION" ? "#fff0eb" : "#120d0b"}
+                fill={layer.title === "执行层" ? "#fff0eb" : "#120d0b"}
                 className="font-mono text-[14px] font-bold"
               >
                 {layer.title}
@@ -366,7 +366,7 @@ export function OrganizationStack() {
               <text
                 x={x + 20}
                 y={layer.y + 42}
-                fill={layer.title === "EXECUTION" ? "#ffd7c9" : "#5a2b20"}
+                fill={layer.title === "执行层" ? "#ffd7c9" : "#5a2b20"}
                 className="font-sans text-[12px]"
               >
                 {layer.detail}
@@ -375,17 +375,17 @@ export function OrganizationStack() {
                 cx={x + layer.width - 24}
                 cy={layer.y + 27}
                 r="6"
-                fill={layer.title === "EXECUTION" ? "#ff4b1f" : "#120d0b"}
+                fill={layer.title === "执行层" ? "#ff4b1f" : "#120d0b"}
               />
             </g>
           );
         })}
         <g fill="#120d0b" className="font-mono text-[10px] font-bold">
-          <text x="60" y="362">抽象</text>
-          <text x="705" y="362">执行</text>
+          <text x="60" y="348">抽象</text>
+          <text x="705" y="348">执行</text>
         </g>
-        <path d="M95 358H690" stroke="#120d0b" strokeWidth="2" />
-        <path d="M690 358L679 352V364Z" fill="#120d0b" />
+        <path d="M95 344H690" stroke="#120d0b" strokeWidth="2" />
+        <path d="M690 344L679 338V350Z" fill="#120d0b" />
       </svg>
       <figcaption className={captionClass}>
         上层确定方向，中层编排能力，执行层连接真实业务系统。
@@ -405,10 +405,10 @@ export function ExperimentEngine() {
       >
         <defs>
           <pattern id="experiment-dots" width="24" height="24" patternUnits="userSpaceOnUse">
-            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.2" />
+            <circle cx="5" cy="5" r="1.8" fill="#120d0b" opacity="0.1" />
           </pattern>
         </defs>
-        <rect width="800" height="420" fill="#ff4b1f" />
+        <rect width="800" height="420" fill="#f3efe7" />
         <rect width="800" height="420" fill="url(#experiment-dots)" />
         <rect x="22" y="22" width="756" height="376" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
         <circle cx="112" cy="210" r="49" fill="#fff0eb" stroke="#120d0b" strokeWidth="4" />
@@ -433,7 +433,7 @@ export function ExperimentEngine() {
         </g>
 
         <rect x="470" y="66" width="170" height="290" rx="7" fill="#120d0b" stroke="#120d0b" strokeWidth="3" />
-        <text x="495" y="98" fill="#ff4b1f" className="font-mono text-[12px] font-bold">EVALUATION</text>
+        <text x="495" y="98" fill="#ff4b1f" className="font-mono text-[12px] font-bold">评估</text>
         <g>
           <rect x="495" y="123" width="105" height="16" fill="#4c2118" />
           <rect x="495" y="123" width="28" height="16" fill="#ff4b1f" />
@@ -449,14 +449,14 @@ export function ExperimentEngine() {
         </text>
 
         <path
-          d="M640 252C740 252 749 381 604 382H164C93 382 64 338 81 280"
+          d="M640 232C740 232 749 361 604 362H164C93 362 64 318 81 260"
           fill="none"
           stroke="#120d0b"
           strokeWidth="3"
           strokeDasharray="7 7"
         />
-        <path d="M76 289L80 273L91 284" fill="#120d0b" />
-        <text x="340" y="402" textAnchor="middle" fill="#120d0b" className="font-mono text-[11px] font-bold">
+        <path d="M76 269L80 253L91 264" fill="#120d0b" />
+        <text x="340" y="382" textAnchor="middle" fill="#120d0b" className="font-mono text-[11px] font-bold">
           结果写回下一轮规划
         </text>
       </svg>
