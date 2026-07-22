@@ -48,7 +48,7 @@ export const posts: PostData[] = [
     date: "2026-07-21",
     tag: "大模型",
     summary:
-      "AI 让执行变得便宜，也让错误更快扩散。难以复制的竞争优势，是公司发现有效路径并修正自身的速度。",
+      "AI 降低执行成本后，组织竞争的约束转向学习率。文章定义 OLR，区分局部智能与组织智能，并为 AI Native Organization Stack 建立入口。",
     cover: <AiNativeOrganizationCover />,
     coverShape: "square",
   },
