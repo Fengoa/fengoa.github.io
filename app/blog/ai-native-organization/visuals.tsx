@@ -106,12 +106,18 @@ export function CoordinationShift() {
 }
 
 export function LearningRateLoop() {
+  const boxW = 116;
+  const boxH = 80;
+  const boxY = 165;
+  const boxMidY = boxY + boxH / 2;
   const stages = [
     { x: 58, title: "感知变化", detail: "OBSERVE", color: "#fff0eb", dark: false },
     { x: 232, title: "提出判断", detail: "DECIDE", color: "#ffd7c9", dark: false },
     { x: 406, title: "取得证据", detail: "TEST", color: "#120d0b", dark: true },
     { x: 580, title: "改变组织", detail: "ADAPT", color: "#ff4b1f", dark: true },
   ];
+  const firstCx = stages[0].x + boxW / 2;
+  const lastCx = stages[stages.length - 1].x + boxW / 2;
 
   return (
     <figure className={frameClass}>
@@ -144,46 +150,52 @@ export function LearningRateLoop() {
 
         <rect x="48" y="48" width="704" height="62" rx="4" fill="#120d0b" />
         <text x="68" y="73" fill="#ff4b1f" className="font-mono text-[13px] font-bold">
-          ENVIRONMENT
+          Environment
         </text>
         <text x="68" y="94" fill="#fff0eb" className="font-sans text-[11px]">
           用户 · 市场 · 竞争 · 技术 · 政策
         </text>
         <text x="732" y="83" textAnchor="end" fill="#ffd7c9" className="font-mono text-[11px] font-bold">
-          CHANGE SIGNALS
+          Change Signals
         </text>
 
         <path
-          d="M111 110V159"
+          d={`M${firstCx} 110V${boxY - 6}`}
           fill="none"
           stroke="#120d0b"
           strokeWidth="2.5"
           markerEnd="url(#learning-rate-arrow)"
         />
 
-        <path
-          d="M174 205H220M348 205H394M522 205H568"
-          fill="none"
-          stroke="#120d0b"
-          strokeWidth="2.5"
-          markerEnd="url(#learning-rate-arrow)"
-        />
+        {stages.slice(0, -1).map((stage, index) => {
+          const next = stages[index + 1];
+          return (
+            <path
+              key={`arrow-${stage.detail}`}
+              d={`M${stage.x + boxW} ${boxMidY}H${next.x - 6}`}
+              fill="none"
+              stroke="#120d0b"
+              strokeWidth="2.5"
+              markerEnd="url(#learning-rate-arrow)"
+            />
+          );
+        })}
 
         {stages.map((stage) => (
           <g key={stage.title}>
             <rect
               x={stage.x}
-              y="165"
-              width="116"
-              height="80"
+              y={boxY}
+              width={boxW}
+              height={boxH}
               rx="4"
               fill={stage.color}
               stroke="#120d0b"
               strokeWidth="2.5"
             />
             <text
-              x={stage.x + 58}
-              y="198"
+              x={stage.x + boxW / 2}
+              y={boxY + 33}
               textAnchor="middle"
               fill={stage.dark ? "#fff0eb" : "#120d0b"}
               className="font-sans text-[13px] font-bold"
@@ -191,8 +203,8 @@ export function LearningRateLoop() {
               {stage.title}
             </text>
             <text
-              x={stage.x + 58}
-              y="222"
+              x={stage.x + boxW / 2}
+              y={boxY + 57}
               textAnchor="middle"
               fill={stage.dark ? "#ffd7c9" : "#6f3528"}
               className="font-mono text-[9px] font-bold"
@@ -203,7 +215,7 @@ export function LearningRateLoop() {
         ))}
 
         <path
-          d="M638 245V290Q638 304 624 304H126Q111 304 111 289V258"
+          d={`M${lastCx} ${boxY + boxH}V290Q${lastCx} 304 ${lastCx - 14} 304H${firstCx + 14}Q${firstCx} 304 ${firstCx} 290V${boxY + boxH + 6}`}
           fill="none"
           stroke="#120d0b"
           strokeWidth="2.5"
@@ -216,7 +228,7 @@ export function LearningRateLoop() {
 
         <rect x="48" y="360" width="704" height="70" rx="4" fill="#120d0b" />
         <text x="68" y="389" fill="#ff4b1f" className="font-mono text-[13px] font-bold">
-          ORGANIZATION LEARNING RATE
+          Organization Learning Rate
         </text>
         <text x="68" y="413" fill="#fff0eb" className="font-sans text-[11px]">
           单位时间内完成可靠组织修正的速度

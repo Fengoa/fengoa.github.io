@@ -117,7 +117,8 @@ function SeriesNavPanel({
             >
               <div className="flex-1 min-w-0 text-secondary-foreground">
                 {isCurrent ? (
-                  <strong className="font-semibold text-secondary-foreground underline decoration-dotted decoration-current underline-offset-4">
+                  // <strong className="font-semibold text-secondary-foreground underline decoration-dotted decoration-current underline-offset-4">
+                  <strong className="font-semibold text-secondary-foreground">
                     {post.title}
                   </strong>
                 ) : (

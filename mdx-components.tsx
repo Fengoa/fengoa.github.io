@@ -115,7 +115,8 @@ export const Ul = ({ children, ...props }: ComponentPropsWithoutRef<"ul">) => (
 
 export const Strong = (props: ComponentPropsWithoutRef<"strong">) => (
   <strong
-    className="font-semibold text-secondary-foreground underline decoration-dotted decoration-current underline-offset-4"
+    // className="font-semibold text-secondary-foreground underline decoration-dotted decoration-current underline-offset-4"
+    className="font-semibold text-secondary-foreground"
     {...props}
   />
 );
