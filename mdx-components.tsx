@@ -90,7 +90,7 @@ export const Ol = ({ children, ...props }: ComponentPropsWithoutRef<"ol">) => (
       child?.type === "li" ? (
         <li
           key={index}
-          className="flex mb-2 before:content-[counter(counts)_'._'] before:pr-4 before:font-mono before:font-medium before:text-muted-foreground"
+          className="flex mb-2 before:content-[counter(counts)_'._'] before:pr-1 before:font-mono before:font-medium before:text-muted-foreground"
           style={{ counterIncrement: "counts 1" }}
         >
           <div className="flex-1 text-secondary-foreground">

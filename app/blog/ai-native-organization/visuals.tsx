@@ -106,25 +106,34 @@ export function CoordinationShift() {
 }
 
 export function LearningRateLoop() {
-  const boxW = 116;
-  const boxH = 80;
-  const boxY = 165;
-  const boxMidY = boxY + boxH / 2;
-  const stages = [
-    { x: 58, title: "感知变化", detail: "OBSERVE", color: "#fff0eb", dark: false },
-    { x: 232, title: "提出判断", detail: "DECIDE", color: "#ffd7c9", dark: false },
-    { x: 406, title: "取得证据", detail: "TEST", color: "#120d0b", dark: true },
-    { x: 580, title: "改变组织", detail: "ADAPT", color: "#ff4b1f", dark: true },
+  const boxW = 108;
+  const boxH = 72;
+  const topY = 140;
+  const botY = 280;
+  const topMidY = topY + boxH / 2;
+  const botMidY = botY + boxH / 2;
+
+  const top = [
+    { x: 92, title: "感知变化", detail: "Observe", color: "#fff0eb", dark: false },
+    { x: 256, title: "提出判断", detail: "Decide", color: "#ffd7c9", dark: false },
+    { x: 410, title: "设计实验", detail: "Experiment", color: "#120d0b", dark: true },
+    { x: 584, title: "评估结果", detail: "Evaluate", color: "#120d0b", dark: true },
   ];
-  const firstCx = stages[0].x + boxW / 2;
-  const lastCx = stages[stages.length - 1].x + boxW / 2;
+  const bottom = [
+    { x: 584, title: "改变组织", detail: "Adapt", color: "#ff4b1f", dark: true },
+    { x: 256, title: "沉淀能力", detail: "Memory", color: "#ffd7c9", dark: false },
+  ];
+
+  const observeCx = top[0].x + boxW / 2;
+  const evaluateCx = top[3].x + boxW / 2;
+  const MemoryCx = bottom[1].x + boxW / 2;
 
   return (
     <figure className={frameClass}>
       <svg
-        viewBox="0 0 800 500"
+        viewBox="0 0 800 540"
         role="img"
-        aria-label="组织从感知环境变化到改变自身的学习率循环"
+        aria-label="组织学习循环：从环境感知到实验评估、组织改变与能力沉淀"
         className="block h-auto w-full"
       >
         <defs>
@@ -144,35 +153,35 @@ export function LearningRateLoop() {
           </marker>
         </defs>
 
-        <rect width="800" height="500" fill="#f3efe7" />
-        <rect width="800" height="500" fill="url(#learning-rate-dots)" />
-        <rect x="22" y="22" width="756" height="456" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
+        <rect width="800" height="540" fill="#f3efe7" />
+        <rect width="800" height="540" fill="url(#learning-rate-dots)" />
+        <rect x="22" y="22" width="756" height="496" rx="8" fill="none" stroke="#120d0b" strokeWidth="4" />
 
-        <rect x="48" y="48" width="704" height="62" rx="4" fill="#120d0b" />
-        <text x="68" y="73" fill="#ff4b1f" className="font-mono text-[13px] font-bold">
+        <rect x="48" y="42" width="704" height="56" rx="4" fill="#120d0b" />
+        <text x="68" y="65" fill="#ff4b1f" className="font-mono text-[13px] font-bold">
           Environment
         </text>
-        <text x="68" y="94" fill="#fff0eb" className="font-sans text-[11px]">
+        <text x="68" y="84" fill="#fff0eb" className="font-sans text-[11px]">
           用户 · 市场 · 竞争 · 技术 · 政策
         </text>
-        <text x="732" y="83" textAnchor="end" fill="#ffd7c9" className="font-mono text-[11px] font-bold">
+        <text x="732" y="74" textAnchor="end" fill="#ffd7c9" className="font-mono text-[11px] font-bold">
           Change Signals
         </text>
 
         <path
-          d={`M${firstCx} 110V${boxY - 6}`}
+          d={`M${observeCx} 98V${topY - 6}`}
           fill="none"
           stroke="#120d0b"
           strokeWidth="2.5"
           markerEnd="url(#learning-rate-arrow)"
         />
 
-        {stages.slice(0, -1).map((stage, index) => {
-          const next = stages[index + 1];
+        {top.slice(0, -1).map((stage, index) => {
+          const next = top[index + 1];
           return (
             <path
-              key={`arrow-${stage.detail}`}
-              d={`M${stage.x + boxW} ${boxMidY}H${next.x - 6}`}
+              key={`top-arrow-${stage.detail}`}
+              d={`M${stage.x + boxW} ${topMidY}H${next.x - 6}`}
               fill="none"
               stroke="#120d0b"
               strokeWidth="2.5"
@@ -181,11 +190,40 @@ export function LearningRateLoop() {
           );
         })}
 
-        {stages.map((stage) => (
-          <g key={stage.title}>
+        <path
+          d={`M${evaluateCx} ${topY + boxH}V${botY - 6}`}
+          fill="none"
+          stroke="#120d0b"
+          strokeWidth="2.5"
+          markerEnd="url(#learning-rate-arrow)"
+        />
+
+        <path
+          d={`M${bottom[0].x} ${botMidY}H${bottom[1].x + boxW + 6}`}
+          fill="none"
+          stroke="#120d0b"
+          strokeWidth="2.5"
+          markerEnd="url(#learning-rate-arrow)"
+        />
+
+        <path
+          d={`M${MemoryCx} ${botY}V${topY + boxH + 20}H${observeCx}V${topY + boxH + 6}`}
+          fill="none"
+          stroke="#120d0b"
+          strokeWidth="2.5"
+          strokeDasharray="8 7"
+          markerEnd="url(#learning-rate-arrow)"
+        />
+
+        <text x="320" y="254" fill="#6f3528" className="font-mono text-[14px] font-bold">
+          New Goal
+        </text>
+
+        {[...top, ...bottom].map((stage) => (
+          <g key={stage.detail}>
             <rect
               x={stage.x}
-              y={boxY}
+              y={stage.detail === "Adapt" || stage.detail === "Memory" ? botY : topY}
               width={boxW}
               height={boxH}
               rx="4"
@@ -195,7 +233,7 @@ export function LearningRateLoop() {
             />
             <text
               x={stage.x + boxW / 2}
-              y={boxY + 33}
+              y={(stage.detail === "Adapt" || stage.detail === "Memory" ? botY : topY) + 30}
               textAnchor="middle"
               fill={stage.dark ? "#fff0eb" : "#120d0b"}
               className="font-sans text-[13px] font-bold"
@@ -204,38 +242,29 @@ export function LearningRateLoop() {
             </text>
             <text
               x={stage.x + boxW / 2}
-              y={boxY + 57}
+              y={(stage.detail === "Adapt" || stage.detail === "Memory" ? botY : topY) + 52}
               textAnchor="middle"
               fill={stage.dark ? "#ffd7c9" : "#6f3528"}
-              className="font-mono text-[9px] font-bold"
+              className="font-mono text-[12px] font-bold"
             >
               {stage.detail}
             </text>
           </g>
         ))}
 
-        <path
-          d={`M${lastCx} ${boxY + boxH}V290Q${lastCx} 304 ${lastCx - 14} 304H${firstCx + 14}Q${firstCx} 304 ${firstCx} 290V${boxY + boxH + 6}`}
-          fill="none"
-          stroke="#120d0b"
-          strokeWidth="2.5"
-          strokeDasharray="8 7"
-          markerEnd="url(#learning-rate-arrow)"
-        />
-        <text x="400" y="328" textAnchor="middle" fill="#120d0b" className="font-mono text-[10px] font-bold">
-          一次完整、可靠的组织修正
-        </text>
-
-        <rect x="48" y="360" width="704" height="70" rx="4" fill="#120d0b" />
-        <text x="68" y="389" fill="#ff4b1f" className="font-mono text-[13px] font-bold">
+        <rect x="48" y="400" width="704" height="98" rx="4" fill="#120d0b" />
+        <text x="68" y="432" fill="#ff4b1f" className="font-mono text-[13px] font-bold">
           Organization Learning Rate
         </text>
-        <text x="68" y="413" fill="#fff0eb" className="font-sans text-[11px]">
-          单位时间内完成可靠组织修正的速度
+        <text x="68" y="456" fill="#fff0eb" className="font-sans text-[11px]">
+          衡量一次可靠组织修正完成的速度，以及修正是否固化为可重复能力
+        </text>
+        <text x="68" y="476" fill="#ffd7c9" className="font-mono text-[10px] font-bold">
+          Valid Insight × Adoption Rate / Cycle Time
         </text>
       </svg>
       <figcaption className={captionClass}>
-        Learning Rate 衡量整个循环完成得多快，以及循环产生的结论是否可靠。
+        组织学习循环完成适应；Memory 沉淀能力后进入下一轮 Goal。OLR 衡量循环的速度与质量。
       </figcaption>
     </figure>
   );
