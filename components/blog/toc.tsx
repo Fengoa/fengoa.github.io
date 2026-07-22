@@ -115,7 +115,7 @@ export function TableOfContents({
     <nav className="flex flex-col gap-6">
       <Link
         href={backHref}
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit pt-1"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
       >
         <svg
           className="size-3.5"
