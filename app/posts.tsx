@@ -40,8 +40,19 @@ import { CodexAgentReactCover } from "@/app/blog/codex-agent-ReAct/cover";
 import { MinqinASRCover } from "@/app/blog/minqin-asr/cover";
 import { RelationLLMCover } from "@/app/blog/relation-llm/cover";
 import { AiNativeOrganizationCover } from "./blog/ai-native-organization/cover";
+import { AimlabCover } from "./blog/aimlab/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "aimlab",
+    title: "用 React Three Fiber 实现一个 3D 瞄准训练器",
+    date: "2026-07-23",
+    tag: "前端技术",
+    summary:
+      "讲解一个完全运行于浏览器的 3D 瞄准训练器的实现：双层渲染架构、状态分层、第一人称控制、靶子空间几何、命中射线与数据化调参。",
+    cover: <AimlabCover />,
+    coverShape: "square",
+  },
   {
     slug: "ai-native-organization",
     title: "为什么组织学习率将成为 AI 时代最重要的竞争变量",

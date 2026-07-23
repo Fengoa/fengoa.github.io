@@ -66,16 +66,16 @@ export function NavTabs() {
             onMouseLeave={seq.handleLeave}
           >
             {tab.id === "blog" && (
-              <BrainIcon ref={seq.iconRef} size={20} isAnimated={false} />
+              <BrainIcon ref={seq.iconRef} size={20} isAnimated={false} className="hidden sm:block" />
             )}
             {tab.id === "monthly" && (
-              <CalendarDays className="size-5" strokeWidth={1.5} />
+              <CalendarDays className="size-5 sm:block hidden" strokeWidth={1.5} />
             )}
             {tab.id === "taste" && (
-              <HeartIcon ref={seq.iconRef} size={20} isAnimated={false} />
+              <HeartIcon ref={seq.iconRef} size={20} isAnimated={false} className="hidden sm:block" />
             )}
             {tab.id === "product" && (
-              <DashboardIcon ref={seq.iconRef} size={20} isAnimated={false} />
+              <DashboardIcon ref={seq.iconRef} size={20} isAnimated={false} className="hidden sm:block" />
             )}
             {tab.id === "me" && (
               <AvatarIcon
@@ -85,6 +85,7 @@ export function NavTabs() {
                 size={20}
                 isAnimated={false}
                 active={isActive}
+                className="hidden sm:block"
               />
             )}
             {seq.isShimmering ? (
@@ -111,7 +112,7 @@ export function NavTabs() {
         }}
         aria-label="搜索 (⌘K)"
       >
-        <Search className="size-5" strokeWidth={1.5} />
+        <Search className="size-5 sm:block hidden" strokeWidth={1.5} />
       </button>
     </div>
   );
