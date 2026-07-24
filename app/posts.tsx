@@ -45,11 +45,11 @@ import { AimlabCover } from "./blog/aimlab/cover";
 export const posts: PostData[] = [
   {
     slug: "aimlab",
-    title: "用 React Three Fiber 实现一个 3D 瞄准训练器",
-    date: "2026-07-23",
+    title: "从零写一个浏览器里的 3D 瞄准训练器",
+    date: "2026-07-24",
     tag: "前端技术",
     summary:
-      "讲解一个完全运行于浏览器的 3D 瞄准训练器的实现：双层渲染架构、状态分层、第一人称控制、靶子空间几何、命中射线与数据化调参。",
+      "面向零基础：用 React Three Fiber 从空项目到可玩训练器。分三个里程碑——天空盒与贴图（含贴图怎么生成）、靶子与命中靶点、第一人称枪械模型。",
     cover: <AimlabCover />,
     coverShape: "square",
   },

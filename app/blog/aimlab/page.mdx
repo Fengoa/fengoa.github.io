@@ -1,243 +1,191 @@
-# 用 React Three Fiber 实现一个 3D 瞄准训练器
+import tuneImage from "./aimlab-tune.png";
 
-点下「开始」，鼠标被锁进画面，手腕转动带动视野旋转，屏幕正中的准星扫过一片蓝色小球，左键扣下，最近的那颗亮起分数后换到别处。整段体验不依赖任何原生客户端，完全运行在浏览器中。
+export const metadata = {
+  title: "从零写一个浏览器里的 3D 瞄准训练器",
+}
 
-瞄准训练器（Aim Lab、Kovaak's 等）用来练习射击精度。要把它放进浏览器，需要组合几类 3D 应用的基础构件：每帧刷新的场景、画面与界面共享读写的状态、第一人称视角控制、把靶子摆到合理位置的空间几何、从准星射出并判断命中的射线。下文按从按下开始到扣下扳机的顺序讲解这些构件，并在每处说明当时的选择依据。
+# 从零写一个浏览器里的 3D 瞄准训练器
 
----
+最近发现一个实用的库，[React Three Fiber](https://r3f.docs.pmnd.rs/getting-started/introduction)，可以用 React 组件描述 3D 场景，大幅降低了 3D 交互产品的开发门槛。
 
-## 1. 技术基础
+于是我写了一个小型的瞄准训练工具：鼠标锁入画面后，移动鼠标即可环顾四周；屏幕正中的准星扫过一片蓝色小球，左键扣动，最近的那颗亮起分数、迸成光点，随后转移到另一处。整套产品可在纯浏览器环境中流畅运行。
 
-页面基于 Next.js（App Router）与 React 19。3D 部分由 React Three Fiber 承担，它以 React 组件描述 three.js 场景，drei 补充环境贴图、`Html`、`useGLTF` 等常用组件。three.js 负责绘制，zustand 作为 3D 世界与上层界面之间共享的状态容器，Tailwind CSS v4 处理样式。
+下面按我实际开发的顺序展开：先解决「人站在哪里」的问题，再解决「打什么」的问题，最后解决「手里拿什么」的问题。每一步都记录了开发过程遇到的真实问题与对应解法。
 
-一个常见误区是认为 3D 游戏和 React 应用互不相关。在 React Three Fiber 中两者属于同一棵组件树：`<mesh>`、`<sphereGeometry>` 这类标签会被映射为 three 的对象，每帧通过 `useFrame` 修改其属性，状态由 zustand 统一管理。后续内容都建立在这个模型上。
+先玩一把感受一下：
 
----
+<GameEmbed src="https://app.logeast.cc/aimlab" title="Aim Lab 在线试玩" />
 
-## 2. 架构：双层渲染与 SSR 隔离
+> 点击画面锁定鼠标即可开始；按 Esc 退出锁定。
+> 右上角「放大」可在窗口内弹出大窗，「全屏」走浏览器全屏。
 
-画面由 3D 层与 2D 层叠加构成。3D 层是 React Three Fiber 的 `<Canvas>`，渲染 three.js 世界；2D 层是叠加在 Canvas 之上的 DOM，承载分数与调参面板，通过 `fixed`/`absolute` 与 `z-index` 定位。
+## 让玩家站在一个有环境的世界里
 
-两层共用一个 zustand store（`useGame`）。3D 侧在 `useFrame` 中写入相机朝向、位置、按键状态；2D 侧用选择器订阅 `score`、`hits`、`shots` 等切片。命中与计分逻辑集中在 store 处理。
+一个误解是场景必须用类似 glb 格式的 3D 模型，但其实不然，可以巧妙的用一张全景图片来模拟环境。
 
-重型 3D 子树经 `next/dynamic` 以 `ssr:false` 导入（`app/components/Game.tsx:10`）。WebGL 依赖浏览器环境，服务端缺少 `window`，直接渲染会抛异常。隔离为 `ssr:false` 后，首屏 HTML 可立即返回，Canvas 随后在客户端挂载。
+最初的直接思路是给场景加一个背景。three.js 提供 `scene.background` 直接贴图，但实测后它会被 tone mapping 处理——全景图的暗部被提亮、亮部被压暗，整体观感像蒙了一层灰。而且 `scene.background` 只是一张背景贴图，既会被额外调色，也完全不参与任何光照与反射，金属枪身与靶子并不会从中映出环境。
+
+因此改为自建一个天空球，将全景图贴到内壁：
 
 ```tsx
-// app/components/Game.tsx
-const Experience = dynamic(() => import("./Experience"), { ssr: false });
+<mesh>
+  <sphereGeometry args={[100, 60, 40]} />
+  <meshBasicMaterial map={texture} side={THREE.BackSide} toneMapped={false} />
+</mesh>
+```
 
-export default function Game() {
-  return (
-    <div className="relative h-screen w-screen overflow-hidden bg-black">
-      <Canvas flat shadows="percentage" camera={{ fov: 75, near: 0.1, far: 200 }}>
-        <Experience />
-      </Canvas>
-    </div>
-  );
+`side={THREE.BackSide}` 是关键：普通球体仅渲染外表面，而我们需要观察球的**内部**，因此翻转渲染面。`toneMapped={false}` 让贴图颜色原样输出，不被额外调色。球体半径取 100，足以将全部游戏内容包裹在内。
+
+不过天空盒本质仍是一张贴图，它自己并不会参与光照——金属枪身与靶子想「映出周围环境」，得另开一盏基于图像的环境光。做法是把同一张全景图赋给 `scene.environment`，three.js 会据此做 IBL（Image-Based Lighting），金属与清漆表面便有了可反射的周遭：
+
+```ts
+tex.mapping = THREE.EquirectangularReflectionMapping;
+tex.colorSpace = THREE.SRGBColorSpace;
+scene.environment = tex;        // 供金属 / 清漆表面反射
+scene.environmentIntensity = ...; // 反射强度可调
+```
+
+天空盒负责「背景长什么样」，IBL 负责「物体表面反射什么」，两件事分开，画面才既真实又可控。
+
+全景图采用一张等距柱状投影（equirectangular）的暗色室内射击场贴图（宽高比 2:1）。对应的提示词如下，可以给任意AI工具来生成。
+
+```text
+生成一张等距圆柱投影(equirectangular)的360度全景图，比例是2:1。
+主题是科幻未来感的射击训练场室内：深灰/暗色调金属墙面、橙红色点缀灯带和警示条纹、深色网格地面、工业风暗调照明、4K清晰度（3840×1920像素）、2:1等距圆柱投影，无缝拼接。
+无人物、无文字、无水印。不要有人物、不要文字、不要水印，画面要能左右无缝拼接、无透视扭曲。
+```
+
+
+## 让世界里有可命中的目标
+
+靶子是一颗金属质感的球体，使用 `meshPhysicalMaterial`：高 `metalness` 让它像抛光金属球，叠加 `clearcoat` 清漆层增加一层高光，再用一点 `emissive` 自发光保证暗处也看得见；球心再叠一个黄色小圆点，方便快速定位对准：
+
+```tsx
+<group position={position}>
+  {/* 抛光金属球 */}
+  <mesh userData={{ targetId: id }}>
+    <sphereGeometry args={[size, 48, 48]} />
+    <meshPhysicalMaterial
+      color="#3b6fe0" emissive="#2f6bff"
+      emissiveIntensity={0.12} roughness={0.16}
+      metalness={0.9} envMapIntensity={1.6}
+      clearcoat={0.7} clearcoatRoughness={0.2}
+    />
+  </mesh>
+  {/* 中心黄色小瞄准点 */}
+  <mesh position={[0, 0, size * 1.01]}>
+    <circleGeometry args={[size * 0.12, 16]} />
+    <meshBasicMaterial color="#f59e0b" side={THREE.DoubleSide} />
+  </mesh>
+</group>
+```
+
+金属度拉到 0.9 意味着球体几乎只反射「环境与灯光」、自身漫反射极弱——若场景里没光，它就是一团黑。所以我额外布了几盏灯：一盏 `ambientLight` 兜底填亮暗部、一盏 `directionalLight` 给出主光方向，再加两盏橙色与一盏蓝色 `pointLight` 点光源。它们既照亮靶球，也把射击场的科幻氛围带进金属反光里。
+
+射击训练需要让靶子分布在一个以玩家为球心的弧面上，转头才能扫到不同方向。我的做法是先生成一组固定间距的参考点网格，再在每个参考点附近做随机抖动：
+
+```ts
+export function genGridPositions(cfg) {
+  const { radius, rows, cols, aHalf, eUp, eDown, gridSpacing } = cfg;
+  const pts = [];
+  const hSpan = Math.min((cols - 1) * gridSpacing, 2 * aHalf);
+  const vSpan = Math.min((rows - 1) * gridSpacing, eUp + eDown);
+  const aStart = -hSpan / 2, eStart = -vSpan / 2;
+  // ... 按行列遍历，球面角 → 世界坐标
+  return pts;
 }
 ```
 
-### 2.1 选择依据：首屏是否直接挂载 Canvas
-
-首屏直接挂载 Canvas、不区分服务端渲染会触发 WebGL 在 `window` 缺失时抛异常，且重型 three 场景会显著增大首屏 HTML 体积与阻塞时间。`ssr:false` 的代价是增加一次客户端加载，收益是首屏即时呈现且 3D 仅在客户端执行。内容型站点中读者先看到页面、游戏随后加载，两者互不阻塞。
-
-降级策略保留了 PCSS 软阴影。软阴影对空间感知贡献明显，清晰度下降对瞄准手感影响有限，因此默认保留阴影，仅在帧率持续下降时降低 dpr。
-
----
-
-## 3. 渲染管线与性能自适应
-
-Canvas 的几处配置需要说明：
-
-```tsx
-<Canvas flat shadows="percentage" camera={{ fov: 75, near: 0.1, far: 200 }}>
-```
-
-`flat` 关闭 three 的自动 tone mapping，全景图颜色按原始像素呈现。`shadows="percentage"` 启用百分比软阴影。透视相机 `fov` 为 75，远裁剪距离 200，足以覆盖训练场与天空球。
-
-性能自适应在帧率持续下降时将 `gl.dpr` 降至 1，以清晰度换取帧率。移动端高分屏固定 `dpr=2~3` 容易掉帧，本项目用 drei 的 `<PerformanceMonitor>` 在 `onDecline` 回调中降低 DPR。
-
-每帧可变状态与触发 React 渲染的 UI 状态应当分离，并在必要时对 dpr、阴影、抗锯齿做自动降级。
-
----
-
-## 4. 状态管理：共享 store 与状态分层
-
-`app/store.ts` 以 zustand 暴露单例 `useGame`，区分两类状态。
-
-每帧高频变化的运行时状态（相机 `yaw`/`pitch`、位置、速度、`keys`、`locked`）在 `useFrame` 中直接写入，或由组件内的 `useRef` 持有并仅供 `useFrame` 读取，订阅者少，不会引起大规模重渲染。
-
-低频、需要 DOM 立即反映的 UI 状态（`score`、`hits`、`shots`、`started`）由 DOM 层用选择器订阅，仅对应切片变化时重渲染该组件。
-
-`Tuning` 是一份可调参数对象（`app/store.ts:149`），将背景、武器、网格、靶子、灵敏度全部数据化。拖动面板滑块触发 `setTuning(patch)` 并重新摆放存活靶子，无需刷新页面。
-
-计分由纯函数 `computeScore`（`app/store.ts:121`）完成，使游戏数值与渲染代码解耦：
+这里存在一个约束：若直接在世界坐标的 `x/y/z` 上叠加随机米数做抖动，球面边缘处各方向不一致，靶子容易越出边界或相互重叠。解法是**在角度空间里抖动**——先将参考点转换为 `(方位角 az, 仰角 el)`，在角度上叠加随机量，再 clamp 回合法区间，最后转回世界坐标：
 
 ```ts
-const edge = Math.min(1, Math.max(Math.abs(az) / t.arcA, Math.abs(el) / t.arcEmax));
-const small = Math.min(
-  1,
-  Math.max(0, (t.targetSizeMax - size) / (t.targetSizeMax - t.targetSizeMin))
-);
-return Math.round(10 + edge * 5 + small * 5); // 范围约 10~20
-```
-
-公式化表达为：
-
-<Math block>{`\\text{score}=\\left\\lfloor 10+5\\,e+5\\,s\\right\\rfloor,\\quad e=\\min\\!\\left(1,\\max\\!\\left(\\tfrac{|az|}{\\text{arc}_A},\\tfrac{|el|}{\\text{arc}_{E_{\\max}}}\\right)\\right),\\quad s=\\min\\!\\left(1,\\max\\!\\left(0,\\tfrac{\\text{size}_{\\max}-\\text{size}}{\\text{size}_{\\max}-\\text{size}_{\\min}}\\right)\\right)`}</Math>
-
-分数范围约 10~20，边缘距离与尺寸共同决定难度权重。
-
-### 4.1 选择依据：相机状态是否进入 React state
-
-以 `useState` 保存 `yaw`/`pitch`/`position` 并每帧 `setState` 的写法，会使 React 在 60~144fps 下每帧重渲染整棵订阅树，开销不可接受。高频运行时状态作为命令式可变对象，与 React 声明式状态分离。相机朝向在 `useFrame` 中直接赋值，不经 React 协调层，性能与裸 three.js 一致；分数、命中数这类需要观察的状态才走 React 订阅。
-
-`computeScore` 提取为纯函数后，计分规则可单测、可被策划直接阅读，无需深入射线逻辑。数值与渲染解耦是快速调参的前提。
-
----
-
-## 5. 第一人称控制：Pointer Lock 与即时视角
-
-`app/components/Player.tsx` 不渲染可见内容（`return null`），在 `useEffect` 中注册监听、在 `useFrame` 中每帧更新相机。
-
-### 5.1 Pointer Lock：捕获鼠标增量
-
-点击画面触发 `el.requestPointerLock()`。锁定后鼠标不受屏幕边缘限制，`mousemove` 事件提供 `movementX`/`movementY`（本次移动的像素增量）。
-
-```ts
-const onMove = (e: MouseEvent) => {
-  if (document.pointerLockElement !== el) return;
-  const sens = useGame.getState().tuning.lookSens;
-  targetYaw.current   -= e.movementX * BASE_SENS * sens;
-  targetPitch.current -= e.movementY * BASE_SENS * sens;
-  targetPitch.current = THREE.MathUtils.clamp(targetPitch.current, -MAX_PITCH, MAX_PITCH);
-};
-```
-
-`BASE_SENS = 0.0022` 弧度/像素为基准灵敏度，`lookSens` 为倍率。`yaw` 用 `-=` 计算，鼠标右移使视角右转；`pitch` 以 `clamp` 限制于 ±85°，避免翻转过头。
-
-按 Esc 退出 Pointer Lock 后浏览器进入短暂冷却期，期间再次调用 `requestPointerLock` 会抛 `SecurityError` 或 reject Promise。代码以 `try/catch` 与 `p.catch(() => {})` 捕获该异常（`Player.tsx:55`），否则控制台会持续报错。
-
-### 5.2 即时视角：准星、视线、子弹一致
-
-```ts
-useFrame((_, delta) => {
-  if (!useGame.getState().started) return;
-  camera.rotation.set(targetPitch.current, targetYaw.current, 0);
-  camera.updateMatrixWorld();
-  // ... WASD 移动
-});
-```
-
-相机 `rotation.order = "YXZ"`（`Player.tsx:27`），先 yaw 后 pitch，可规避万向锁式抖动。`rotation.set(pitch, yaw, 0)` 每帧直接将目标视角赋给相机，无插值或阻尼。准星固定于屏幕中心，子弹沿中心射线发射，阻尼会使画面滞后于鼠标导致射线与准星错位。零延迟视角保证三者一致，是命中判定的前提。
-
-### 5.3 WASD 移动：相对朝向、帧率无关
-
-```ts
-camera.getWorldDirection(dir.current);
-dir.current.y = 0; dir.current.normalize();
-rightVec.current.crossVectors(dir.current, camera.up).normalize();
-move.current.multiplyScalar(2.5 * delta);
-camera.position.add(move.current);
-camera.position.y = 1.6;
-camera.position.x = clamp(x, -25, 25);
-camera.position.z = clamp(z, -28, 15);
-```
-
-`2.5 * delta` 使每帧位移乘以帧间隔，移动速度在 60fps 与 144fps 下一致。位置被限制于训练场范围内，`y` 锁死为 1.6（人眼高度），玩家只能平移。
-
-### 5.4 选择依据：即时视角与帧率无关移动
-
-视角即时、移动帧率无关方向相反。FPS 的硬性契约是准星即所见，零延迟视角是必要条件，阻尼平滑无法满足。移动不绑定视觉契约，玩家只关注位移距离，以 `delta` 归一化即可使不同帧率下位移一致。
-
-`BASE_SENS` 以像素为单位，`delta` 不参与视角计算（代码注释标注「视角灵敏度用像素、不用 delta」）。`movementX` 本身是像素增量，与帧率无关，相乘后天然帧率无关；移动是每帧持续施加的位移，才需要 `delta`。两种物理量采用两套帧率无关策略，是按物理含义选型的结果。
-
-移动速度 `2.5` 硬编码、未暴露给 `Tuning`。移动手感属于底层契约，调参面板仅面向视觉与靶子分布，不应由非程序员调整的量保持隐藏。
-
----
-
-## 6. 靶子生成：角度空间抖动
-
-### 6.1 问题：笛卡尔坐标抖动导致出界
-
-靶子分布在以相机为球心、半径 R 的球面上（非平面网格）。在网格点附近按随机米数偏移生成靶子，球面边缘方向不一致，在 `x`/`y`/`z` 上 `position += random` 容易把靶子推出 `arcA`/`arcEmax` 边界，甚至穿出天花板或移到相机背后。
-
-### 6.2 解法：在角度空间抖动
-
-`SpawnGrid.genGridPositions`（`app/components/SpawnGrid.tsx:39`）生成一组固定角间距的参考点，边界由 `arcA`/`arcEmax`/`arcEmin` 定义。相邻点角度差恒为 `gridSpacing`；总跨度取 `min((n-1) * spacing, 边界范围)`；点阵居中且不超边界，因此改行列数只改变覆盖面积，不改变间距。
-
-`store.ts` 中的 `randomPosWithSlot`（`app/store.ts:63`）执行一次坐标变换：
-
-```ts
-const idx = pickSlot()!;
-const base = toAngles(c[0], c[1], c[2]);     // 世界 → (az, el)
-const jAng = tuning.jitter / tuning.arcRadius;
+const jAng = tuning.jitter / tuning.arcRadius; // 米 → 弧度
 let az = base.az + (Math.random() - 0.5) * jAng;
 let el = base.el + (Math.random() - 0.5) * jAng * 0.4;
 const margin = Math.atan(size / tuning.arcRadius);
 az = clamp(az, -tuning.arcA + margin, tuning.arcA - margin);
 el = clamp(el, -tuning.arcEmin + margin, tuning.arcEmax - margin);
-return { pos: fromAngles(az, el, tuning.arcRadius), idx, size };
 ```
 
-`toAngles`/`fromAngles` 是球面角与世界坐标的互转（`app/store.ts:31`）。边界 `arcA`/`arcEmax` 以弧度定义，将 jitter 换算为弧度并在角度空间 clamp，即可保证靶子落入合法弧面，与 jitter 取值无关：
+如此无论 jitter 取值多大，靶子在数学上保证不越界。避免重叠采用槽位制：每个参考点是一个槽，生成时随机选取未被占用的槽，命中后释放并重新分配。
 
-<Math block>{`az\\in\\big[-\\text{arc}_A+m,\\;\\text{arc}_A-m\\big],\\quad el\\in\\big[-\\text{arc}_{E_{\\min}}+m,\\;\\text{arc}_{E_{\\max}}-m\\big],\\quad m=\\arctan\\!\\left(\\tfrac{\\text{size}}{R}\\right)`}</Math>
-
-`m` 为靶子半径对应的角宽度安全边距。
-
-### 6.3 槽位占用：避免重叠
-
-`pickSlot`/`releaseSlot`（`app/components/SpawnGrid.tsx:76`）用 `Set<number>` 记录已占用槽位。生成时随机选取未占用槽位，命中后释放旧槽位并重新分配。同一时刻的 N 个靶子分布在不同参考点附近，不会重叠。
-
-### 6.4 选择依据：角度空间抖动
-
-在网格点附近叠加随机米数的方案中，球面几何使米数与角度呈非线性：越靠近边界，相同米数偏移对应的角度越大，出界概率越高，只能缩小 jitter 规避，靶子会聚集于中心。改用在弧度边界内 clamp 的角度坐标系后，出界问题从数学上消除，调参仅能压制。网格参考点同时解耦靶子覆盖面积与间距：调整行列数只改变覆盖、不改变密度。
-
-槽位制的条件是 N 个靶子不超过槽位数，否则 `pickSlot()!` 会因无空位断言失败。当前训练场网格足够密集，该边界不会被触发，因此不为其构建复杂回退，用一个前提假设换取代码简洁。
-
----
-
-## 7. 命中判定：屏幕中心射线
-
-射击在 `Player.tsx` 的 `mousedown` 中完成：
+瞄准的本质是锁定鼠标加鼠标移动驱动视角。点击画面调用 `requestPointerLock()`，此后鼠标不再受屏幕边缘限制，`mousemove` 提供的为像素增量 `movementX/Y`：
 
 ```ts
-const shoot = () => {
-  const state = useGame.getState();
-  if (!state.started) return;
-  if (document.pointerLockElement !== gl.domElement) return;
-  state.shoot();
-  raycaster.current.setFromCamera(new THREE.Vector2(0, 0), camera);
-  const meshes = getTargetMeshes().filter((m) => m.parent?.visible !== false);
-  const hits = raycaster.current.intersectObjects(meshes, false);
-  if (hits.length > 0) {
-    const id = hits[0].object.userData.targetId as number;
-    useGame.getState().hitTarget(id);
+const onClick = () => {
+  if (document.pointerLockElement !== gl.domElement) {
+    try {
+      gl.domElement.requestPointerLock();
+    } catch { /* 刚退出锁定后浏览器有冷却期，捕获异常 */ }
   }
+};
+
+const onMove = (e: MouseEvent) => {
+  if (document.pointerLockElement !== gl.domElement) return;
+  targetYaw.current   -= e.movementX * BASE_SENS * sens; // 右移→右转
+  targetPitch.current -= e.movementY * BASE_SENS * sens;
+  targetPitch.current = clamp(targetPitch.current, -MAX_PITCH, MAX_PITCH); // ±85°
 };
 ```
 
-`setFromCamera((0,0), camera)` 从屏幕中心发射射线，与准星、相机前向对齐，印证了即时视角的必要性。`getTargetMeshes()`（`app/lib/targets.ts`）是 mesh 注册表：每个靶球在 `ref` 回调中执行 `registerTarget(id, mesh)`（`app/components/Targets.tsx:15`），命中检测从注册表取全部 mesh 做射线相交，避免遍历 `scene.children` 误射环境。`userData.targetId` 用于反查命中 mesh 所属的靶子（`app/components/Targets.tsx:14`），再交 store 加分并重新摆放。
+视角每帧**直接**赋给相机，不做任何平滑插值。原因在于准星绘制于 DOM 层正中央，子弹是从相机中心射出的射线，三者必须零延迟对齐；否则画面滞后于鼠标时，所见的准星位置与实际射出的方向将不再一致。
 
-命中后 `hitTarget(id)`（`app/store.ts:284`）执行算分、加分、释放旧槽位、重新分配位置，构成无限训练循环。
+移动采用 WASD，方向相对当前朝向，位移乘以 `delta` 以在不同帧率下保持一致速度，人眼高度锁定 1.6 仅做平移。
 
----
+命中判定利用准星位于屏幕中心这一事实，从相机中心发出射线（NDC 坐标 `(0, 0)`），检测其与哪个靶球相交：
 
-## 8. 调参面板：把参数数据化
+```ts
+raycaster.current.setFromCamera(new THREE.Vector2(0, 0), camera);
+const meshes = getTargetMeshes().filter((m) => m.parent?.visible !== false);
+const hits = raycaster.current.intersectObjects(meshes, false);
+if (hits.length > 0) {
+  const id = hits[0].object.userData.targetId as number;
+  useGame.getState().hitTarget(id);
+}
+```
 
-`app/components/TuningPanel.tsx` 将所有参数组织为分组滑块（背景、武器、网格、靶子、视角）。拖动触发 `setTuning` 并实时 `refreshTargets`。复制参数 JSON 将整份 `Tuning` 写入剪贴板，可直接交付工程写入 `DEFAULT_TUNING`，使美术与策划的调整与工程代码分离。
+每个靶球挂载时注册到一个全局表（`registerTarget(id, mesh)`），命中检测仅从该表取值，不会误射天空盒。射线仅取第一个交点（最近的那颗），符合直觉。
 
-### 8.1 选择依据：复制 JSON 而非预设系统
+瞄准与命中发生在 3D 场景里，但准星和分数是叠在 Canvas 之上的**独立 DOM 层**，互不干扰、也不随 3D 重渲染。准星（`Crosshair`）固定在视口正中：鼠标锁定后显示十字，未锁定时显示「点击画面锁定鼠标瞄准」的引导文字。分数面板（`HUD`）在底部中央显示大号得分与命中率（`hits / shots`），右下角是武器图标与无限弹药标记 `∞`——这是一个专注瞄准的训练器，刻意不做弹匣限制，让练习不被换弹打断。
 
-预设下拉框（flick、tracking、micro）或后端配置属于更重的方案。本项目采用一份 `Tuning` 对象加一个复制按钮，依据有三点。`Tuning` 已是纯数据，复制出的 JSON 即视觉规格书，策划与工程之间无需另设描述语言。预设系统需要维护命名、版本、默认值迁移，在模式种类未确定前建立系统会成为负债。面板 `reset` 可恢复默认，复制 JSON 负责前进、reset 负责后退，闭环已足够。
+## 让第一人称手里有把枪
 
-复制粘贴一段 JSON 即可解决问题时，不必优先构建配置中心。出现第二、第三种固定模式后再沉淀为预设，`Tuning` 的形状已稳定，抽象成本更低。
+靶子与瞄准齐备后，视角中若空无一物会显得单薄。取一把 GLB 武器模型挂载到相机之下即可：
 
----
+```tsx
+import { useGLTF } from "@react-three/drei";
+import { asset } from "@/app/lib/asset";
 
-## 9. 主线：把约束放到正确的抽象层
+const MODEL_PATH = asset("/models/sci-fi_bullpup_rifle.webp.glb");
 
-前述决策有一条共同主线。出界问题因边界以弧度定义，在角度坐标系内由弧度 clamp 消除。每帧重渲染通过将高频状态移出 React、走命令式解决，性能与裸 three.js 一致。准星与子弹错位通过保持视角零延迟（无阻尼）解决。调参协作通过令 `Tuning` 数据结构直接作为策划与工程的接口解决，省去专有描述语言。
+export default function Weapon() {
+  const { scene } = useGLTF(MODEL_PATH);
+  return (
+    <primitive
+      object={scene}
+      position={[0.7, -0.18, 0.03]}
+      scale={0.55}
+      rotation={[0, 0.067, 0]}
+    />
+  );
+}
+```
 
-问题反复出现时，优先核查其所在的抽象层是否恰当。坐标系、状态层、渲染层、协作层选对层级，许多难题会自然消解。
+`position` 为相对相机的偏移：X 正向向右、Y 负向略向上、Z 正向略靠前，枪便端在屏幕右下角。原始 GLB 约 20MB，使用 `gltf-transform webp` 将内部纹理转为 WebP 后压缩至约 5MB。
+
+枪的位置、大小、朝向几乎无法一次调准，我将这些参数全部纳入一个 Tuning 对象，拖动调试面板实时调整，定稿后将 JSON 写回代码。相机 `near` 取较小值（0.1）、枪的 Z 偏移为正，确保枪始终可见且不被天空盒遮挡。
+
+<figure className="my-8">
+  <img
+    src={tuneImage.src}
+    alt="调参调试面板：实时拖动枪的位置、缩放、旋转等参数，左侧同步预览第一人称视角中的枪模位置"
+    className="mx-auto max-w-2xl w-full rounded-lg border border-neutral-200 dark:border-neutral-800"
+  />
+  <figcaption className="mt-2 text-xs text-center text-muted-foreground">
+    拖动调试面板实时调整 Tuning 参数，右侧画面同步预览，定稿后把数值固化进代码。
+  </figcaption>
+</figure>
+
+## 最后
+
+以上就是第一人称射击的全部实现。大部分情况下我之需要提供素材、调整 Tuning 参数即可。剩下的任务都可以交给 AI 去完成。这种协作模式让产出效率大幅提升。

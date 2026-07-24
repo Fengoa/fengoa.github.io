@@ -11,6 +11,7 @@ export interface PostMeta {
 }
 
 export const postsMeta: PostMeta[] = [
+  { slug: "aimlab", title: "从零写一个浏览器里的 3D 瞄准训练器", tag: "前端技术", date: "2026-07-24" },
   { slug: "ai-native-organization", title: "为什么组织学习率将成为 AI 时代最重要的竞争变量", tag: "大模型", date: "2026-07-21" },
   { slug: "relation-llm", title: "非结构化关系记忆：口语笔记到可查询图谱", tag: "大模型", date: "2026-07-16" },
   { slug: "minqin-asr", title: "民勤话语音识别：Whisper 微调流水线", tag: "大模型", date: "2026-07-03" },

@@ -15,6 +15,7 @@ import { PostMetaInfo } from "@/components/blog/post-meta-info";
 import { RecommenderArchitecture } from "@/components/blog/recommender-architecture";
 import { SeriesNav } from "@/components/blog/series-nav";
 import { Math } from "@/components/ui/math";
+import { GameEmbed } from "@/components/ui/game-embed";
 
 export const H1 = (props: ComponentPropsWithoutRef<"h1">) => (
   <>
@@ -263,6 +264,7 @@ export const components = {
   RecommenderArchitecture,
   SeriesNav,
   Math,
+  GameEmbed,
   h1: H1,
   H1: H1,
   h2: H2,
