@@ -41,8 +41,19 @@ import { MinqinASRCover } from "@/app/blog/minqin-asr/cover";
 import { RelationLLMCover } from "@/app/blog/relation-llm/cover";
 import { AiNativeOrganizationCover } from "./blog/ai-native-organization/cover";
 import { AimlabCover } from "./blog/aimlab/cover";
+import { DeepSeekCover } from "./blog/deepseek-interview/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "deepseek-interview",
+    title: "梁文锋访谈：开源、克制与 AGI 路线图",
+    date: "2026-07-27",
+    tag: "大模型",
+    summary:
+      "按主题整理梁文锋围绕 DeepSeek 的一系列看法：为什么坚持开源、API 怎么定价、克制为什么是战略、AGI 的阶梯怎么走、中美真正的差距在算力，以及 TileLang 如何换掉 CUDA。",
+    cover: <DeepSeekCover />,
+    coverShape: "square",
+  },
   {
     slug: "aimlab",
     title: "从零写一个浏览器里的 3D 瞄准训练器",
