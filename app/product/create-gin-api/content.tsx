@@ -11,6 +11,7 @@ const STACK = [
   "Zap",
   "Air",
   "Swagger",
+  "Docker",
 ] as const;
 
 const FLAGS = [
@@ -64,7 +65,31 @@ internal/
   logger/                 # Zap
   router/                 # 路由组装
   service/                # 业务逻辑
+Dockerfile                # 多阶段镜像
+docker-compose.yml        # api + Postgres + Redis
 Makefile / .air.toml / .env.example`;
+
+const CLI_SAMPLE = `✔ Creating project in /path/my-api
+✔ Downloading Go modules
+✔ Generating Swagger docs
+
+Success! Created my-api at /path/my-api
+  module  my-api
+  title   My Api API
+
+Inside that directory, you can run several commands:
+
+  make run
+    Start the API server locally.
+
+  make docker-up
+    Build and start api + Postgres + Redis.
+
+We suggest that you begin by typing:
+
+  cd my-api
+  cp .env.example .env
+  make run`;
 
 function Section({
   id,
@@ -110,9 +135,10 @@ export function CreateGinApiContent() {
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             create-gin-api
           </code>{" "}
-          是一个 Go CLI 脚手架。给定项目名后，它会写出一套可直接编译运行的 Gin
-          API 目录：handler → service → database / redis 分层已搭好，环境变量、Makefile、热重载与
-          Swagger 注解一并带上。
+          是 Go CLI 脚手架。写出可直接编译的 Gin API
+          目录：handler → service → database / redis
+          分层已搭好，并带上环境变量、Makefile、Air、Swagger 与 Docker
+          Compose。
         </p>
         <p>
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
@@ -122,29 +148,51 @@ export function CreateGinApiContent() {
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             REDIS_URL
           </code>{" "}
-          可选。未配置时服务仍可启动，适合先搭好 HTTP 骨架再接依赖。
+          在本地运行时可选；Compose 启动时会注入 Postgres 与 Redis
+          服务地址。
         </p>
       </Section>
 
       <Section id="install" title="安装" delay={0.08}>
-        <p>需要 Go 1.25 及以上。</p>
+        <p>需要 Go 1.25 及以上。安装最新 semver tag：</p>
         <CodeBlock code="go install github.com/oriensx/create-gin-api@latest" />
+        <p>
+          打完新 tag 并{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            git push origin vX.Y.Z
+          </code>{" "}
+          后，本机需再执行一次{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            go install …@latest
+          </code>
+          ；已装二进制不会自动替换。急用可{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            GOPROXY=direct
+          </code>
+          。
+        </p>
         <p>或克隆仓库本地执行：</p>
         <CodeBlock
           code={`git clone https://github.com/oriensx/create-gin-api.git
 cd create-gin-api
-go run . <name>`}
+go install .
+# 或：go run . <name>`}
         />
       </Section>
 
       <Section title="用法" delay={0.1}>
+        <p>
+          <strong>TTY 下不带项目名</strong>
+          ，进入交互模式：依次询问 name、module、父目录、title、description；回车采用括号内默认值。已传 flag 会作为默认值。
+        </p>
         <CodeBlock
-          code={`create-gin-api my-api
+          code={`create-gin-api
+create-gin-api my-api
 create-gin-api -module github.com/acme/my-api my-api
 create-gin-api -out ~/work -title "Order Service API" order-svc`}
         />
         <p>
-          Flag 必须写在{" "}
+          Flag 写在{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             &lt;name&gt;
           </code>{" "}
@@ -152,7 +200,11 @@ create-gin-api -out ~/work -title "Order Service API" order-svc`}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             ^[a-z][a-z0-9-]*$
           </code>
-          。
+          。非 TTY 且无{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            &lt;name&gt;
+          </code>{" "}
+          时打印 Usage 并退出。
         </p>
 
         <div className="overflow-x-auto rounded border">
@@ -187,8 +239,10 @@ create-gin-api -out ~/work -title "Order Service API" order-svc`}
         <CodeBlock
           code={`cd my-api
 cp .env.example .env
-make swagger   # 若生成时 PATH 中没有 swag
-make run`}
+make run              # 本地启动
+make docker-up        # api + Postgres + Redis
+make swagger          # 若生成时 PATH 中没有 swag
+make docker-down      # 停止 Compose`}
         />
         <p>可选开发工具：</p>
         <CodeBlock
@@ -196,23 +250,42 @@ make run`}
 go install github.com/swaggo/swag/cmd/swag@latest`}
         />
         <p className="text-muted-foreground">
-          脚手架在写入文件后会执行{" "}
+          写入文件后执行{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             go mod tidy
           </code>
-          ；若本机已安装{" "}
+          ；若已安装{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             swag
           </code>
-          ，还会生成 docs。任一步失败时命令退出非零，不打印「created」。
+          ，继续生成 docs。任一步失败则退出非零，不打印 Success。子进程日志默认静默，失败时再输出。
         </p>
+      </Section>
+
+      <Section title="CLI 输出" delay={0.13}>
+        <p>
+          进度与 Success 文案接近 create-next-app：勾选步骤、命令说明、建议的{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            cd
+          </code>{" "}
+          /{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            make run
+          </code>
+          。设置{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            NO_COLOR
+          </code>{" "}
+          可关闭颜色。
+        </p>
+        <CodeBlock code={CLI_SAMPLE} language="text" />
       </Section>
 
       <Section title="生成项目结构" delay={0.14}>
         <p>默认目录大致如下：</p>
         <CodeBlock code={LAYOUT} language="text" />
         <p>
-          Make 目标包括{" "}
+          Make 目标：{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             tidy
           </code>
@@ -228,7 +301,7 @@ go install github.com/swaggo/swag/cmd/swag@latest`}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             dev
           </code>
-          （Air）、{" "}
+          、{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             swagger
           </code>
@@ -236,7 +309,53 @@ go install github.com/swaggo/swag/cmd/swag@latest`}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             test
           </code>
+          、{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            docker-build
+          </code>
+          、{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            docker-up
+          </code>
+          、{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            docker-down
+          </code>
           。
+        </p>
+      </Section>
+
+      <Section title="Docker" delay={0.15}>
+        <p>
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            make docker-up
+          </code>{" "}
+          构建 API 镜像，并启动 Postgres 16 与 Redis 7；健康检查通过后再起
+          api。Compose 内{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            DATABASE_URL
+          </code>{" "}
+          /{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            REDIS_URL
+          </code>{" "}
+          指向服务名{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            postgres
+          </code>{" "}
+          /{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            redis
+          </code>
+          。宿主端口默认{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            8080
+          </code>
+          （可用环境变量{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            PORT
+          </code>{" "}
+          覆盖发布映射）。
         </p>
       </Section>
 
@@ -281,11 +400,11 @@ go install github.com/swaggo/swag/cmd/swag@latest`}
           ))}
         </ul>
         <p className="text-muted-foreground">
-          改生成物形态：编辑脚手架仓库里的{" "}
+          改生成物：编辑脚手架仓库{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             internal/scaffold/template/
           </code>
-          。维护说明见仓库{" "}
+          。维护说明见{" "}
           <a
             href="https://github.com/oriensx/create-gin-api/blob/main/DEVELOP.md"
             target="_blank"

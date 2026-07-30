@@ -19,8 +19,8 @@ const products: ProductItem[] = [
     name: "create-gin-api",
     description: (
       <>
-        Go CLI 脚手架。给定项目名，生成 Gin API 目录；模板含{" "}
-        <strong>GORM / Postgres</strong>、Redis、Zap、Air 与 Swagger。
+        Go CLI 脚手架。交互式或命令行生成 Gin API；模板含{" "}
+        <strong>GORM / Postgres</strong>、Redis、Zap、Air、Swagger 与 Docker。
       </>
     ),
     href: "/product/create-gin-api",

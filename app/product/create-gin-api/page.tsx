@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Grid } from "@/components/ui/grid";
-import { CreateGinApiHero } from "@/components/product/create-gin-api/hero";
-import { CreateGinApiContent } from "@/components/product/create-gin-api/content";
+import { CreateGinApiHero } from "./hero";
+import { CreateGinApiContent } from "./content";
 
 export const metadata: Metadata = {
   title: "create-gin-api",
   description:
-    "一条命令生成 Gin API 项目骨架。GORM / Postgres、Redis、Zap、Air、Swagger 已写入模板。",
+    "Go CLI 脚手架：交互式生成 Gin API 项目，模板含 GORM / Postgres、Redis、Zap、Air、Swagger 与 Docker Compose。",
 };
 
 export default function CreateGinApiProductPage() {

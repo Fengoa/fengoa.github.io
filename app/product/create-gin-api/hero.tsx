@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, ArrowUpRight, Terminal } from "lucide-react";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Grid } from "@/components/ui/grid";
 import { CodeBlock } from "./code-block";
 
@@ -47,13 +47,18 @@ export function CreateGinApiHero() {
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
               className="flex w-full max-w-2xl flex-col items-center"
             >
+              <p className="mb-3 font-mono text-xs text-muted-foreground">
+                CLI · Go 1.25+ · MIT
+              </p>
+
               <h1 className="text-center font-mono text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
                 create-gin-api
               </h1>
 
               <p className="mt-4 max-w-lg text-center text-sm leading-relaxed text-secondary-foreground md:text-base text-pretty">
-                一条命令生成 Gin API 项目骨架。GORM /
-                Postgres、Redis、Zap、Air、Swagger 已写入模板，可直接启动。
+                生成 Gin API 项目骨架。模板含{" "}
+                <strong>GORM / Postgres</strong>、Redis、Zap、Air、Swagger 与
+                Docker Compose；支持交互式填写与本地 / 容器两种启动方式。
               </p>
 
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -74,7 +79,7 @@ export function CreateGinApiHero() {
                 </a>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-6 w-full">
                 <CodeBlock code={INSTALL} language="bash" />
               </div>
             </motion.div>
