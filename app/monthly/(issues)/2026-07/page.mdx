@@ -24,6 +24,31 @@ export const metadata = {
 2. 在一个 50 臂的真实投放实验中，AI 生成的最佳创意比人类写的最佳创意互动率高出 45.1%，另外两组实验也复现了 46.7% 和 36.2% 的提升。
 3. 虽然预测模型本身噪声很大，根本无法直接离线选出最优创意，却足以把生成方向“引”对，交由线上自适应实验进一步筛选。
 4. 提炼出一条可复用的设计原则：离线模型负责“生成一个好的候选池”，线上自适应实验负责“从候选池中择优”，同时用**自适应分流**减少弱创意浪费的流量。
- 
+
 这几乎就是为广告投放场景量身定做的论文——生成式 AI 做创意 + 投放系统做验证的完整闭环，而且是 Meta 真实生产环境产出的数据。若你正在搭建投放 Agent 或创意自动化系统，这套“离线 critic 引导生成、在线 bandit 收敛选优”的架构可直接复用。它也回应了一个常见质疑：预测模型不准时该怎么做？预测模型无需精准打分，其作用在于提升候选池的质量上限。
- 
+
+## YC Startup Directory
+
+[Y Combinator 创业公司目录](https://www.ycombinator.com/companies)可检索全部被投公司。2005 年起已投资逾 5000 家，合计估值超过 1 万亿美元；找职位可去 Work at a Startup。
+
+目录里有一份 **Top Companies**（约 91 家），是 YC 标出的标杆组合，商业价值与行业影响力更集中。
+
+![YC Top Companies 行业与地域概览](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/imghub/yc_1785403357182.png)
+
+行业上 **B2B 企业服务**占大头：41 家、约 45%，覆盖开发者工具、DevOps、数据分析、HR 与全球薪酬、供应链与办公效率，代表有 GitLab、Dropbox、Rippling、Deel、Scale AI、Flexport、Zapier、Webflow。**Consumer** 约 20 家（22%），偏消费平台、社交内容、按需配送与电商，如 DoorDash、Airbnb、Instacart、Reddit、Twitch、Zepto、Whatnot。**Fintech** 14 家（约 15%），集中在支付、数字银行、加密货币与跨境金融基础设施，Stripe、Coinbase、Brex、Razorpay、Groww 都在列。Industrials 与 Healthcare 各约 6 家：前者有 Oklo、Rigetti Computing、Cruise、Momentus 一类清洁能源、量子、自动驾驶与航天项目；后者有 Ginkgo Bioworks、Pardes Biosciences 等合成生物学与数字医疗方向。教育与地产建筑各 2 家，分别有 Codecademy、Clever，以及 EquipmentShare、PlanGrid。
+
+总部仍以北美为主，约 81 家在美国或加拿大，湾区最密；南亚 4 家（如 Groww、Razorpay），欧洲与非洲各 2 家（非洲侧有 Paystack、Wave），拉美与大洋洲各 1 家。约 70 家标了 Remote，SaaS 与高科技公司对分布式团队接受度不低。
+
+批次跨度很长：Summer 2005 的 Reddit、Summer 2007 的 Dropbox、Winter 2009 的 Airbnb、Summer 2009 的 Stripe，一直到 Winter 2021 的 Zepto、Moxion Power 等。名单里混着已 IPO 的公司与高估值私有独角兽，是 YC 历史回报的主要来源之一。
+
+![](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/imghub/yc_1785406552996.png)
+
+再看近期批次（约 2026—2027）共 **564** 家，风向更集中：**AI Agent**、物理 AI（具身智能 / 硬件）与 AI 基础设施。
+
+行业仍以 **B2B** 为主，336 家、约 60%。产品描述里常见的是 AI Agent 与 AI 原生工作流：替企业代跑流程的 [Coasty](https://www.ycombinator.com/companies/coasty)、面向会计职能的 [Billow AI Labs](https://www.ycombinator.com/companies/billow-ai-labs)、Agent 身份网关 [OneCLI](https://www.ycombinator.com/companies/onecli) 等。**Industrials** 升到约 90 家（16%），比重高于往年 Top 名单里的工业占比，集中在具身智能与机器人（如 [Lambda Robotics](https://www.ycombinator.com/companies/lambda-robotics)、[Salem Robotics Inc](https://www.ycombinator.com/companies/salem-robotics-inc)）、国防与无人系统（如无人机蜂群防御 [Earendil Robotics](https://www.ycombinator.com/companies/earendil-robotics)），以及极端能源与算力（如海上核动力数据中心 [Atomarine](https://www.ycombinator.com/companies/atomarine)）。Healthcare 约 47 家、Fintech 约 45 家，各占约 8%，多见垂直场景 AI 化，例如面向 Agent 的借记卡 [Agentcard](https://www.ycombinator.com/companies/agentcard)、AI 放射科操作系统 [Avoca Systems](https://www.ycombinator.com/companies/avoca-systems)。**Consumer** 仅约 28 家（5%），比重明显偏小；能直接验证 ROI 的企业级场景仍占投放与融资注意力。
+
+产品叙事上，多数项目写的是「替人做完整条工作」（Agent-native），覆盖会计、法律、货运、硬件设计等结果交付，少再强调「辅助写代码 / 写邮件」。纯软件模型层门槛下降后，更多团队进入物理世界：机器人评测、物理 AI 支撑系统、芯片设计工具（如 [hardware intelligence](https://www.ycombinator.com/companies/hardware-intelligence)）。另一条线是 LLM / Agent 基建，处理 Token 成本（[Conifer](https://www.ycombinator.com/companies/conifer)）、权限与安全（[Palisade](https://www.ycombinator.com/companies/palisade-2)）、Agent 侧文件系统与日志压缩等问题。
+
+地理上北美更密：约 503 家（89%）在美国或加拿大，湾区仍是人才与资本汇合处。标 Remote 的约 93 家（16%）；北美以外，欧洲约 28 家（伦敦、苏黎世、巴黎等），澳大利亚也有零星项目。
+
+合起来看，近期批次里软件公司仍在，但叙事重心已落到 Agent 承接重复劳力、基建重塑算力与权限，以及物理 AI 进入工业与国防现场。
