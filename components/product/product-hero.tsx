@@ -29,7 +29,7 @@ export function ProductHero() {
               一些小玩意
             </h1>
             <p className="text-secondary-foreground text-center max-w-md mt-4">
-              独立项目、开源工具与设计探索。
+              独立项目与开源工具。
             </p>
           </div>
         </Grid.Cell>
