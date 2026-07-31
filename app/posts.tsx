@@ -42,8 +42,19 @@ import { RelationLLMCover } from "@/app/blog/relation-llm/cover";
 import { AiNativeOrganizationCover } from "./blog/ai-native-organization/cover";
 import { AimlabCover } from "./blog/aimlab/cover";
 import { DeepSeekCover } from "./blog/deepseek-interview/cover";
+import { AeoGoosePracticeCover } from "./blog/aeo-goose-practice/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "aeo-goose-practice",
+    title: "答案引擎优化：一套可落地的 AEO 能力清单",
+    date: "2026-07-30",
+    tag: "大模型",
+    summary:
+      "面向 AI 搜索的四块能力清单：站内可读性与技术基建、对话式提问对齐、站外信源渗透、多引擎监测与空白点补位，可直接当审计表勾选。",
+    cover: <AeoGoosePracticeCover />,
+    coverShape: "square",
+  },
   {
     slug: "deepseek-interview",
     title: "梁文锋访谈：开源、克制与 AGI 路线图",

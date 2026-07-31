@@ -1,7 +1,7 @@
 import React, { ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
 import { highlight } from "sugar-high";
-import { getId } from "@/lib/utils";
+import { cn, getId } from "@/lib/utils";
 import { ExternalLink } from "@/app/me/external-link";
 import { DemoWithCode } from "@/components/ui/demo-with-code";
 import { Grid } from "@/components/ui/grid";
@@ -16,6 +16,7 @@ import { RecommenderArchitecture } from "@/components/blog/recommender-architect
 import { SeriesNav } from "@/components/blog/series-nav";
 import { Math } from "@/components/ui/math";
 import { GameEmbed } from "@/components/ui/game-embed";
+import { TaskListItem } from "@/components/blog/task-list-item";
 
 export const H1 = (props: ComponentPropsWithoutRef<"h1">) => (
   <>
@@ -105,14 +106,51 @@ export const Ol = ({ children, ...props }: ComponentPropsWithoutRef<"ol">) => (
   </ol>
 );
 
-export const Ul = ({ children, ...props }: ComponentPropsWithoutRef<"ul">) => (
-  <ul
-    className="mb-4 ps-5 list-disc text-secondary-foreground marker:text-muted-foreground space-y-2 [&>li>div]:inline [&>li>p]:inline [&>li>div]:m-0 [&>li>p]:m-0"
-    {...props}
-  >
-    {children}
-  </ul>
-);
+export const Ul = ({
+  children,
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"ul">) => {
+  const isTaskList =
+    typeof className === "string" && className.includes("contains-task-list");
+
+  return (
+    <ul
+      className={cn(
+        isTaskList
+          ? [
+              "mb-8 list-none ps-0",
+              "space-y-2.5 md:space-y-3",
+              "leading-relaxed text-secondary-foreground",
+              "[&>li>div]:m-0 [&>li>p]:m-0",
+            ]
+          : [
+              "mb-4 ps-5 list-disc text-secondary-foreground",
+              "marker:text-muted-foreground space-y-2",
+              "[&>li>div]:inline [&>li>p]:inline [&>li>div]:m-0 [&>li>p]:m-0",
+            ],
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </ul>
+  );
+};
+
+export const Li = ({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"li">) => {
+  const isTaskItem =
+    typeof className === "string" && className.includes("task-list-item");
+
+  if (isTaskItem) {
+    return <TaskListItem className={className} {...props} />;
+  }
+
+  return <li className={className} {...props} />;
+};
 
 export const Strong = (props: ComponentPropsWithoutRef<"strong">) => (
   <strong
@@ -279,6 +317,8 @@ export const components = {
   Ol: Ol,
   ul: Ul,
   Ul: Ul,
+  li: Li,
+  Li: Li,
   strong: Strong,
   Strong: Strong,
   blockquote: Blockquote,

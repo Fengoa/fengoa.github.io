@@ -11,6 +11,8 @@ export interface PostMeta {
 }
 
 export const postsMeta: PostMeta[] = [
+  { slug: "aeo-goose-practice", title: "答案引擎优化：一套可落地的 AEO 能力清单", tag: "大模型", date: "2026-07-30" },
+  { slug: "deepseek-interview", title: "梁文锋访谈：开源、克制与 AGI 路线图", tag: "大模型", date: "2026-07-27" },
   { slug: "aimlab", title: "从零写一个浏览器里的 3D 瞄准训练器", tag: "前端技术", date: "2026-07-24" },
   { slug: "ai-native-organization", title: "为什么组织学习率将成为 AI 时代最重要的竞争变量", tag: "大模型", date: "2026-07-21" },
   { slug: "relation-llm", title: "非结构化关系记忆：口语笔记到可查询图谱", tag: "大模型", date: "2026-07-16" },
