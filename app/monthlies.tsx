@@ -4,6 +4,16 @@ import { MonthlyCover } from "@/app/monthly/cover";
 /** 月刊期次元数据；列表页已改为信息流，此处仅作归档兼容 */
 export const monthlies: PostData[] = [
   {
+    slug: "2026-08",
+    href: "/monthly",
+    title: "2026 年 8 月刊",
+    date: "2026-08",
+    tag: "2026",
+    summary: "记录本月读到、看到与使用过的内容，按条目持续补充。",
+    cover: <MonthlyCover year={2026} month={8} />,
+    coverShape: "square",
+  },
+  {
     slug: "2026-07",
     href: "/monthly",
     title: "2026 年 7 月刊",

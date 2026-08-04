@@ -33,7 +33,7 @@ function parseTags(raw?: string): string[] {
 }
 
 /**
- * 按月 Markdown 文件格式：
+ * 按月 Markdown：`app/monthly/(issues)/YYYY-MM/entries.md`
  *
  * ---
  * id: ...
@@ -84,18 +84,22 @@ export function parseMonthlyMarkdown(
 }
 
 export function loadMonthlyEntries(): MonthlyEntry[] {
-  const dir = path.join(process.cwd(), "content/monthly");
+  const dir = path.join(process.cwd(), "app/monthly/(issues)");
   if (!fs.existsSync(dir)) return [];
 
-  const files = fs
-    .readdirSync(dir)
-    .filter((name) => name.endsWith(".md"))
+  const months = fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter(
+      (entry) => entry.isDirectory() && /^\d{4}-\d{2}$/.test(entry.name)
+    )
+    .map((entry) => entry.name)
     .sort()
     .reverse();
 
-  const entries = files.flatMap((file) => {
-    const source = fs.readFileSync(path.join(dir, file), "utf-8");
-    const slug = file.replace(/\.md$/, "");
+  const entries = months.flatMap((slug) => {
+    const filePath = path.join(dir, slug, "entries.md");
+    if (!fs.existsSync(filePath)) return [];
+    const source = fs.readFileSync(filePath, "utf-8");
     return parseMonthlyMarkdown(source, slug);
   });
 
