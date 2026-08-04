@@ -3,11 +3,12 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import Markdown from "react-markdown";
 import { ExternalLink } from "@/app/me/external-link";
 import {
@@ -131,7 +132,8 @@ function FeedEntry({ entry }: { entry: MonthlyEntry }) {
 }
 
 export function MonthlyFeed({ entries }: { entries: MonthlyEntry[] }) {
-  const parentRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -142,15 +144,24 @@ export function MonthlyFeed({ entries }: { entries: MonthlyEntry[] }) {
 
   const rows = useMemo(() => buildRows(filtered), [filtered]);
 
-  const virtualizer = useVirtualizer({
+  useLayoutEffect(() => {
+    const update = () => {
+      setScrollMargin(listRef.current?.offsetTop ?? 0);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const virtualizer = useWindowVirtualizer({
     count: rows.length,
-    getScrollElement: () => parentRef.current,
     estimateSize: (index) => {
       const row = rows[index];
       if (row?.kind !== "date") return 280;
       return index === 0 ? 36 : 64;
     },
     overscan: 6,
+    scrollMargin,
     measureElement:
       typeof window !== "undefined" &&
       navigator.userAgent.indexOf("Firefox") === -1
@@ -174,8 +185,8 @@ export function MonthlyFeed({ entries }: { entries: MonthlyEntry[] }) {
   }, [scrollToHash]);
 
   return (
-    <div className="relative left-1/2 flex h-[calc(100dvh-5rem)] w-screen max-w-[100vw] -translate-x-1/2 flex-col">
-      <header className="shrink-0 pb-5 pt-10 md:pt-14">
+    <div className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2">
+      <header className="pb-5 pt-10 md:pt-14">
         <div className="mx-auto w-full max-w-2xl px-4 md:px-0">
           <label className="block">
             <span className="sr-only">搜索月刊</span>
@@ -198,53 +209,51 @@ export function MonthlyFeed({ entries }: { entries: MonthlyEntry[] }) {
         </div>
       </header>
 
-      <div
-        ref={parentRef}
-        className="min-h-0 flex-1 overflow-y-auto"
-      >
-        {rows.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted-foreground">
-            没有匹配的条目。
-          </p>
-        ) : (
-          <div
-            className="relative w-full"
-            style={{ height: virtualizer.getTotalSize() }}
-          >
-            {virtualizer.getVirtualItems().map((item) => {
-              const row = rows[item.index];
-              const isDate = row.kind === "date";
-              return (
-                <div
-                  key={row.key}
-                  data-index={item.index}
-                  ref={virtualizer.measureElement}
-                  className={cn(
-                    "absolute top-0 left-0 w-full",
-                    !isDate && "border-b border-border/70"
+      {rows.length === 0 ? (
+        <p className="py-16 text-center text-sm text-muted-foreground">
+          没有匹配的条目。
+        </p>
+      ) : (
+        <div
+          ref={listRef}
+          className="relative w-full"
+          style={{ height: virtualizer.getTotalSize() }}
+        >
+          {virtualizer.getVirtualItems().map((item) => {
+            const row = rows[item.index];
+            const isDate = row.kind === "date";
+            return (
+              <div
+                key={row.key}
+                data-index={item.index}
+                ref={virtualizer.measureElement}
+                className={cn(
+                  "absolute top-0 left-0 w-full",
+                  !isDate && "border-b border-border/70"
+                )}
+                style={{
+                  transform: `translateY(${item.start - scrollMargin}px)`,
+                }}
+              >
+                <div className="mx-auto w-full max-w-2xl px-4 md:px-0">
+                  {isDate ? (
+                    <h2
+                      className={cn(
+                        "text-sm font-semibold text-muted-foreground",
+                        item.index === 0 ? "pt-2 pb-1" : "pt-12 pb-1"
+                      )}
+                    >
+                      {formatFeedDate(row.date)}
+                    </h2>
+                  ) : (
+                    <FeedEntry entry={row.entry} />
                   )}
-                  style={{ transform: `translateY(${item.start}px)` }}
-                >
-                  <div className="mx-auto w-full max-w-2xl px-4 md:px-0">
-                    {isDate ? (
-                      <h2
-                        className={cn(
-                          "text-sm font-semibold text-muted-foreground",
-                          item.index === 0 ? "pt-2 pb-1" : "pt-12 pb-1"
-                        )}
-                      >
-                        {formatFeedDate(row.date)}
-                      </h2>
-                    ) : (
-                      <FeedEntry entry={row.entry} />
-                    )}
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
