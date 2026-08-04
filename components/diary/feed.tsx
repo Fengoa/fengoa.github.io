@@ -49,6 +49,23 @@ function matchesQuery(entry: DiaryEntry, query: string) {
   return haystack.includes(q);
 }
 
+function formatMonthLabel(yearMonth: string) {
+  const [year, month] = yearMonth.split("-").map(Number);
+  return `${year}年${month}月`;
+}
+
+function collectMonths(entries: DiaryEntry[]) {
+  const months: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    const yearMonth = entry.date.slice(0, 7);
+    if (seen.has(yearMonth)) continue;
+    seen.add(yearMonth);
+    months.push(yearMonth);
+  }
+  return months;
+}
+
 function EntryBody({ markdown }: { markdown: string }) {
   return (
     <div
@@ -135,6 +152,13 @@ export function DiaryFeed({ entries }: { entries: DiaryEntry[] }) {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
   const [query, setQuery] = useState("");
+  const [activeMonth, setActiveMonth] = useState(() => {
+    const first = entries[0]?.date.slice(0, 7);
+    return first ?? "";
+  });
+  const [monthBarVisible, setMonthBarVisible] = useState(true);
+
+  const months = useMemo(() => collectMonths(entries), [entries]);
 
   const filtered = useMemo(() => {
     const q = query.trim();
@@ -184,9 +208,80 @@ export function DiaryFeed({ entries }: { entries: DiaryEntry[] }) {
     scrollToHash();
   }, [scrollToHash]);
 
+  const syncActiveMonth = useCallback(() => {
+    const items = virtualizer.getVirtualItems();
+    if (items.length === 0) return;
+    const anchor = window.scrollY + 140;
+    let current = items[0];
+    for (const item of items) {
+      if (item.start <= anchor) current = item;
+      else break;
+    }
+    const row = rows[current.index];
+    if (!row) return;
+    const date = row.kind === "date" ? row.date : row.entry.date;
+    setActiveMonth(date.slice(0, 7));
+  }, [rows, virtualizer]);
+
+  useEffect(() => {
+    syncActiveMonth();
+    window.addEventListener("scroll", syncActiveMonth, { passive: true });
+    return () => window.removeEventListener("scroll", syncActiveMonth);
+  }, [syncActiveMonth]);
+
+  useEffect(() => {
+    const updateMonthBar = () => {
+      const footer = document.querySelector("footer");
+      if (footer) {
+        const top = footer.getBoundingClientRect().top;
+        setMonthBarVisible(top > window.innerHeight - 8);
+        return;
+      }
+      const remaining =
+        document.documentElement.scrollHeight -
+        window.scrollY -
+        window.innerHeight;
+      setMonthBarVisible(remaining > 48);
+    };
+    updateMonthBar();
+    window.addEventListener("scroll", updateMonthBar, { passive: true });
+    window.addEventListener("resize", updateMonthBar);
+    return () => {
+      window.removeEventListener("scroll", updateMonthBar);
+      window.removeEventListener("resize", updateMonthBar);
+    };
+  }, []);
+
+  const scrollToMonth = useCallback(
+    (yearMonth: string) => {
+      const index = rows.findIndex((row) => {
+        if (row.kind === "date") return row.date.startsWith(yearMonth);
+        return row.entry.date.startsWith(yearMonth);
+      });
+      if (index < 0) return;
+      setActiveMonth(yearMonth);
+      virtualizer.scrollToIndex(index, { align: "start" });
+    },
+    [rows, virtualizer]
+  );
+
+  const onHeaderDoubleClick = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      const target = event.target as HTMLElement;
+      if (target.closest("input, textarea, a, button")) return;
+      event.preventDefault();
+      window.getSelection()?.removeAllRanges();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    []
+  );
+
   return (
-    <div className="relative w-screen max-w-[100vw] ml-[calc(50%-50vw)]">
-      <header className="sticky top-0 z-[60] bg-background/95 pb-4 pt-4 backdrop-blur md:pt-6">
+    <div className="relative w-screen max-w-[100vw] ml-[calc(50%-50vw)] pb-20">
+      <header
+        className="sticky top-0 z-[60] cursor-default select-none bg-background/95 pb-4 pt-4 backdrop-blur md:pt-6"
+        onDoubleClick={onHeaderDoubleClick}
+      >
         <div className="mx-auto w-full max-w-2xl px-4 md:px-0">
           <label className="block">
             <span className="sr-only">搜索日记</span>
@@ -195,7 +290,7 @@ export function DiaryFeed({ entries }: { entries: DiaryEntry[] }) {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="搜索标题、标签或正文…"
               className={cn(
-                "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm",
+                "w-full select-text rounded-lg border border-border bg-background px-3 py-2 text-sm",
                 "placeholder:text-muted-foreground/70",
                 "outline-none focus:border-foreground/30"
               )}
@@ -253,6 +348,41 @@ export function DiaryFeed({ entries }: { entries: DiaryEntry[] }) {
             );
           })}
         </div>
+      )}
+
+      {months.length > 0 && (
+        <nav
+          aria-label="按月份切换"
+          aria-hidden={!monthBarVisible}
+          className={cn(
+            "fixed bottom-0 left-0 right-0 z-[60] border-t border-border/60 bg-background/95 backdrop-blur transition-all duration-200",
+            monthBarVisible
+              ? "translate-y-0 opacity-100"
+              : "pointer-events-none translate-y-full opacity-0"
+          )}
+        >
+          <div className="mx-auto flex w-full max-w-2xl items-center justify-center gap-1 px-4 py-3">
+            {months.map((yearMonth) => {
+              const active = activeMonth === yearMonth;
+              return (
+                <button
+                  key={yearMonth}
+                  type="button"
+                  tabIndex={monthBarVisible ? 0 : -1}
+                  onClick={() => scrollToMonth(yearMonth)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs transition-colors",
+                    active
+                      ? "font-semibold text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {formatMonthLabel(yearMonth)}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
       )}
     </div>
   );
