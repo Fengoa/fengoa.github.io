@@ -1,10 +1,11 @@
 import type { PostData } from "@/components/blog/post-card";
 import { MonthlyCover } from "@/app/monthly/cover";
 
+/** 月刊期次元数据；列表页已改为信息流，此处仅作归档兼容 */
 export const monthlies: PostData[] = [
   {
     slug: "2026-07",
-    href: "/monthly/2026-07",
+    href: "/monthly",
     title: "2026 年 7 月刊",
     date: "2026-07",
     tag: "2026",
