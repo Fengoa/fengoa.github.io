@@ -186,6 +186,7 @@ export function DiaryFeed({ entries }: { entries: DiaryEntry[] }) {
     },
     overscan: 6,
     scrollMargin,
+    useFlushSync: false,
     measureElement:
       typeof window !== "undefined" &&
       navigator.userAgent.indexOf("Firefox") === -1
