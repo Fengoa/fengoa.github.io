@@ -14,15 +14,15 @@ import { ExternalLink } from "@/app/me/external-link";
 import {
   formatFeedDate,
   formatFeedTime,
-  type MonthlyEntry,
-} from "@/lib/monthly-types";
+  type DiaryEntry,
+} from "@/lib/diary-types";
 import { cn } from "@/lib/utils";
 
 type FeedRow =
   | { kind: "date"; key: string; date: string }
-  | { kind: "entry"; key: string; entry: MonthlyEntry };
+  | { kind: "entry"; key: string; entry: DiaryEntry };
 
-function buildRows(entries: MonthlyEntry[]): FeedRow[] {
+function buildRows(entries: DiaryEntry[]): FeedRow[] {
   const rows: FeedRow[] = [];
   let lastDate = "";
   for (const entry of entries) {
@@ -35,7 +35,7 @@ function buildRows(entries: MonthlyEntry[]): FeedRow[] {
   return rows;
 }
 
-function matchesQuery(entry: MonthlyEntry, query: string) {
+function matchesQuery(entry: DiaryEntry, query: string) {
   const q = query.trim().toLowerCase();
   if (!q) return true;
   const haystack = [
@@ -84,7 +84,7 @@ function EntryBody({ markdown }: { markdown: string }) {
   );
 }
 
-function FeedEntry({ entry }: { entry: MonthlyEntry }) {
+function FeedEntry({ entry }: { entry: DiaryEntry }) {
   return (
     <article id={entry.id} className="scroll-mt-28 py-8">
       <h2 className="mb-2 text-base font-semibold leading-snug text-foreground md:text-lg">
@@ -131,7 +131,7 @@ function FeedEntry({ entry }: { entry: MonthlyEntry }) {
   );
 }
 
-export function MonthlyFeed({ entries }: { entries: MonthlyEntry[] }) {
+export function DiaryFeed({ entries }: { entries: DiaryEntry[] }) {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
   const [query, setQuery] = useState("");
@@ -185,11 +185,11 @@ export function MonthlyFeed({ entries }: { entries: MonthlyEntry[] }) {
   }, [scrollToHash]);
 
   return (
-    <div className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2">
-      <header className="pb-5 pt-10 md:pt-14">
+    <div className="relative w-screen max-w-[100vw] ml-[calc(50%-50vw)]">
+      <header className="sticky top-0 z-[60] bg-background/95 pb-4 pt-4 backdrop-blur md:pt-6">
         <div className="mx-auto w-full max-w-2xl px-4 md:px-0">
           <label className="block">
-            <span className="sr-only">搜索月刊</span>
+            <span className="sr-only">搜索日记</span>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}

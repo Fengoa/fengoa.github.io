@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import type { MonthlyEntry } from "@/lib/monthly-types";
+import type { DiaryEntry } from "@/lib/diary-types";
 
 function parseFrontmatter(block: string): Record<string, string> {
   const meta: Record<string, string> = {};
@@ -33,7 +33,7 @@ function parseTags(raw?: string): string[] {
 }
 
 /**
- * 按月 Markdown：`app/monthly/(issues)/YYYY-MM/entries.md`
+ * 按月 Markdown：`app/diary/(issues)/YYYY-MM/entries.md`
  *
  * ---
  * id: ...
@@ -47,10 +47,10 @@ function parseTags(raw?: string): string[] {
  *
  * 正文 Markdown
  */
-export function parseMonthlyMarkdown(
+export function parseDiaryMarkdown(
   source: string,
   fallbackId: string
-): MonthlyEntry[] {
+): DiaryEntry[] {
   const pieces = source
     .replace(/^\uFEFF/, "")
     .trim()
@@ -58,7 +58,7 @@ export function parseMonthlyMarkdown(
     .map((part) => part.trim())
     .filter(Boolean);
 
-  const entries: MonthlyEntry[] = [];
+  const entries: DiaryEntry[] = [];
 
   for (let i = 0; i + 1 < pieces.length; i += 2) {
     const meta = parseFrontmatter(pieces[i]);
@@ -83,8 +83,8 @@ export function parseMonthlyMarkdown(
   return entries;
 }
 
-export function loadMonthlyEntries(): MonthlyEntry[] {
-  const dir = path.join(process.cwd(), "app/monthly/(issues)");
+export function loadDiaryEntries(): DiaryEntry[] {
+  const dir = path.join(process.cwd(), "app/diary/(issues)");
   if (!fs.existsSync(dir)) return [];
 
   const months = fs
@@ -100,7 +100,7 @@ export function loadMonthlyEntries(): MonthlyEntry[] {
     const filePath = path.join(dir, slug, "entries.md");
     if (!fs.existsSync(filePath)) return [];
     const source = fs.readFileSync(filePath, "utf-8");
-    return parseMonthlyMarkdown(source, slug);
+    return parseDiaryMarkdown(source, slug);
   });
 
   return entries.sort((a, b) => {

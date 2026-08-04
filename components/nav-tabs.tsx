@@ -11,7 +11,7 @@ import { CalendarDays, Search } from "lucide-react";
 
 const tabs = [
   { id: "blog", label: "博客", href: "/" },
-  { id: "monthly", label: "月刊", href: "/monthly" },
+  { id: "diary", label: "日记", href: "/diary" },
   // { id: "taste", label: "品味", href: "/taste" },
   { id: "product", label: "产品", href: "/product" },
   { id: "me", label: "我的", href: "/me" },
@@ -20,7 +20,8 @@ const tabs = [
 function getActiveTab(pathname: string): string {
   if (pathname === "/") return "blog";
   if (pathname.startsWith("/blog")) return "blog";
-  if (pathname.startsWith("/monthly")) return "monthly";
+  if (pathname.startsWith("/diary")) return "diary";
+  if (pathname.startsWith("/monthly")) return "diary";
   if (pathname.startsWith("/taste")) return "taste";
   if (pathname.startsWith("/product")) return "product";
   if (pathname.startsWith("/me")) return "me";
@@ -33,14 +34,14 @@ export function NavTabs() {
   const activeTab = getActiveTab(pathname);
 
   const blog = useHoverSequence();
-  const monthly = useHoverSequence();
+  const diary = useHoverSequence();
   const taste = useHoverSequence();
   const product = useHoverSequence();
   const me = useHoverSequence();
 
   const sequences: Record<string, ReturnType<typeof useHoverSequence>> = {
     blog,
-    monthly,
+    diary,
     taste,
     product,
     me,
@@ -68,7 +69,7 @@ export function NavTabs() {
             {tab.id === "blog" && (
               <BrainIcon ref={seq.iconRef} size={20} isAnimated={false} className="hidden sm:block" />
             )}
-            {tab.id === "monthly" && (
+            {tab.id === "diary" && (
               <CalendarDays className="size-5 sm:block hidden" strokeWidth={1.5} />
             )}
             {tab.id === "taste" && (

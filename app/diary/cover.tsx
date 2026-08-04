@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export function MonthlyCover({
+export function DiaryCover({
   year,
   month,
   className,
@@ -25,36 +25,36 @@ export function MonthlyCover({
       >
         <defs>
           <pattern
-            id={`monthly-grid-${year}-${month}`}
+            id={`diary-grid-${year}-${month}`}
             width="5"
             height="5"
             patternUnits="userSpaceOnUse"
           >
             <path d="M5 0H0V5" fill="none" stroke="#34343b" strokeWidth="0.35" />
           </pattern>
-          <clipPath id={`monthly-frame-${year}-${month}`}>
+          <clipPath id={`diary-frame-${year}-${month}`}>
             <rect x="7" y="7" width="86" height="86" rx="2" />
           </clipPath>
         </defs>
-        <rect width="100" height="100" fill="url(#monthly-grid-${year}-${month})" />
+        <rect width="100" height="100" fill={`url(#diary-grid-${year}-${month})`} />
         <rect
           x="7"
           y="68"
           width="86"
           height="25"
           fill="#ff5038"
-          clipPath={`url(#monthly-frame-${year}-${month})`}
+          clipPath={`url(#diary-frame-${year}-${month})`}
         />
         <rect x="7" y="7" width="86" height="86" rx="2" fill="none" stroke="#f2efe7" strokeWidth="0.8" />
 
         <text x="11" y="16" fill="#f2efe7" className="font-mono text-[3.5px] font-semibold" letterSpacing="0.5">
-          MONTHLY NOTES / {year}
+          DIARY NOTES / {year}
         </text>
         <text x="8" y="65" fill="#f2efe7" className="font-sans text-[54px] font-black" letterSpacing="1">
           {monthText}
         </text>
         <text x="12" y="78" fill="#111114" className="font-sans text-[7px] font-black">
-          月刊
+          日记
         </text>
         <text x="12" y="87" fill="#111114" className="font-mono text-[3px] font-semibold" letterSpacing="0.35">
           READ · WATCH · USE · KEEP
