@@ -1,4 +1,20 @@
 ---
+id: salary-ticker
+date: 2026-08-04
+time: 20:10
+tags: macOS, 菜单栏, 工具
+url: https://steveharrison.dev/salaryticker/
+---
+
+# Salary Ticker：菜单栏里实时跳动的今日已赚工资
+
+一款很小的 macOS 菜单栏应用：按日薪与上下班时间换算，把「今天已经赚到多少」显示在菜单栏，并随时间实时累加。
+
+设置里可填日薪、上班与下班时刻；勾选后可在屏幕共享时自动遮罩金额，也可随时用 Option 点击菜单项手动切换遮罩。免费，要求 macOS 13 及以上。
+
+![Salary Ticker：菜单栏金额与设置面板](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/imghub/hn__1785845413574.png)
+
+---
 id: simon-willison-weblog
 date: 2026-08-04
 time: 13:23
