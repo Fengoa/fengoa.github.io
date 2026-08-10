@@ -21,7 +21,6 @@ function getActiveTab(pathname: string): string {
   if (pathname === "/") return "blog";
   if (pathname.startsWith("/blog")) return "blog";
   if (pathname.startsWith("/diary")) return "diary";
-  if (pathname.startsWith("/monthly")) return "diary";
   if (pathname.startsWith("/taste")) return "taste";
   if (pathname.startsWith("/product")) return "product";
   if (pathname.startsWith("/me")) return "me";
