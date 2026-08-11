@@ -43,8 +43,19 @@ import { AiNativeOrganizationCover } from "./blog/ai-native-organization/cover";
 import { AimlabCover } from "./blog/aimlab/cover";
 import { DeepSeekCover } from "./blog/deepseek-interview/cover";
 import { AeoGoosePracticeCover } from "./blog/aeo-goose-practice/cover";
+import { ApplePictureHeroCover } from "./blog/apple-picture-hero/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "apple-picture-hero",
+    title: "苹果官网 <picture> 首屏代码的技术拆解",
+    date: "2026-08-11",
+    tag: "前端技术",
+    summary:
+      "拆苹果 MacBook Air M5 首屏的 <picture> 代码：五套构图做艺术导向、2x 密度描述符适配 Retina、兜底图与 alt、懒加载钩子与哈希缓存。",
+    cover: <ApplePictureHeroCover />,
+    coverShape: "square",
+  },
   {
     slug: "aeo-goose-practice",
     title: "答案引擎优化：一套可落地的 AEO 能力清单",

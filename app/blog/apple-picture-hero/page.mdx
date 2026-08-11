@@ -1,0 +1,60 @@
+export const metadata = {
+  title: "苹果官网 <picture> 首屏代码的技术拆解",
+}
+
+# 苹果官网 `<picture>` 首屏代码的技术拆解
+
+MacBook Air M5 产品页首屏用一段 `<picture>` 代码承载主视觉。表面是几个 `<source>` 加一张兜底 `<img>`，内部同时组织了构图裁切、像素密度适配、懒加载状态与缓存策略。以下按代码逐段拆解其技术实现。
+
+代码：
+
+```html
+<picture class="static" data-anim-lazy-image-download-complete="">
+    <source srcset="/home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_small.jpg, /home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_small_2x.jpg 2x" media="(max-width:734px)">
+    <source srcset="/home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_mediumtall.jpg, /home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_mediumtall_2x.jpg 2x" media="(max-width:1068px) and (min-height:734px)">
+    <source srcset="/home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_medium.jpg, /home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_medium_2x.jpg 2x" media="(max-width:1068px) and (max-height:733px)">
+    <source srcset="/home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_largetall.jpg, /home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_largetall_2x.jpg 2x" media="(min-width:0px) and (min-height:776px)">
+    <source srcset="/home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_large.jpg, /home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_large_2x.jpg 2x" media="(min-width:0px) and (max-height:775px)">
+    <img src="/home/built/heroes/macbook-air/images/hero_macbook_air_m5__w2bjb22ky7my_large.jpg" alt="两台呈打开状态的天蓝色 MacBook Air 笔记本电脑，组成一个箭头形状，着重展示纤薄机身。">
+</picture>
+```
+
+## 结构：`<picture>` 调度资源，`<source>` 提供分支，`<img>` 兜底
+
+`<picture>` 不渲染像素，职责是按 `<source>` 的 `media` 查询选择候选资源，未命中时退回 `<img>` 的 `src`。这与 `srcset` 配合 `sizes` 的纯缩放方案有区别：后者在单张图内按宽度挑尺寸，前者替换完全不同的素材。
+
+## 艺术导向：`media` 查询决定构图
+
+五个 `<source>` 用 `media` 把视口划分为五档，每档对应一套独立裁切的物料：
+
+| 视口条件 | 物料 | 构图目标 |
+| --- | --- | --- |
+| `max-width:734px` | small | 窄屏只保留产品细节 |
+| `≤1068px` 且 `min-height:734px` | mediumtall | 高度充足时给产品纵向空间 |
+| `≤1068px` 且 `max-height:733px` | medium | 高度受限时压缩纵向避免溢出 |
+| `min-height:776px` | largetall | 大屏高视口呈现完整构图 |
+| `max-height:775px` | large | 大屏矮视口优先保证横向完整 |
+
+浏览器取第一个 `media` 命中的 `<source>`。前三个带 `max-width:1068px`，只在窄屏区间生效；后两个用 `min-width:0px` 覆盖任意宽度，再以高度区间区分，且排在窄屏分支之后，不会被提前匹配。五档各自可达，不存在覆盖盲区。
+
+该写法的收益来自把裁切焦点定在素材侧。同一产品在不同纵横比下的视觉重心由设计师在导出时确定，运行时 `<picture>` 只做选择，不依赖 `object-fit` 按比例机械裁切。
+
+## 像素密度：用 2x 描述符适配 Retina
+
+每个 `srcset` 提供 1x 与 2x 两张图，使用密度描述符而非宽度描述符。Hero 为满宽元素，显示宽度基本等于视口，浏览器无需 `sizes` 提示即可按设备像素比（DPR）在 1x 与 2x 间选择。Retina 屏取 2x 获得清晰渲染，普通屏取 1x 避免下载两倍体积。
+
+流式宽度图片（例如仅占栏宽一部分）应改用 `w` 描述符配合 `sizes`，让浏览器综合 CSS 宽度与 DPR 选型。满宽 Hero 用 `2x` 是对该场景的简化。
+
+## 兜底 `<img>` 与 alt
+
+末尾 `<img>` 承担兜底与可访问性两职。浏览器不支持 `<picture>` 或所有 `media` 均未命中时，加载其 `src`。`alt` 文本描述图内对读者有价值的信息：产品数量、形态（箭头状）、颜色（天蓝色）、卖点（纤薄机身）。屏幕阅读器与搜索引擎读取 `alt`，而非图片本身。
+
+## 状态钩子：懒加载与入场动效
+
+`data-anim-lazy-image-download-complete=""` 是自定义属性，初始为空字符串。站内脚本在图片下载完成后写入状态，CSS 据此触发渐入或视差。该机制保证动效在资源就绪后播放，避免半图先显。
+
+`class="static"` 是样式或行为分类标记，用于区分滚动视差与非视差图片，语义取决于配套 CSS，不能据此推断其等价 `position:fixed`。
+
+## 文件名哈希与缓存
+
+路径中的 `__w2bjb22ky7my` 为内容哈希。图片内容变更（改色、改文案）后哈希改变，URL 随之改变，CDN 与浏览器强制重新拉取，无需手动附加版本参数。构建流程将哈希注入文件名即可自动化该过程。
