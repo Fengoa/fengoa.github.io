@@ -74,6 +74,8 @@ function EntryBody({ markdown }: { markdown: string }) {
         "[&_p]:mb-3 [&_p]:last:mb-0",
         "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs",
         "[&_strong]:font-semibold [&_strong]:text-foreground",
+        "[&_h2]:mb-2 [&_h2]:mt-5 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:leading-snug [&_h2]:text-foreground",
+        "[&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug [&_h3]:text-foreground",
         "[&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5",
         "[&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5",
         "[&_li]:mb-1",
