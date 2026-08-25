@@ -15,6 +15,8 @@ const ARENA_COLORS = [
   "#7a5c4e",
 ];
 
+const sideTimers = new Set<number>();
+
 function tierIndex(milestone: number) {
   const idx = SCORE_MILESTONES.indexOf(milestone);
   return idx >= 0 ? idx : SCORE_MILESTONES.length;
@@ -41,6 +43,13 @@ function fireBurst(
   });
 }
 
+/** Stop ongoing bursts (e.g. Play again). */
+export function resetConfetti() {
+  for (const id of sideTimers) window.clearInterval(id);
+  sideTimers.clear();
+  confetti.reset();
+}
+
 /** One milestone celebration — intensity scales with the threshold. */
 export function celebrateMilestone(milestone: number) {
   const { particleCount, spread, ticks, scalar, durationMs } =
@@ -61,6 +70,7 @@ export function celebrateMilestone(milestone: number) {
   const sideTimer = window.setInterval(() => {
     if (Date.now() >= end) {
       window.clearInterval(sideTimer);
+      sideTimers.delete(sideTimer);
       return;
     }
     fireBurst({
@@ -82,6 +92,7 @@ export function celebrateMilestone(milestone: number) {
       startVelocity: 22 + tierIndex(milestone) * 3,
     });
   }, interval);
+  sideTimers.add(sideTimer);
 }
 
 /** Fire when score crosses new milestones during play. */

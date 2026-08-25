@@ -14,6 +14,7 @@ import { ScriptEditor } from "./script-editor";
 import {
   celebrateGameOver,
   celebrateScoreProgress,
+  resetConfetti,
 } from "./score-confetti";
 import { STARTER_SCRIPT, SCRIPT_HELP } from "./starter-script";
 import type {
@@ -162,8 +163,9 @@ export function ArenaApp() {
     mergePopStartedRef.current = true;
     mergePopAtRef.current = Date.now();
     // Keep .is-sliding — outer transform keeps gliding while inner face pops.
+    // Do NOT include the spawned tile yet: transition is still on and would fly it in.
     flushSync(() => {
-      setTiles(game.getMergeSettleTiles());
+      setTiles(game.getMergeSettleTiles(false));
     });
   }, []);
 
@@ -195,8 +197,10 @@ export function ArenaApp() {
 
       if (game.hadMerge()) {
         if (!mergePopStartedRef.current) beginMergePop(game);
+        // Sliding off first, then reveal spawn (no position transition).
         flushSync(() => {
           setSliding(false);
+          setTiles(game.getMergeSettleTiles(true));
         });
         scheduleMergeCleanup(game);
         return;
@@ -304,6 +308,7 @@ export function ArenaApp() {
     setRunning(false);
     setBusy(false);
     clearAnimTimers();
+    resetConfetti();
     const game = new GameController();
     controllerRef.current = game;
     slideDoneRef.current = false;
@@ -316,7 +321,7 @@ export function ArenaApp() {
     setGameOver(false);
     animatingRef.current = false;
     queuedRef.current = null;
-  }, [clearAnimTimers]);
+  }, [clearAnimTimers, resetScore]);
 
   const startManualGame = useCallback(
     (nextProduct: ProductProfile) => {

@@ -4,18 +4,11 @@
  * 设计来源：
  * - Robert Xiao / Petr Morávek，CMA-ES 调参的行列启发式查找表
  *   https://github.com/nneonneo/2048-ai
- *   公开统计：平均分约 22 万，16384 出现率约 90%，32768 约三分之一
- * - Szubert & Jaśkowski, CIG 2014：N-tuple + TD-afterstate（论文路线，权重量级不适合控制台粘贴）
- * - Wu et al. / Yeh et al.：Multi-stage TD、Optimistic TD；TDL2048+ 平均分约 62 万
- *
- * 10 万分对应稳定合成 8192（单块贡献 98304 分）。评估对每个局面做 8 次行/列查表；
- * 搜索在时限内迭代加深，深度随棋盘上不同面值数量上升。Node 自对弈在固定 4 层时
- * 4/4 局超过 10 万，平均约 30 万，3/4 局出现 16384。浏览器默认每步 250ms，足够
- * 在开局完成 4～5 层、残局完成 7 层以上。
  *
  * 使用方法：打开 2048 网页，F12 → Console，粘贴本文件全部内容并回车。
- * start2048AI()            默认：短思考 + 不规则步间隔
- * start2048AI(80)          提高思考上限（仍带抖动）
+ * start2048AI()            默认：约 150ms 思考，等动画结束后再走下一步
+ * start2048AI(200)         提高思考上限（更稳）
+ * start2048AI(150, 40)     思考 150ms；第二参数为步后额外间隔
  * stop2048AI()             停止
  *
  * Node 自对弈：node scripts/2048-ai-console.js --bench [局数] [深度]
@@ -25,11 +18,10 @@
   'use strict';
 
   const SIZE = 4;
-  const ROW_MASK = 0xffff;
   const CPROB_THRESH = 0.0001;
   const CACHE_DEPTH_LIMIT = 15;
-  const ID_MAX_DEPTH = 12;
-  const MIN_COMPLETE_DEPTH = 3;
+  const ID_MAX_DEPTH = 8;
+  const MIN_COMPLETE_DEPTH = 4;
 
   const SCORE_LOST_PENALTY = 200000;
   const SCORE_MONOTONICITY_POWER = 4;
@@ -262,6 +254,17 @@
       : Date.now();
   }
 
+  function rootMoveOrder(board) {
+    const scored = [];
+    for (let m = 0; m < 4; m++) {
+      const nb = EXEC[m](board);
+      if (boardsEq(board, nb)) continue;
+      scored.push({ m, h: scoreHeur(nb) + scoreMove(board, m) * 0.1 });
+    }
+    scored.sort((a, b) => b.h - a.h);
+    return scored.map((s) => s.m);
+  }
+
   function makeSearch() {
     const state = {
       trans: new Map(),
@@ -328,8 +331,8 @@
       return res;
     }
 
-    function searchRoot(board, depthLimit, deadline) {
-      state.trans = new Map();
+    function searchRoot(board, depthLimit, deadline, keepCache) {
+      if (!keepCache) state.trans = new Map();
       state.depthLimit = depthLimit;
       state.curdepth = 0;
       state.nodes = 0;
@@ -339,19 +342,28 @@
 
       let bestDir = -1;
       let bestScore = -Infinity;
-      for (let m = 0; m < 4; m++) {
+      let finishedAll = true;
+      const order = rootMoveOrder(board);
+      for (let i = 0; i < order.length; i++) {
+        const m = order[i];
         const nb = EXEC[m](board);
-        if (boardsEq(board, nb)) continue;
         const s = scoreChanceNode(nb, 1) + 1e-6;
+        if (state.timedOut) {
+          finishedAll = false;
+          break;
+        }
         if (s > bestScore) {
           bestScore = s;
           bestDir = m;
         }
-        if (state.timedOut) {
-          return { dir: bestDir, score: bestScore, nodes: state.nodes, timedOut: true };
-        }
       }
-      return { dir: bestDir, score: bestScore, nodes: state.nodes, timedOut: false };
+      return {
+        dir: bestDir,
+        score: bestScore,
+        nodes: state.nodes,
+        timedOut: state.timedOut || !finishedAll,
+        complete: finishedAll && bestDir >= 0,
+      };
     }
 
     return { searchRoot, state };
@@ -364,6 +376,33 @@
     return -1;
   }
 
+  function greedyMove(board) {
+    let bestDir = -1;
+    let best = -Infinity;
+    for (let m = 0; m < 4; m++) {
+      const nb = EXEC[m](board);
+      if (boardsEq(board, nb)) continue;
+      const s = scoreHeur(nb) + scoreMove(board, m);
+      if (s > best) {
+        best = s;
+        bestDir = m;
+      }
+    }
+    return bestDir;
+  }
+
+  function startDepthFor(board, cap) {
+    const empty = countEmpty(board);
+    const distinct = countDistinct(board);
+    // Prefer finishing a reliable depth over starting too deep and timing out.
+    let start = 4;
+    if (empty <= 3) start = 6;
+    else if (empty <= 5) start = 5;
+    else if (empty >= 10) start = 3;
+    if (distinct >= 9) start = Math.max(start, 5);
+    return Math.min(Math.max(start, 3), cap);
+  }
+
   function getBestMove(board, timeBudgetMs, fixedDepth) {
     const legal = firstLegal(board);
     if (legal < 0) return { dir: -1, depth: 0, nodes: 0 };
@@ -371,26 +410,29 @@
     const search = makeSearch();
     const cap = fixedDepth != null ? fixedDepth : ID_MAX_DEPTH;
     const deadline = timeBudgetMs == null ? Infinity : nowMs() + timeBudgetMs;
+    const startDepth =
+      fixedDepth != null ? fixedDepth : startDepthFor(board, cap);
 
-    let chosen = { dir: legal, depth: 0, nodes: 0 };
-    const startDepth = Math.min(MIN_COMPLETE_DEPTH, cap);
-    for (let depth = startDepth; depth <= cap; depth++) {
-      if (nowMs() >= deadline && depth > startDepth) break;
-      const r = search.searchRoot(board, depth, deadline);
+    let chosen = {
+      dir: greedyMove(board),
+      depth: 0,
+      nodes: 0,
+      score: -Infinity,
+    };
+    if (chosen.dir < 0) chosen.dir = legal;
+
+    // Clear TT each ID depth: cached values are tied to that depthLimit.
+    for (let depth = Math.min(startDepth, cap); depth <= cap; depth++) {
+      if (nowMs() >= deadline && chosen.depth > 0) break;
+      const r = search.searchRoot(board, depth, deadline, false);
       chosen.nodes += r.nodes;
-      if (r.timedOut) {
-        if (chosen.depth === 0 && r.dir >= 0) {
-          chosen.dir = r.dir;
-          chosen.depth = depth;
-          chosen.score = r.score;
-        }
-        break;
-      }
-      if (r.dir >= 0) {
+      if (r.complete && r.dir >= 0) {
         chosen.dir = r.dir;
         chosen.depth = depth;
         chosen.score = r.score;
+        continue;
       }
+      break;
     }
     if (chosen.dir < 0) chosen.dir = legal;
     return chosen;
@@ -493,6 +535,16 @@
     let col = snapGrid(parsePercent(leftRaw));
     if (row !== null && col !== null) return [row, col];
 
+    const transform = el.style.transform || '';
+    const tm = transform.match(
+      /translate\(\s*(-?\d+(?:\.\d+)?)%\s*,\s*(-?\d+(?:\.\d+)?)%\s*\)/
+    );
+    if (tm) {
+      col = snapGrid(parseFloat(tm[1]));
+      row = snapGrid(parseFloat(tm[2]));
+      if (row !== null && col !== null) return [row, col];
+    }
+
     const cs = window.getComputedStyle(el);
     row = snapGrid(parsePercent(cs.top));
     col = snapGrid(parsePercent(cs.left));
@@ -517,17 +569,30 @@
     return value;
   }
 
+  function boardIsAnimating() {
+    return Boolean(document.querySelector('.board-slot.is-sliding, .tile-merge-partner, .tile-pop'));
+  }
+
   function readBoard() {
+    // Never trust mid-slide frames: merging tiles share a cell and under-count.
+    if (boardIsAnimating()) return null;
+
     const tileEls = Array.from(document.querySelectorAll('.tile-position'));
     if (tileEls.length === 0) return null;
     const board = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
     let placed = 0;
     for (const el of tileEls) {
+      const inner = el.firstElementChild;
+      if (inner && /tile-merge-partner/.test(inner.className || '')) continue;
       const value = parseTileValue(el);
       if (!value) continue;
       const cell = cellFromElement(el);
       if (!cell) continue;
       const [row, col] = cell;
+      if (board[row][col] !== 0 && board[row][col] !== value) {
+        // Overlapping distinct values → still settling.
+        return null;
+      }
       board[row][col] = Math.max(board[row][col], value);
       placed++;
     }
@@ -578,27 +643,9 @@
     });
   }
 
-  function randInt(min, max) {
-    return min + Math.floor(Math.random() * (max - min + 1));
-  }
-
-  function gauss() {
-    let u = 0;
-    let v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  }
-
-  function humanGapMs() {
-    if (Math.random() < 0.07) return randInt(1100, 2400);
-    const ms = Math.exp(6.15 + 0.38 * gauss());
-    return Math.min(1600, Math.max(220, Math.round(ms)));
-  }
-
   function thinkBudgetMs(meanThink) {
-    const jitter = 0.35 + Math.random() * 0.5;
-    return Math.max(28, Math.min(120, Math.round(meanThink * jitter)));
+    const jitter = 0.92 + Math.random() * 0.16;
+    return Math.max(80, Math.round(meanThink * jitter));
   }
 
   let running = false;
@@ -608,22 +655,52 @@
   let moveCount = 0;
   let deadTries = 0;
 
+  /** Arena slide ≈180ms + merge pop ≈ up to 380ms — never fire keys faster. */
+  const SETTLE_POLL_MS = 40;
+  const MOVE_APPLY_TIMEOUT_MS = 900;
+
   async function waitSettledBoard() {
     let prev = '';
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 20; i++) {
+      if (boardIsAnimating()) {
+        prev = '';
+        await sleep(SETTLE_POLL_MS);
+        if (!running) return null;
+        continue;
+      }
       const grid = readBoard();
       const fp = boardFingerprint(grid);
       if (grid && fp === prev && fp.length > 0) return grid;
       prev = fp;
-      await sleep(70);
+      await sleep(SETTLE_POLL_MS);
       if (!running) return null;
     }
-    return readBoard();
+    return boardIsAnimating() ? null : readBoard();
+  }
+
+  async function waitBoardChanged(beforeFp) {
+    const deadline = nowMs() + MOVE_APPLY_TIMEOUT_MS;
+    while (running && nowMs() < deadline) {
+      await sleep(SETTLE_POLL_MS);
+      if (boardIsAnimating()) continue;
+      const grid = readBoard();
+      const fp = boardFingerprint(grid);
+      if (grid && fp && fp !== beforeFp) {
+        // One extra settle tick so spawn / pop flags clear.
+        await sleep(SETTLE_POLL_MS);
+        if (!running) return null;
+        return waitSettledBoard();
+      }
+      if (isGameOverOverlay()) return null;
+    }
+    return waitSettledBoard();
   }
 
   function start2048AI(thinkTimeMs, tickIntervalMs) {
-    const meanThink = typeof thinkTimeMs === 'number' ? thinkTimeMs : 55;
-    const extraGap = typeof tickIntervalMs === 'number' ? tickIntervalMs : null;
+    const meanThink = typeof thinkTimeMs === 'number' ? thinkTimeMs : 150;
+    // tickIntervalMs kept for API compat; real pacing is wait-for-board-change.
+    const minGapAfterMove =
+      typeof tickIntervalMs === 'number' ? Math.max(40, tickIntervalMs) : 40;
     if (running) {
       console.log('已经在运行中');
       return;
@@ -634,9 +711,9 @@
     moveCount = 0;
     deadTries = 0;
     console.log(
-      '2048 AI 已启动。步间隔不规则抖动，思考约 ' +
+      '2048 AI 已启动。思考约 ' +
         meanThink +
-        'ms。输入 stop2048AI() 停止。'
+        'ms，每步等棋盘动画结束再走。输入 stop2048AI() 停止。'
     );
 
     const step = async () => {
@@ -650,14 +727,13 @@
         const valueGrid = await waitSettledBoard();
         if (!running) return;
         if (!valueGrid) {
-          await sleep(humanGapMs());
+          await sleep(80);
           continue;
         }
 
         const boardStr = boardFingerprint(valueGrid);
         const stalled = boardStr === lastBoardStr;
         stallCount = stalled ? stallCount + 1 : 0;
-        lastBoardStr = boardStr;
 
         const rows = encodeGrid(valueGrid);
         const dirs = legalDirs(rows);
@@ -665,22 +741,24 @@
 
         if (dirs.length === 0) {
           deadTries++;
-          if (isGameOverOverlay() || deadTries >= 6) {
+          if (isGameOverOverlay() || deadTries >= 8) {
             console.log('连续多次无有效移动，停止。');
             stop2048AI();
             return;
           }
-          sendKey(DIR_NAME[deadTries % 4]);
-          await sleep(200 + humanGapMs());
+          // Re-settle — may have read a transient frame.
+          await sleep(120);
           continue;
         }
 
         deadTries = 0;
-        if (stallCount >= 3) {
+        if (stallCount >= 4) {
           pick = { dir: dirs[stallCount % dirs.length], depth: 0, nodes: 0 };
         } else {
           pick = getBestMove(rows, thinkBudgetMs(meanThink), null);
-          if (pick.dir < 0) pick = { dir: dirs[0], depth: 0, nodes: 0 };
+          if (pick.dir < 0 || dirs.indexOf(pick.dir) < 0) {
+            pick = { dir: dirs[0], depth: 0, nodes: 0 };
+          }
         }
 
         moveCount++;
@@ -699,9 +777,19 @@
           );
         }
 
+        lastBoardStr = boardStr;
         sendKey(DIR_NAME[pick.dir]);
-        const gap = extraGap != null ? randInt(Math.max(180, extraGap - 80), extraGap + 180) : humanGapMs();
-        await sleep(200 + gap);
+        const nextGrid = await waitBoardChanged(boardStr);
+        if (!running) return;
+        if (nextGrid) {
+          lastBoardStr = boardFingerprint(nextGrid);
+          stallCount = 0;
+        } else if (isGameOverOverlay()) {
+          console.log('页面已出现 GAME OVER。');
+          stop2048AI();
+          return;
+        }
+        await sleep(minGapAfterMove);
       }
     };
 
@@ -739,11 +827,14 @@
 
   if (typeof process !== 'undefined' && process.argv && process.argv.includes('--bench')) {
     const games = parseInt(process.argv[3] || '8', 10);
-    const depth = parseInt(process.argv[4] || '3', 10);
+    const depthOrBudget = process.argv[4] || '4';
+    const useTime = String(depthOrBudget).endsWith('ms');
     const t0 = Date.now();
     const results = [];
     for (let i = 0; i < games; i++) {
-      const r = playOneGame({ fixedDepth: depth });
+      const r = useTime
+        ? playOneGame({ timeBudgetMs: parseInt(depthOrBudget, 10) })
+        : playOneGame({ fixedDepth: parseInt(depthOrBudget, 10) });
       results.push(r);
       console.log(
         '局 ' +
@@ -764,8 +855,35 @@
     const hit8192 = results.filter((r) => r.maxTile >= 8192).length;
     const hit16384 = results.filter((r) => r.maxTile >= 16384).length;
     console.log('---');
-    console.log('深度=' + depth + '  局数=' + games + '  耗时=' + ((Date.now() - t0) / 1000).toFixed(1) + 's');
-    console.log('平均分=' + Math.round(avg) + '  最低=' + results[0].score + '  最高=' + results[results.length - 1].score);
-    console.log('>=10万: ' + hit100k + '/' + games + '  >=8192: ' + hit8192 + '/' + games + '  >=16384: ' + hit16384 + '/' + games);
+    console.log(
+      (useTime ? '时限=' + depthOrBudget : '深度=' + depthOrBudget) +
+        '  局数=' +
+        games +
+        '  耗时=' +
+        ((Date.now() - t0) / 1000).toFixed(1) +
+        's'
+    );
+    console.log(
+      '平均分=' +
+        Math.round(avg) +
+        '  最低=' +
+        results[0].score +
+        '  最高=' +
+        results[results.length - 1].score
+    );
+    console.log(
+      '>=10万: ' +
+        hit100k +
+        '/' +
+        games +
+        '  >=8192: ' +
+        hit8192 +
+        '/' +
+        games +
+        '  >=16384: ' +
+        hit16384 +
+        '/' +
+        games
+    );
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this);

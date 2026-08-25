@@ -282,12 +282,14 @@ export class GameController {
     return this.lastHadMerge;
   }
 
-  /** Slide just finished: survivor updates + pop while partner fades at the same cell. */
-  getMergeSettleTiles() {
-    const settled = this.tiles.map((t) => ({
-      ...t,
-      z: t.isMerged ? 20 : t.z ?? 1,
-    }));
+  /** Merge faces at destination; exclude spawn until sliding has fully stopped. */
+  getMergeSettleTiles(includeSpawn = false) {
+    const settled = this.tiles
+      .filter((t) => includeSpawn || !t.isNew)
+      .map((t) => ({
+        ...t,
+        z: t.isMerged ? 20 : t.isNew ? 5 : t.z ?? 1,
+      }));
     const partners = this.movingTiles
       .filter((t) => t.isMergePartner)
       .map((t) => ({ ...t, isFading: true, z: 10 }));
