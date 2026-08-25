@@ -172,3 +172,101 @@ url: https://changedetection.io
 8. 用"可视化选择器"辅助定位特定元素
 9. 每个监控项可配置独立代理
 10. 检测到网页变化时，随通知发送截图
+
+---
+id: awesome-gpt-image-2
+date: 2026-08-25
+time: 10:27
+tags: GPT-Image2, 提示词, Agent Skills, 开源
+url: https://github.com/freestylefly/awesome-gpt-image-2
+---
+
+# awesome-gpt-image-2：把 GPT-Image2 案例逆向成 Prompt-as-Code
+
+freestylefly 维护的开源仓库，标题写成 **Prompt as Code**。作者把社区里散落的 GPT-Image2 出图案例逆向拆开，把主体、光影、材质、排版整理成可组合字段，再做成分类模板，供 Agent 和脚本调用。画廊目前收录 532 个案例、二十余套模板，并整理出 `gpt-image-2-style-library` Skill。
+
+海报与排版一类最多，有 86 例；摄影写实 77 例，UI 与界面 73 例。其余还有信息图、电商主图、插画和古风长卷。先在画廊里选定视觉方向，再回到模板页填入业务变量。可视化站点 [gpt-image2.canghe.ai](https://gpt-image2.canghe.ai/) 可以放大预览、复制完整 Prompt、按风格筛选，登录后可以试生成。
+
+![信息图案例 Urban Metabolism Atlas](https://raw.githubusercontent.com/freestylefly/awesome-gpt-image-2/main/data/images/case1.jpg)
+
+Skill 与网站共用 `data/style-library.json`。Claude Code、Codex、Cursor 可用 `npx skills add freestylefly/awesome-gpt-image-2` 安装，或执行 `npx gpt-image-2-style-library install all` 写入本地 skills 目录。请求可以写成：用 gpt-image-2-style-library 生成一张 Codex 信息图提示词。
+
+案例多整理自 YouMind、OpenNana 等公开社区，仓库本身按 MIT 开源。
+
+---
+id: free-claude-code
+date: 2026-08-25
+time: 10:30
+tags: Claude Code, 代理, 开源, 编程 Agent
+url: https://github.com/Alishahryar1/free-claude-code
+---
+
+# Free Claude Code：用本地代理把免费额度接入 Claude Code
+
+独立开源项目，作者 Alishahryar1，与 Anthropic 无隶属关系。它在本机启动代理和管理界面，把约 50 家符合服务条款的供应商汇总成一份模型目录，再接入 Claude Code、Codex、Pi、OpenCode、Cline 等客户端。目录覆盖免费额度、订阅、付费接口和本地模型。README 写明每月可用免费 token 超过 13 亿，额度由各供应商自行控制，随时可能调整。
+
+安装后用 `fcc-claude`、`fcc-codex`、`fcc-pi`、`fcc-opencode` 启动对应客户端。Windows 与 macOS 提供托盘或菜单栏入口，Linux 运行 `fcc-server`。管理界面里填写 API Key、选择模型、配置 fallback；请求重试耗尽后，会自动切到下一份已配置模型。也可接入 VS Code、JetBrains、Discord、Telegram，语音输入使用本地 Whisper 或 NVIDIA NIM。可选 RTK 过滤常见命令输出，降低终端回传占用的 token。
+
+macOS / Linux 安装命令为 `curl -fsSL "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install.sh" | sh`。默认示例模型是 NVIDIA NIM 上的 `nvidia/nemotron-3-super-120b-a12b`。MIT 许可。
+
+---
+id: openlogi
+date: 2026-08-25
+time: 10:31
+tags: 罗技, HID++, Rust, 开源, 鼠标
+url: https://github.com/AprilNEA/OpenLogi
+---
+
+# OpenLogi：用 Rust 在本地配置罗技键鼠，不经过 Options+
+
+AprilNEA 写的本地优先工具，走 HID++ 直接读写罗技外设。可改按键映射、DPI、SmartShift、滚轮与灯光，配置写在一份明文 TOML 里，不要求罗技账号，也不采集遥测。连接方式覆盖 Logi Bolt、Unifying、Lightspeed 接收器、蓝牙直连和 USB 线。键鼠之外，Litra 灯和部分摄像头的 UVC 参数也可以调。
+
+程序分 GUI、后台 agent 和 CLI 三块：agent 占用系统输入钩子并独占设备 I/O，GUI 只做 IPC 客户端。Linux 按一等平台维护，提供 evdev/uinput、udev 规则、systemd 用户单元，以及 `.deb` / `.rpm` 包。使用前需要先退出官方 Logi Options+，两套软件会争抢同一接收器的 HID++ 通道。项目仍在活跃开发，配置格式可能继续变。文档在 [openlogi.org](https://openlogi.org/docs)。Apache 2.0 许可。
+
+---
+id: skylens
+date: 2026-08-25
+time: 10:32
+tags: 卫星, 可视化, UAP, 公开数据
+url: https://skylens.yantraai.app/
+---
+
+# SkyLens：三维地球上的在轨目标，旁边是一份可检索的 UAP 档案
+
+YantraAI 做的浏览器站点，把 CelesTrak 公开星历画成可旋转的三维地球，并附一份美国政府滚动解密的 UAP 阅读室。地球上可以搜国际空间站、Starlink，按国家、轨道、运营方和任务类型过滤；卡片给出 NORAD 编号、高度、速度和星历历元。位置在浏览器里由公开轨道根数推算，站点自己标明这不是导航级数据。近地小行星走 NASA / JPL 的接近预报。
+
+另一半产品是 PURSUE 披露计划的索引。五次批次合计约 375 条记录，可按批次、来源机构、事发日期、地点和文件类型检索，条目链回 DVIDS、FBI、NASA、AARO 等原始托管地址。档案不鉴定现象本身，政府侧也把这些个案标成未决。站点声明与政府无隶属关系，分析层只做来源、时间、地点和传感器限制的整理。
+
+---
+id: box-blanks
+date: 2026-08-25
+time: 10:34
+tags: 包装, 刀版, 参数化, FEFCO
+url: https://boxblanks.com/
+---
+
+# Box Blanks：按尺寸生成 479 种盒型的免费刀版
+
+a1anm 做的浏览器工具。选定盒型后填长宽高和纸板厚度，得到实时展开图，并可从平面拖到成型状态查看折叠过程。导出 PDF（1:1 矢量）、SVG，以及带 CUT / CREASE / PERF 分层的 DXF R12，给模切厂和激光机用。
+
+![Box Blanks：开盖状态的三维纸盒](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1787626521747.png)
+
+盒型代码来自 FEFCO Code 第 12 版（2022）和 ECMA Codes EN 2022。无标准编号的常见结构（磁吸礼盒、手提袋、柜台展示架）只用描述名。模板是面板与铰链的图结构：改一个尺寸，轮廓、压痕和三维折叠一起重算。尺寸可按内径、压痕到压痕或外径输入，另外两项会同步显示。纸板厚度可从瓦楞、卡纸、灰板表里选，也可直接输入；余量、槽宽、糊口和角部间隙都暴露成参数。
+
+![Box Blanks：平面刀版与折叠预览](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1787626609824.png)
+
+每套模板带校验标记。「Checked against the plate」表示已与标准附图对照；「Not yet plate-checked」表示能折、能导出，细节尚未逐条对齐图纸。站点建议先打样再开模。
+
+---
+id: 2048bid
+date: 2026-08-25
+time: 11:04
+tags: 营销, 排行榜, 2048, 游戏
+url: https://2048bid.lol/
+---
+
+# 2048bid.lol：用 2048 分数给产品排名
+
+voladd 做的浏览器站点，灵感来自 outbid.lol 的付费排行榜。提交产品网址后玩一局 2048，分数进入当日 UTC 排行榜；最高分占据榜首，并记入 Hall of Fame。方向键、WASD 或滑动均可操作。对局结束后，服务器回放每一步并核对时间，只有通过校验的分数才会上榜。免费。
+
+作者博士第一年常玩 2048。同类玩法还有 flappybid.lol。
