@@ -1,0 +1,266 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+
+/* Isolate from site theme / dark mode — full HSL so tokens cannot be overridden. */
+html:has(.arena-2048),
+body:has(.arena-2048) {
+  background: #f5efe5 !important;
+  color-scheme: light;
+}
+
+.arena-2048 {
+  --arena-bg: #f5efe5;
+  --arena-fg: #7a5c4e;
+  --arena-primary: #e8955a;
+  --arena-primary-fg: #5c4033;
+  --arena-secondary: #e8794a;
+  --arena-card: #f5efe5;
+  --arena-board: #b6a090;
+  --arena-border: #7a5c4e;
+  --arena-muted: #e8ddd0;
+  --arena-muted-fg: #9a7f70;
+  --arena-cell: rgb(245 239 229 / 0.4);
+  --arena-cell-border: rgb(245 239 229 / 0.2);
+  --arena-input: #efe4d6;
+  --arena-destructive: #ef6b4a;
+  --arena-radius: 0.875rem;
+
+  --tile-2: #f0e6d8;
+  --tile-4: #eddcc4;
+  --tile-8: #e8955a;
+  --tile-16: #e8794a;
+  --tile-32: #ef6b4a;
+  --tile-64: #e84f3a;
+  --tile-128: #e8c85a;
+  --tile-256: #e4c04a;
+  --tile-512: #e0b83f;
+  --tile-1024: #e8c83a;
+  --tile-2048: #ebc82e;
+  --tile-4096: #c99528;
+  --tile-8192: #9a6b3a;
+  --tile-super: #5a3d7a;
+
+  /* Map Tailwind semantic tokens used inside the arena */
+  --background: 43 56% 96%;
+  --foreground: 29 17% 43%;
+  --primary: 28 80% 70%;
+  --primary-foreground: 29 17% 32%;
+  --secondary: 21 87% 67%;
+  --secondary-foreground: 29 17% 32%;
+  --card: 43 56% 96%;
+  --card-foreground: 29 17% 43%;
+  --border: 29 17% 43%;
+  --input: 28 28% 88%;
+  --ring: 28 80% 70%;
+  --muted: 36 29% 87%;
+  --muted-foreground: 29 14% 53%;
+  --accent: 47 84% 55%;
+  --accent-foreground: 29 17% 32%;
+  --destructive: 10 88% 67%;
+  --radius: 0.875rem;
+
+  --color-background: var(--arena-bg);
+  --color-foreground: var(--arena-fg);
+  --color-primary: var(--arena-primary);
+  --color-primary-foreground: var(--arena-primary-fg);
+  --color-secondary: var(--arena-secondary);
+  --color-secondary-foreground: var(--arena-primary-fg);
+  --color-card: var(--arena-card);
+  --color-card-foreground: var(--arena-fg);
+  --color-border: var(--arena-border);
+  --color-input: var(--arena-input);
+  --color-ring: var(--arena-primary);
+  --color-muted: var(--arena-muted);
+  --color-muted-foreground: var(--arena-muted-fg);
+  --color-accent: var(--tile-2048);
+  --color-accent-foreground: var(--arena-primary-fg);
+  --color-destructive: var(--arena-destructive);
+
+  font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  color: var(--arena-fg);
+  background: var(--arena-bg);
+  min-height: 100dvh;
+  color-scheme: light;
+}
+
+.arena-2048 .font-mono {
+  font-family: "Space Mono", ui-monospace, monospace;
+}
+
+.arena-2048 .shadow-brutal,
+.arena-2048 .shadow-brutal-primary {
+  box-shadow: none;
+}
+
+.arena-2048 .shadow-hard {
+  box-shadow: 2px 2px 0 var(--arena-fg);
+}
+
+.arena-2048 .shadow-hard-primary {
+  box-shadow: 8px 8px 0 var(--arena-primary);
+}
+
+.arena-2048 .active-press {
+  transition-property: transform;
+  transition-duration: 100ms;
+  transition-timing-function: ease-out;
+}
+
+.arena-2048 .active-press:active {
+  transform: scale(0.98);
+}
+
+/*
+ * Slide via transform (not top/left calc) — percentage translate is stable across browsers.
+ * Transitions only while .is-sliding so spawns never fly in from the origin.
+ */
+.arena-2048 .tile-position {
+  pointer-events: none;
+  transition: none;
+}
+
+.arena-2048 .board-slot.is-sliding .tile-position {
+  transition: transform 180ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.arena-2048 .tile-position .rounded-xl {
+  border-color: var(--arena-fg) !important;
+}
+
+/* Apple-like soft spring on the tile face (outer wrapper keeps sliding). */
+.arena-2048 .tile-pop {
+  animation: arena-tile-pop 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.arena-2048 .tile-spawn {
+  animation: arena-tile-spawn 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.arena-2048 .tile-merge-partner {
+  animation: arena-tile-merge-out 320ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes arena-tile-pop {
+  0% {
+    transform: scale(1);
+  }
+  26% {
+    transform: scale(1.06);
+  }
+  50% {
+    transform: scale(0.992);
+  }
+  74% {
+    transform: scale(1.01);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes arena-tile-merge-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes arena-tile-spawn {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.5;
+  }
+  45% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.arena-2048 .arena-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--arena-bg);
+  isolation: isolate;
+}
+
+.arena-2048 .arena-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 100%;
+  left: -100vw;
+  width: 300vw;
+  background: var(--arena-bg);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.arena-2048 .board-slot {
+  background: var(--arena-board);
+  border-color: var(--arena-fg);
+}
+
+.arena-2048 .board-cell {
+  background: var(--arena-cell);
+  border-color: var(--arena-cell-border);
+}
+
+.arena-2048 .arena-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: var(--arena-radius);
+  border: 2px solid var(--arena-fg);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25;
+  transition: background-color 150ms ease, color 150ms ease, transform 100ms ease;
+}
+
+.arena-2048 .arena-btn:focus-visible {
+  outline: 2px solid var(--arena-primary);
+  outline-offset: 2px;
+}
+
+.arena-2048 .arena-btn:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.arena-2048 .arena-btn-primary {
+  background: var(--arena-primary);
+  color: var(--arena-primary-fg);
+}
+
+.arena-2048 .arena-btn-primary:hover {
+  filter: brightness(0.96);
+}
+
+.arena-2048 .arena-btn-outline {
+  background: var(--arena-card);
+  color: var(--arena-fg);
+}
+
+.arena-2048 .arena-btn-outline:hover {
+  background: var(--arena-muted);
+}
+
+.arena-2048 ::selection {
+  background: var(--arena-primary);
+  color: var(--arena-primary-fg);
+}
+
+.arena-2048 textarea,
+.arena-2048 input {
+  caret-color: var(--arena-primary);
+}

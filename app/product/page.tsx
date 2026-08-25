@@ -11,6 +11,7 @@ import {
   Figma,
   ScanLine,
   Terminal,
+  Gamepad2,
 } from "lucide-react";
 
 const products: ProductItem[] = [
@@ -25,6 +26,14 @@ const products: ProductItem[] = [
     ),
     href: "/product/create-gin-api",
     icon: <Terminal className="size-5" />,
+  },
+  {
+    id: "2048-arena",
+    name: "2048 Arena",
+    description:
+      "Write a JS bot, play 2048, and rank your product site on a daily board. Visual language adapted from 2048bid.lol.",
+    href: "/2048",
+    icon: <Gamepad2 className="size-5" />,
   },
   {
     id: "personal-site",
