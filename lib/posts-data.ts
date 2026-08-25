@@ -11,6 +11,7 @@ export interface PostMeta {
 }
 
 export const postsMeta: PostMeta[] = [
+  { slug: "2048-expectimax", title: "2048 Expectimax：查表启发式与迭代加深", tag: "前端技术", date: "2026-08-25" },
   { slug: "apple-picture-hero", title: "苹果官网 <picture> 首屏代码的技术拆解", tag: "前端技术", date: "2026-08-11" },
   { slug: "aeo-goose-practice", title: "答案引擎优化：一套可落地的 AEO 能力清单", tag: "大模型", date: "2026-07-30" },
   { slug: "deepseek-interview", title: "梁文锋访谈：开源、克制与 AGI 路线图", tag: "大模型", date: "2026-07-27" },

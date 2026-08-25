@@ -44,8 +44,19 @@ import { AimlabCover } from "./blog/aimlab/cover";
 import { DeepSeekCover } from "./blog/deepseek-interview/cover";
 import { AeoGoosePracticeCover } from "./blog/aeo-goose-practice/cover";
 import { ApplePictureHeroCover } from "./blog/apple-picture-hero/cover";
+import { Expectimax2048Cover } from "./blog/2048-expectimax/cover";
 
 export const posts: PostData[] = [
+  {
+    slug: "2048-expectimax",
+    title: "2048 Expectimax：查表启发式与迭代加深",
+    date: "2026-08-25",
+    tag: "前端技术",
+    summary:
+      "用 Expectimax 拆 2048：机会节点与期望估值、16 位行查表、空格/合并/单调启发式，以及浏览器里迭代加深与动画同步。附可自动推盘的封面与控制台脚本。",
+    cover: <Expectimax2048Cover />,
+    coverShape: "square",
+  },
   {
     slug: "apple-picture-hero",
     title: "苹果官网 <picture> 首屏代码的技术拆解",
