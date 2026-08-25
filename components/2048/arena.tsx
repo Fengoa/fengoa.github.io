@@ -10,6 +10,11 @@ import {
   ScoreBadge,
 } from "./leaderboard";
 import { productNameFromUrl, leaderboardStore } from "./storage";
+import { ScriptEditor } from "./script-editor";
+import {
+  celebrateGameOver,
+  celebrateScoreProgress,
+} from "./score-confetti";
 import { STARTER_SCRIPT, SCRIPT_HELP } from "./starter-script";
 import type {
   Direction,
@@ -63,6 +68,18 @@ export function ArenaApp() {
   const [logs, setLogs] = useState<string[]>([]);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [busy, setBusy] = useState(false);
+  const scoreRef = useRef(0);
+
+  const updateScore = useCallback((next: number) => {
+    celebrateScoreProgress(scoreRef.current, next);
+    scoreRef.current = next;
+    setScore(next);
+  }, []);
+
+  const resetScore = useCallback(() => {
+    scoreRef.current = 0;
+    setScore(0);
+  }, []);
 
   useEffect(() => {
     void leaderboardStore.load().then((board) => setEntries(board.entries));
@@ -99,6 +116,16 @@ export function ArenaApp() {
     [product, scriptLabel]
   );
 
+  const markGameOver = useCallback(
+    (finalScore: number) => {
+      updateScore(finalScore);
+      setGameOver(true);
+      celebrateGameOver(finalScore);
+      void commitScore(finalScore);
+    },
+    [commitScore, updateScore]
+  );
+
   const clearAnimTimers = useCallback(() => {
     if (animTimerRef.current !== null) {
       window.clearTimeout(animTimerRef.current);
@@ -119,8 +146,7 @@ export function ArenaApp() {
 
       if (game.state.over) {
         window.setTimeout(() => {
-          setGameOver(true);
-          void commitScore(game.state.score);
+          markGameOver(game.state.score);
         }, GAME_OVER_DELAY_MS);
         return;
       }
@@ -128,7 +154,7 @@ export function ArenaApp() {
       queuedRef.current = null;
       if (queued) moveImplRef.current(queued);
     },
-    [commitScore]
+    [markGameOver]
   );
 
   const beginMergePop = useCallback((game: GameController) => {
@@ -216,8 +242,7 @@ export function ArenaApp() {
       if (!changed) {
         if (game.state.over) {
           window.setTimeout(() => {
-            setGameOver(true);
-            void commitScore(game.state.score);
+            markGameOver(game.state.score);
           }, GAME_OVER_DELAY_MS);
         }
         return false;
@@ -227,7 +252,7 @@ export function ArenaApp() {
       slideDoneRef.current = false;
       slideEndedRef.current = false;
       mergePopStartedRef.current = false;
-      setScore(game.state.score);
+      updateScore(game.state.score);
       setGameOver(false);
 
       const moving = game.getMovingTiles();
@@ -267,24 +292,18 @@ export function ArenaApp() {
 
       return true;
     },
-    [beginMergePop, commitScore, handleSlideComplete]
+    [beginMergePop, handleSlideComplete, markGameOver, updateScore]
   );
 
   moveImplRef.current = (dir: Direction) => {
     applyDirection(dir);
   };
 
-  const startManualGame = useCallback((nextProduct: ProductProfile) => {
+  const resetGame = useCallback(() => {
     abortRef.current = true;
     setRunning(false);
-    if (animTimerRef.current !== null) {
-      window.clearTimeout(animTimerRef.current);
-      animTimerRef.current = null;
-    }
-    if (mergePopTimerRef.current !== null) {
-      window.clearTimeout(mergePopTimerRef.current);
-      mergePopTimerRef.current = null;
-    }
+    setBusy(false);
+    clearAnimTimers();
     const game = new GameController();
     controllerRef.current = game;
     slideDoneRef.current = false;
@@ -293,13 +312,20 @@ export function ArenaApp() {
     mergePopStartedRef.current = false;
     setSliding(false);
     setTiles(game.getTiles());
-    setScore(0);
+    resetScore();
     setGameOver(false);
-    setProduct(nextProduct);
-    setLogs([]);
     animatingRef.current = false;
     queuedRef.current = null;
-  }, []);
+  }, [clearAnimTimers]);
+
+  const startManualGame = useCallback(
+    (nextProduct: ProductProfile) => {
+      resetGame();
+      setProduct(nextProduct);
+      setLogs([]);
+    },
+    [resetGame]
+  );
 
   const onSubmitProduct = (e: React.FormEvent) => {
     e.preventDefault();
@@ -400,10 +426,6 @@ export function ArenaApp() {
   }, [applyDirection, pushLog]);
 
   const runScript = async () => {
-    if (!product) {
-      setUrlError("Claim a product site before running a script.");
-      return;
-    }
     if (running) return;
 
     abortRef.current = false;
@@ -427,7 +449,7 @@ export function ArenaApp() {
     mergePopStartedRef.current = false;
     setSliding(false);
     setTiles(game.getTiles());
-    setScore(0);
+    resetScore();
     setGameOver(false);
     animatingRef.current = false;
     queuedRef.current = null;
@@ -477,8 +499,7 @@ export function ArenaApp() {
       setRunning(false);
       const final = controllerRef.current;
       if (final?.state.over) {
-        setGameOver(true);
-        await commitScore(final.state.score);
+        markGameOver(final.state.score);
       } else if (final && final.state.score > 0) {
         await commitScore(final.state.score);
       }
@@ -507,13 +528,13 @@ export function ArenaApp() {
         <button
           type="button"
           className="arena-btn arena-btn-primary active-press h-10 w-full px-4 shadow-brutal"
-          onClick={() => product && startManualGame(product)}
+          onClick={resetGame}
         >
           Play again
         </button>
       </div>
     );
-  }, [gameOver, product, score, startManualGame]);
+  }, [gameOver, resetGame, score]);
 
   return (
     <div className="arena-2048">
@@ -645,17 +666,19 @@ export function ArenaApp() {
               {SCRIPT_HELP}
             </p>
 
-            <textarea
-              value={script}
-              onChange={(e) => setScript(e.target.value)}
-              spellCheck={false}
-              className="min-h-72 flex-1 resize-y rounded-xl border-2 border-foreground bg-[hsl(29_17%_18%)] p-3 font-mono text-xs leading-relaxed text-[hsl(43_56%_96%)] outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-[28rem]"
-            />
+            <ScriptEditor value={script} onChange={setScript} />
+
+            {!product && (
+              <p className="font-mono text-xs font-bold text-primary">
+                You can run without claiming a site. Scores only rank after you
+                claim one.
+              </p>
+            )}
 
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={!product || busy}
+                disabled={busy}
                 onClick={() => void runScript()}
                 className="arena-btn arena-btn-primary active-press h-12 flex-1 px-4 shadow-brutal"
               >

@@ -264,3 +264,37 @@ body:has(.arena-2048) {
 .arena-2048 input {
   caret-color: var(--arena-primary);
 }
+
+.arena-2048 .script-editor {
+  --script-gutter: 2.75rem;
+  background: hsl(29 17% 18%);
+  --sh-class: #8ec5ff;
+  --sh-identifier: #f5efe5;
+  --sh-sign: #b6a090;
+  --sh-property: #a8d4ff;
+  --sh-entity: #7dceb8;
+  --sh-jsxliterals: #c4b5fd;
+  --sh-string: #6dd4b0;
+  --sh-keyword: #f4a582;
+  --sh-comment: #9a7f70;
+}
+
+.arena-2048 .script-editor:focus-within {
+  outline: 2px solid var(--arena-primary);
+  outline-offset: 2px;
+}
+
+.arena-2048 .script-gutter {
+  width: var(--script-gutter);
+  color: #9a7f70;
+  background: hsl(29 17% 14%);
+}
+
+.arena-2048 .script-pane {
+  margin-left: var(--script-gutter);
+}
+
+.arena-2048 .script-pane pre,
+.arena-2048 .script-pane textarea {
+  padding-left: 0.75rem;
+}

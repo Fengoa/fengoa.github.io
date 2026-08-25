@@ -114,7 +114,7 @@ export function GameBoard({
       </div>
 
       {gameOver && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center overflow-y-auto rounded-[calc(2rem-4px)] bg-[color:var(--arena-bg)]/95 p-4 text-center">
+        <div className="pointer-events-auto absolute inset-0 z-10 flex flex-col items-center justify-center overflow-y-auto rounded-[calc(2rem-4px)] bg-[color:var(--arena-bg)]/95 p-4 text-center">
           {overlay ?? (
             <h3 className="text-3xl font-black text-primary md:text-5xl">
               Game over
