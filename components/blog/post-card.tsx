@@ -65,13 +65,13 @@ export function PostCard({ post, index, onDislike }: { post: PostData; index: nu
       )}
       <div
         className={cn(
-          "grid grid-cols-1 md:grid-cols-2 md:gap-8 overflow-hidden p-6 sm:p-8 lg:p-10"
+          "grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 overflow-hidden p-6 sm:p-8 lg:p-10"
         )}
       >
-        {/* 封面区 — 移动端在上，桌面端根据奇偶左右排列 */}
+        {/* 封面区 — 移动端在文字下方，桌面端根据奇偶左右排列 */}
         <div
           className={cn(
-            "relative flex items-center justify-center mb-6 md:mb-0",
+            "relative flex items-center justify-center order-2",
             isEven ? "md:order-2 md:justify-end" : "md:order-1 md:justify-start"
           )}
         >
@@ -95,7 +95,7 @@ export function PostCard({ post, index, onDislike }: { post: PostData; index: nu
         {/* 文字区 */}
         <div
           className={cn(
-            "flex flex-col justify-center items-start gap-6 md:gap-12",
+            "flex flex-col justify-center items-start gap-6 md:gap-12 order-1",
             isEven ? "md:order-1" : "md:order-2"
           )}
         >
