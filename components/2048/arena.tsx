@@ -17,6 +17,17 @@ import {
   resetConfetti,
 } from "./score-confetti";
 import { STARTER_SCRIPT, SCRIPT_HELP } from "./starter-script";
+import {
+  fetchLlmModels,
+  generateBotFromPrompt,
+  loadLlmBase,
+  loadLlmModel,
+  loadLlmToken,
+  saveLlmBase,
+  saveLlmModel,
+  saveLlmToken,
+  type ScriptMode,
+} from "./prompt-generate";
 import type {
   Direction,
   LeaderboardEntry,
@@ -30,6 +41,21 @@ import {
   MOVE_ANIM_MS,
   POP_ANIM_MS,
 } from "./types";
+
+type LogLine = {
+  id: number;
+  time: string;
+  text: string;
+};
+
+function formatLogTime(date = new Date()) {
+  return date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}
 
 const DIRS: Direction[] = ["up", "down", "left", "right"];
 
@@ -58,6 +84,20 @@ export function ArenaApp() {
   const [urlError, setUrlError] = useState<string | null>(null);
   const [script, setScript] = useState(STARTER_SCRIPT);
   const [scriptLabel, setScriptLabel] = useState("starter");
+  const [scriptMode, setScriptMode] = useState<ScriptMode>("prompt");
+  const [promptText, setPromptText] = useState("");
+  const [llmToken, setLlmToken] = useState("");
+  const [llmBase, setLlmBase] = useState("https://api.openai.com/v1");
+  const [llmModel, setLlmModel] = useState("gpt-4o-mini");
+  const [llmModels, setLlmModels] = useState<string[]>([]);
+  const [fetchingModels, setFetchingModels] = useState(false);
+  const [modelFetchError, setModelFetchError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateNote, setGenerateNote] = useState<string | null>(null);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [streamThinking, setStreamThinking] = useState("");
+  const [streamContent, setStreamContent] = useState("");
+  const generateAbortRef = useRef<AbortController | null>(null);
   const [tiles, setTiles] = useState<TileView[]>(() =>
     bootRef.current!.tiles.map((t) => ({ ...t }))
   );
@@ -66,8 +106,12 @@ export function ArenaApp() {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [running, setRunning] = useState(false);
-  const [logs, setLogs] = useState<string[]>([]);
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [logs, setLogs] = useState<LogLine[]>([]);
+  const logIdRef = useRef(0);
+  const logScrollRef = useRef<HTMLDivElement>(null);
+  const [weekEntries, setWeekEntries] = useState<LeaderboardEntry[]>([]);
+  const [allTimeEntries, setAllTimeEntries] = useState<LeaderboardEntry[]>([]);
+  const [weekLabel, setWeekLabel] = useState("");
   const [busy, setBusy] = useState(false);
   const scoreRef = useRef(0);
 
@@ -83,7 +127,17 @@ export function ArenaApp() {
   }, []);
 
   useEffect(() => {
-    void leaderboardStore.load().then((board) => setEntries(board.entries));
+    void leaderboardStore.load().then((board) => {
+      setWeekEntries(board.weekEntries);
+      setAllTimeEntries(board.allTimeEntries);
+      setWeekLabel(board.weekLabel);
+    });
+  }, []);
+
+  useEffect(() => {
+    setLlmToken(loadLlmToken());
+    setLlmBase(loadLlmBase());
+    setLlmModel(loadLlmModel());
   }, []);
 
   useEffect(() => {
@@ -98,11 +152,23 @@ export function ArenaApp() {
   }, []);
 
   const pushLog = useCallback((...args: unknown[]) => {
-    const line = args
+    const text = args
       .map((a) => (typeof a === "string" ? a : JSON.stringify(a)))
       .join(" ");
-    setLogs((prev) => [...prev.slice(-80), line]);
+    logIdRef.current += 1;
+    const entry: LogLine = {
+      id: logIdRef.current,
+      time: formatLogTime(),
+      text,
+    };
+    setLogs((prev) => [...prev.slice(-120), entry]);
   }, []);
+
+  useEffect(() => {
+    const el = logScrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [logs]);
 
   const commitScore = useCallback(
     async (finalScore: number) => {
@@ -112,7 +178,9 @@ export function ArenaApp() {
         score: finalScore,
         scriptLabel,
       });
-      setEntries(next.entries);
+      setWeekEntries(next.weekEntries);
+      setAllTimeEntries(next.allTimeEntries);
+      setWeekLabel(next.weekLabel);
     },
     [product, scriptLabel]
   );
@@ -436,7 +504,14 @@ export function ArenaApp() {
     abortRef.current = false;
     setRunning(true);
     setBusy(true);
-    setLogs((prev) => [...prev, "— script started —"]);
+    setLogs((prev) => [
+      ...prev,
+      {
+        id: ++logIdRef.current,
+        time: formatLogTime(),
+        text: "— script started —",
+      },
+    ]);
 
     const game = new GameController();
     controllerRef.current = game;
@@ -543,64 +618,61 @@ export function ArenaApp() {
 
   return (
     <div className="arena-2048">
-      <div className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
-        <header className="arena-header -mx-4 flex items-center justify-between border-b-4 border-foreground px-4 py-4 md:-mx-8 md:px-8">
-          <div className="relative flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg border-2 border-foreground bg-primary text-xs font-black tracking-tighter text-background shadow-hard">
+      <div className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col gap-3 overflow-x-clip px-3 py-2 md:gap-4 md:px-4 md:py-3 md:pb-6">
+        <header className="arena-header flex items-center justify-between border-b-2 border-foreground py-1.5 md:py-2">
+          <div className="relative flex min-w-0 items-center gap-2">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-md border-2 border-foreground bg-primary text-[10px] font-black tracking-tighter text-background shadow-hard md:size-8 md:text-xs">
               2048
             </div>
-            <div>
-              <h1 className="text-2xl font-black leading-none tracking-wide md:text-3xl">
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-black leading-none tracking-wide md:text-xl">
                 2048 Arena
               </h1>
-              <p className="mt-1 hidden font-mono text-xs font-bold text-primary sm:block">
+              <p className="mt-0.5 hidden font-mono text-xs font-bold leading-none text-primary md:block">
                 Write a bot. Rank your site.
               </p>
             </div>
           </div>
-          <p className="relative hidden max-w-xs font-mono text-sm font-bold text-muted-foreground xl:block">
-            Highest verified score of the UTC day wins.
+          <p className="relative hidden max-w-[14rem] shrink font-mono text-xs font-bold leading-snug text-muted-foreground xl:block">
+            Highest verified score of the competition week wins.
           </p>
         </header>
 
-        <div className="grid flex-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.95fr)]">
-          <section className="flex flex-col gap-6">
-            <form
-              onSubmit={onSubmitProduct}
-              className="rounded-2xl border-4 border-foreground bg-card p-4 md:p-5"
-            >
-              <div className="flex flex-wrap items-end gap-3">
-                <label className="min-w-[14rem] flex-1 font-mono text-xs font-bold text-muted-foreground">
-                  Your product site
-                  <input
-                    value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
-                    className="mt-2 w-full rounded-[var(--radius)] border-2 border-foreground bg-background px-3 py-3 font-mono text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    placeholder="example.com"
-                    autoComplete="url"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  className="arena-btn arena-btn-primary active-press h-12 px-6 shadow-brutal"
-                >
-                  {product ? "Update site" : "Claim site"}
-                </button>
-              </div>
-              {urlError && (
-                <p className="mt-2 font-mono text-sm font-bold text-destructive">
-                  {urlError}
-                </p>
-              )}
-              {product && (
-                <p className="mt-3 font-mono text-xs font-bold text-muted-foreground">
-                  Playing for {product.name} · {product.domain}
-                </p>
-              )}
-            </form>
+        <div className="grid min-w-0 flex-1 gap-3 md:gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
+          <section className="flex min-w-0 flex-col gap-3 md:gap-4">
+            {!product && (
+              <form
+                onSubmit={onSubmitProduct}
+                className="min-w-0 rounded-2xl border-4 border-foreground bg-card p-3 md:p-4"
+              >
+                <div className="flex min-w-0 flex-wrap items-end gap-3">
+                  <label className="min-w-0 flex-1 basis-40 font-mono text-xs font-bold text-muted-foreground">
+                    Your product site
+                    <input
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      className="mt-2 w-full min-w-0 rounded-[var(--radius)] border-2 border-foreground bg-background px-3 py-3 font-mono text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      placeholder="example.com"
+                      autoComplete="url"
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="arena-btn arena-btn-primary active-press h-12 shrink-0 px-5 shadow-brutal"
+                  >
+                    Claim site
+                  </button>
+                </div>
+                {urlError && (
+                  <p className="mt-2 font-mono text-sm font-bold text-destructive">
+                    {urlError}
+                  </p>
+                )}
+              </form>
+            )}
 
-            <div className="flex flex-col gap-5 rounded-2xl border-4 border-foreground bg-card p-4 md:p-5">
-              <div className="flex flex-wrap items-end justify-between gap-4 border-b-4 border-foreground pb-4">
+            <div className="flex min-w-0 flex-col gap-2.5 rounded-2xl border-4 border-foreground bg-card p-2.5 md:gap-3 md:p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-foreground pb-2 md:gap-3">
                 {product ? (
                   <ProductHeader
                     product={product}
@@ -610,11 +682,8 @@ export function ArenaApp() {
                     }}
                   />
                 ) : (
-                  <div>
-                    <div className="font-mono text-sm font-bold text-muted-foreground">
-                      Board
-                    </div>
-                    <div className="text-2xl font-bold">Claim a site to rank</div>
+                  <div className="min-w-0 font-mono text-xs font-bold text-muted-foreground">
+                    Board
                   </div>
                 )}
                 <ScoreBadge score={score} />
@@ -630,90 +699,321 @@ export function ArenaApp() {
                 onTouchEnd={onTouchEnd}
                 onSlideComplete={handleSlideComplete}
               />
-
-              <div className="flex flex-wrap gap-2">
-                {DIRS.map((dir) => (
-                  <button
-                    key={dir}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => applyDirection(dir)}
-                    className="arena-btn arena-btn-outline active-press h-10 flex-1 px-3 text-xs capitalize shadow-brutal"
-                  >
-                    {dir}
-                  </button>
-                ))}
-              </div>
             </div>
 
-            <Leaderboard entries={entries} highlightId={product?.id} />
+            <Leaderboard
+              weekEntries={weekEntries}
+              allTimeEntries={allTimeEntries}
+              weekLabel={weekLabel}
+              highlightId={product?.id}
+            />
           </section>
 
-          <section className="flex min-h-[32rem] flex-col gap-3 rounded-2xl border-4 border-foreground bg-card p-4 md:p-5">
+          <section className="flex min-h-0 min-w-0 flex-col gap-3 rounded-2xl border-4 border-foreground bg-card p-3 md:p-5">
             <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <div className="font-mono text-xs font-bold text-muted-foreground">
                   Bot script
                 </div>
                 <h2 className="text-xl font-black">Your program</h2>
               </div>
-              <label className="font-mono text-xs font-bold text-muted-foreground">
-                Label
-                <input
-                  value={scriptLabel}
-                  onChange={(e) => setScriptLabel(e.target.value.slice(0, 24))}
-                  className="ml-2 w-28 rounded-lg border-2 border-foreground bg-background px-2 py-1 font-mono text-xs text-foreground"
-                />
-              </label>
+              <div
+                role="group"
+                aria-label="Script mode"
+                className="arena-segment"
+              >
+                <button
+                  type="button"
+                  aria-pressed={scriptMode === "prompt"}
+                  onClick={() => setScriptMode("prompt")}
+                >
+                  Prompt
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={scriptMode === "code"}
+                  onClick={() => setScriptMode("code")}
+                >
+                  Code
+                </button>
+              </div>
             </div>
 
-            <p className="font-mono text-xs leading-relaxed text-muted-foreground">
-              {SCRIPT_HELP}
-            </p>
+            {scriptMode === "prompt" ? (
+              <>
+                <p className="font-mono text-xs leading-relaxed text-muted-foreground">
+                  Paste an OpenAI-compatible API token, describe a strategy, and
+                  generate JavaScript into the Code desk. The token stays in this
+                  browser only.
+                </p>
+                <label className="font-mono text-xs font-bold text-muted-foreground">
+                  API token
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={llmToken}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setLlmToken(next);
+                      saveLlmToken(next);
+                    }}
+                    placeholder="sk-…"
+                    className="mt-2 w-full min-w-0 rounded-xl border-2 border-foreground bg-background px-3 py-2.5 font-mono text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
+                <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                  <label className="min-w-0 font-mono text-xs font-bold text-muted-foreground">
+                    Base URL
+                    <input
+                      value={llmBase}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        setLlmBase(next);
+                        saveLlmBase(next);
+                      }}
+                      placeholder="https://api.openai.com/v1"
+                      className="mt-2 w-full min-w-0 rounded-xl border-2 border-foreground bg-background px-3 py-2.5 font-mono text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </label>
+                  <label className="min-w-0 font-mono text-xs font-bold text-muted-foreground">
+                    Model
+                    <div className="relative mt-2">
+                      <input
+                        value={llmModel}
+                        list="arena-llm-models"
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          setLlmModel(next);
+                          saveLlmModel(next);
+                        }}
+                        placeholder="gpt-4o-mini"
+                        className="w-full min-w-0 rounded-xl border-2 border-foreground bg-background py-2.5 pl-3 pr-16 font-mono text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                      <button
+                        type="button"
+                        disabled={fetchingModels || !llmToken.trim() || !llmBase.trim()}
+                        onClick={() => {
+                          void (async () => {
+                            setFetchingModels(true);
+                            setModelFetchError(null);
+                            try {
+                              const models = await fetchLlmModels({
+                                token: llmToken,
+                                baseUrl: llmBase,
+                              });
+                              setLlmModels(models);
+                              const pick = models.includes(llmModel)
+                                ? llmModel
+                                : models[0]!;
+                              setLlmModel(pick);
+                              saveLlmModel(pick);
+                              pushLog(`Loaded ${models.length} models`);
+                            } catch (err) {
+                              const msg =
+                                err instanceof Error ? err.message : String(err);
+                              setModelFetchError(msg);
+                              pushLog(`Models fetch failed: ${msg}`);
+                            } finally {
+                              setFetchingModels(false);
+                            }
+                          })();
+                        }}
+                        className="absolute inset-y-0 right-1 my-auto h-7 px-2 font-mono text-xs font-bold text-primary hover:underline disabled:pointer-events-none disabled:opacity-40"
+                      >
+                        {fetchingModels ? "…" : "Fetch"}
+                      </button>
+                      <datalist id="arena-llm-models">
+                        {llmModels.map((id) => (
+                          <option key={id} value={id} />
+                        ))}
+                      </datalist>
+                    </div>
+                  </label>
+                </div>
+                {modelFetchError && (
+                  <p className="font-mono text-xs font-bold text-destructive">
+                    {modelFetchError}
+                  </p>
+                )}
+                {llmModels.length > 0 && (
+                  <div className="flex max-h-28 flex-wrap gap-1.5 overflow-auto">
+                    {llmModels.map((id) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => {
+                          setLlmModel(id);
+                          saveLlmModel(id);
+                        }}
+                        className={`rounded-full border-2 border-foreground px-2.5 py-1 font-mono text-xs font-bold transition-colors ${
+                          llmModel === id
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {id}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <label className="font-mono text-xs font-bold text-muted-foreground">
+                  Strategy prompt
+                  <textarea
+                    value={promptText}
+                    onChange={(e) => setPromptText(e.target.value)}
+                    rows={5}
+                    placeholder="e.g. Keep the max tile in a corner, prefer merges, avoid up early…"
+                    className="mt-2 w-full min-w-0 resize-y rounded-xl border-2 border-foreground bg-background px-3 py-2.5 font-mono text-xs leading-relaxed text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={generating || !promptText.trim() || !llmToken.trim()}
+                  onClick={() => {
+                    void (async () => {
+                      generateAbortRef.current?.abort();
+                      const ac = new AbortController();
+                      generateAbortRef.current = ac;
+                      setGenerating(true);
+                      setGenerateError(null);
+                      setGenerateNote(null);
+                      setStreamThinking("");
+                      setStreamContent("");
+                      try {
+                        const bot = await generateBotFromPrompt(
+                          {
+                            prompt: promptText,
+                            token: llmToken,
+                            baseUrl: llmBase,
+                            model: llmModel,
+                          },
+                          {
+                            signal: ac.signal,
+                            onThinking: setStreamThinking,
+                            onContent: setStreamContent,
+                          }
+                        );
+                        setScript(bot.script);
+                        setScriptLabel(bot.label);
+                        setGenerateNote(
+                          "Script filled — switch to Code to run or edit."
+                        );
+                        pushLog(`Generated bot via ${llmModel}`);
+                      } catch (err) {
+                        if (
+                          err instanceof DOMException &&
+                          err.name === "AbortError"
+                        ) {
+                          setGenerateNote("Generation cancelled.");
+                          return;
+                        }
+                        const msg =
+                          err instanceof Error ? err.message : String(err);
+                        setGenerateError(msg);
+                        pushLog(`Generate failed: ${msg}`);
+                      } finally {
+                        setGenerating(false);
+                        generateAbortRef.current = null;
+                      }
+                    })();
+                  }}
+                  className="arena-btn arena-btn-primary active-press h-11 w-full px-4 shadow-brutal sm:h-12"
+                >
+                  {generating ? "Generating…" : "Generate into editor"}
+                </button>
+                {(generating || streamThinking || streamContent) && (
+                  <div className="arena-stream" aria-live="polite">
+                    <div className="arena-stream-block">
+                      <div className="arena-stream-label">Thinking</div>
+                      <div className="arena-stream-body is-thinking">
+                        {streamThinking ||
+                          (generating ? "Waiting for model…" : "—")}
+                      </div>
+                    </div>
+                    <div className="arena-stream-block">
+                      <div className="arena-stream-label">Output</div>
+                      <div className="arena-stream-body">
+                        {streamContent ||
+                          (generating ? "…" : "—")}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {generateNote && (
+                  <p className="font-mono text-xs font-bold text-primary">
+                    {generateNote}
+                  </p>
+                )}
+                {generateError && (
+                  <p className="font-mono text-xs font-bold text-destructive">
+                    {generateError}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="font-mono text-xs leading-relaxed text-muted-foreground">
+                  {SCRIPT_HELP}
+                </p>
 
-            <ScriptEditor value={script} onChange={setScript} />
+                {!product && (
+                  <p className="font-mono text-xs font-bold text-primary">
+                    You can run without claiming a site. Scores only rank after
+                    you claim one.
+                  </p>
+                )}
 
-            {!product && (
-              <p className="font-mono text-xs font-bold text-primary">
-                You can run without claiming a site. Scores only rank after you
-                claim one.
-              </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void runScript()}
+                    className="arena-btn arena-btn-primary active-press h-11 flex-1 px-4 shadow-brutal sm:h-12"
+                  >
+                    {running ? "Running…" : "Run script"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={stopScript}
+                    className="arena-btn arena-btn-outline active-press h-11 px-4 shadow-brutal sm:h-12"
+                  >
+                    Stop
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScript(STARTER_SCRIPT);
+                      setScriptLabel("starter");
+                    }}
+                    className="arena-btn arena-btn-outline active-press h-11 px-4 shadow-brutal sm:h-12"
+                  >
+                    Reset sample
+                  </button>
+                </div>
+
+                <ScriptEditor value={script} onChange={setScript} />
+
+                <div
+                  ref={logScrollRef}
+                  className="arena-log"
+                  aria-label="Run logs"
+                >
+                  {logs.length === 0 ? (
+                    <div className="arena-log-empty">Logs will show up here.</div>
+                  ) : (
+                    logs.map((line) => (
+                      <div key={line.id} className="arena-log-row">
+                        <time className="arena-log-time" dateTime={line.time}>
+                          {line.time}
+                        </time>
+                        <span className="arena-log-text">{line.text}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
             )}
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void runScript()}
-                className="arena-btn arena-btn-primary active-press h-12 flex-1 px-4 shadow-brutal"
-              >
-                {running ? "Running…" : "Run script"}
-              </button>
-              <button
-                type="button"
-                onClick={stopScript}
-                className="arena-btn arena-btn-outline active-press h-12 px-4 shadow-brutal"
-              >
-                Stop
-              </button>
-              <button
-                type="button"
-                onClick={() => setScript(STARTER_SCRIPT)}
-                className="arena-btn arena-btn-outline active-press h-12 px-4 shadow-brutal"
-              >
-                Reset sample
-              </button>
-            </div>
-
-            <div className="max-h-40 overflow-auto rounded-xl border-2 border-foreground bg-background p-3 font-mono text-xs leading-relaxed text-muted-foreground">
-              {logs.length === 0 ? (
-                <span>Logs will show up here.</span>
-              ) : (
-                logs.map((line, i) => (
-                  <div key={`${i}-${line.slice(0, 12)}`}>{line}</div>
-                ))
-              )}
-            </div>
           </section>
         </div>
       </div>

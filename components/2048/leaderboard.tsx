@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { LeaderboardEntry, ProductProfile } from "./types";
 
@@ -16,31 +17,65 @@ function Favicon({ domain, className = "size-10" }: { domain: string; className?
   );
 }
 
+export type LeaderboardTab = "week" | "all";
+
 export function Leaderboard({
-  entries,
+  weekEntries,
+  allTimeEntries,
+  weekLabel,
   highlightId,
 }: {
-  entries: LeaderboardEntry[];
+  weekEntries: LeaderboardEntry[];
+  allTimeEntries: LeaderboardEntry[];
+  weekLabel: string;
   highlightId?: string;
 }) {
+  const [tab, setTab] = useState<LeaderboardTab>("week");
+  const entries = tab === "week" ? weekEntries : allTimeEntries;
+
   return (
     <div className="relative z-10 flex flex-col overflow-hidden rounded-2xl border-4 border-foreground bg-card shadow-hard-primary">
-      <div className="flex items-end justify-between border-b-4 border-foreground bg-foreground p-4 text-background">
-        <div>
-          <div className="font-mono text-xs font-bold text-background/70">
-            Today&apos;s board
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b-4 border-foreground bg-card p-4">
+        <div className="min-w-0">
+          <div className="font-mono text-xs font-bold text-muted-foreground">
+            {tab === "week" ? "Competition week" : "All-time"}
           </div>
-          <h2 className="font-sans text-lg font-bold tracking-wide sm:text-xl">
+          <h2 className="font-sans text-lg font-bold tracking-wide text-foreground sm:text-xl">
             Leaderboard
           </h2>
         </div>
-        <div className="font-mono text-xs font-bold text-background/70">UTC day</div>
+        <div
+          role="group"
+          aria-label="Leaderboard timeframe"
+          className="arena-segment"
+        >
+          <button
+            type="button"
+            aria-pressed={tab === "all"}
+            onClick={() => setTab("all")}
+          >
+            All time
+          </button>
+          <button
+            type="button"
+            aria-pressed={tab === "week"}
+            onClick={() => setTab("week")}
+          >
+            This week
+          </button>
+        </div>
       </div>
+
+      {tab === "week" && (
+        <div className="border-b-2 border-foreground bg-muted/60 px-4 py-2 font-mono text-xs font-bold text-muted-foreground">
+          {weekLabel}
+        </div>
+      )}
 
       <div className="flex flex-col">
         {entries.length === 0 && (
           <div className="p-8 text-center font-mono text-sm font-bold text-muted-foreground">
-            No scores yet.
+            {tab === "week" ? "No scores this week." : "No scores yet."}
           </div>
         )}
         {entries.map((entry, index) => (
@@ -81,7 +116,9 @@ export function Leaderboard({
                 {entry.score.toLocaleString()}
               </div>
               <div className="font-mono text-xs font-bold text-muted-foreground">
-                {entry.runsToday} run{entry.runsToday === 1 ? "" : "s"}
+                {tab === "week"
+                  ? `${entry.runsToday} run${entry.runsToday === 1 ? "" : "s"}`
+                  : `${entry.totalRuns} run${entry.totalRuns === 1 ? "" : "s"}`}
               </div>
             </div>
           </a>
@@ -94,10 +131,10 @@ export function Leaderboard({
 export function ScoreBadge({ score }: { score: number }) {
   return (
     <div className="text-right">
-      <div className="font-mono text-sm font-bold text-muted-foreground">Score</div>
+      <div className="font-mono text-xs font-bold text-muted-foreground">Score</div>
       <div
         aria-live="polite"
-        className="flex h-[3.25rem] min-w-[5.5rem] items-center justify-center overflow-hidden rounded-lg border-2 border-foreground bg-card px-3 py-1 font-mono text-4xl font-bold text-primary shadow-hard"
+        className="flex h-10 min-w-[4.5rem] items-center justify-center overflow-hidden rounded-lg border-2 border-foreground bg-card px-2 py-0.5 font-mono text-2xl font-bold text-primary shadow-hard md:h-11 md:text-3xl"
       >
         <AnimatePresence initial={false} mode="popLayout">
           <motion.span
@@ -123,26 +160,23 @@ export function ProductHeader({
   onChange: () => void;
 }) {
   return (
-    <div className="flex min-w-0 items-start gap-3">
-      <Favicon domain={product.domain} className="mt-1 size-12" />
+    <div className="flex min-w-0 items-center gap-2">
+      <Favicon domain={product.domain} className="size-8 shrink-0" />
       <div className="min-w-0">
-        <div className="font-mono text-sm font-bold text-muted-foreground">
-          Playing for
-        </div>
-        <div className="max-w-[220px] truncate text-2xl font-bold text-primary">
+        <div className="truncate text-sm font-bold leading-tight text-primary md:text-base">
           {product.name}
         </div>
-        <div className="mt-1 font-mono text-xs text-muted-foreground">
+        <div className="truncate font-mono text-xs text-muted-foreground">
           {product.domain}
         </div>
-        <button
-          type="button"
-          onClick={onChange}
-          className="arena-btn arena-btn-outline active-press mt-3 h-8 px-3 text-xs shadow-brutal"
-        >
-          Change site
-        </button>
       </div>
+      <button
+        type="button"
+        onClick={onChange}
+        className="arena-btn arena-btn-outline active-press ml-1 h-8 shrink-0 px-2.5 text-xs shadow-brutal"
+      >
+        Change
+      </button>
     </div>
   );
 }

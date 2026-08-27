@@ -93,7 +93,7 @@ export function GameBoard({
 
   return (
     <div
-      className={`board-slot relative mx-auto aspect-square w-full max-w-md touch-none select-none overflow-hidden rounded-[2rem] border-4 p-2 shadow-brutal-primary${sliding ? " is-sliding" : ""}`}
+      className={`board-slot relative mx-auto aspect-square touch-none select-none overflow-hidden rounded-[1.5rem] border-4 p-1.5 shadow-brutal-primary md:rounded-[2rem] md:p-2${sliding ? " is-sliding" : ""}`}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       onTransitionEnd={handleTransitionEnd}

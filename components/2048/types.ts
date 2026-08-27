@@ -41,13 +41,20 @@ export type ScriptApi = {
 };
 
 /** Swap this for a remote API client when a backend is wired up. */
+export type LeaderboardBoard = {
+  weekKey: string;
+  weekLabel: string;
+  weekEntries: LeaderboardEntry[];
+  allTimeEntries: LeaderboardEntry[];
+};
+
 export type LeaderboardStore = {
-  load: () => Promise<{ day: string; entries: LeaderboardEntry[] }>;
+  load: () => Promise<LeaderboardBoard>;
   submit: (input: {
     product: ProductProfile;
     score: number;
     scriptLabel?: string;
-  }) => Promise<{ day: string; entries: LeaderboardEntry[] }>;
+  }) => Promise<LeaderboardBoard>;
 };
 
 export const MOVE_ANIM_MS = 180;

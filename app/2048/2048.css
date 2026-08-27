@@ -5,6 +5,8 @@ html:has(.arena-2048),
 body:has(.arena-2048) {
   background: #f5efe5 !important;
   color-scheme: light;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 .arena-2048 {
@@ -79,6 +81,8 @@ body:has(.arena-2048) {
   color: var(--arena-fg);
   background: var(--arena-bg);
   min-height: 100dvh;
+  max-width: 100%;
+  overflow-x: clip;
   color-scheme: light;
 }
 
@@ -93,10 +97,6 @@ body:has(.arena-2048) {
 
 .arena-2048 .shadow-hard {
   box-shadow: 2px 2px 0 var(--arena-fg);
-}
-
-.arena-2048 .shadow-hard-primary {
-  box-shadow: 8px 8px 0 var(--arena-primary);
 }
 
 .arena-2048 .active-press {
@@ -189,24 +189,29 @@ body:has(.arena-2048) {
   top: 0;
   z-index: 100;
   background: var(--arena-bg);
-  isolation: isolate;
 }
 
-.arena-2048 .arena-header::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 100%;
-  left: -100vw;
-  width: 300vw;
-  background: var(--arena-bg);
-  z-index: -1;
-  pointer-events: none;
+.arena-2048 .shadow-hard-primary {
+  box-shadow: 4px 4px 0 var(--arena-primary);
 }
 
 .arena-2048 .board-slot {
   background: var(--arena-board);
   border-color: var(--arena-fg);
+  width: min(100%, 22rem, calc(100dvh - 10.5rem));
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .arena-2048 .board-slot {
+    width: min(100%, 26rem, calc(100dvh - 9rem));
+  }
+}
+
+@media (min-width: 1024px) {
+  .arena-2048 .board-slot {
+    width: min(100%, 28rem, calc(100dvh - 8rem));
+  }
 }
 
 .arena-2048 .board-cell {
@@ -297,4 +302,159 @@ body:has(.arena-2048) {
 .arena-2048 .script-pane pre,
 .arena-2048 .script-pane textarea {
   padding-left: 0.75rem;
+  tab-size: 2;
+  -moz-tab-size: 2;
+  line-height: 1.625;
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: pre;
+  word-wrap: normal;
+  overflow-wrap: normal;
+}
+
+.arena-2048 .script-textarea {
+  color: transparent;
+  caret-color: #f5efe5;
+}
+
+.arena-2048 .script-textarea.is-selecting {
+  color: #f5efe5;
+}
+
+.arena-2048 .script-textarea::selection {
+  background: var(--arena-primary);
+  color: var(--arena-primary-fg);
+}
+
+.arena-2048 .arena-segment {
+  display: inline-flex;
+  height: 2.25rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 2px solid var(--arena-fg);
+  background: var(--arena-muted);
+  padding: 0;
+  font-size: 0.75rem;
+}
+
+.arena-2048 .arena-segment button {
+  display: inline-flex;
+  height: 100%;
+  cursor: pointer;
+  align-items: center;
+  padding-inline: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--arena-muted-fg);
+  background: transparent;
+  border: 0;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.arena-2048 .arena-segment button:hover {
+  color: var(--arena-fg);
+}
+
+.arena-2048 .arena-segment button[aria-pressed="true"] {
+  background: var(--arena-primary);
+  color: var(--arena-primary-fg);
+}
+
+.arena-2048 .arena-stream {
+  display: flex;
+  min-height: 10rem;
+  max-height: 18rem;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow: auto;
+  border-radius: 0.75rem;
+  border: 2px solid var(--arena-fg);
+  background: var(--arena-bg);
+  padding: 0.75rem;
+}
+
+.arena-2048 .arena-stream-block {
+  min-width: 0;
+}
+
+.arena-2048 .arena-stream-label {
+  margin-bottom: 0.35rem;
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--arena-muted-fg);
+}
+
+.arena-2048 .arena-stream-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--arena-fg);
+}
+
+.arena-2048 .arena-stream-body.is-thinking {
+  color: var(--arena-muted-fg);
+}
+
+.arena-2048 .arena-log {
+  display: flex;
+  max-height: 10rem;
+  flex-direction: column;
+  gap: 0.2rem;
+  overflow: auto;
+  scroll-behavior: smooth;
+  border-radius: 0.75rem;
+  border: 2px solid var(--arena-fg);
+  background: var(--arena-bg);
+  padding: 0.65rem 0.75rem;
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .arena-2048 .arena-log {
+    max-height: 11rem;
+  }
+}
+
+.arena-2048 .arena-log-empty {
+  color: var(--arena-muted-fg);
+  font-weight: 700;
+}
+
+.arena-2048 .arena-log-row {
+  display: grid;
+  grid-template-columns: 4.75rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+  animation: arena-log-in 220ms ease-out;
+}
+
+.arena-2048 .arena-log-time {
+  color: var(--arena-muted-fg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.arena-2048 .arena-log-text {
+  min-width: 0;
+  color: var(--arena-fg);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@keyframes arena-log-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
