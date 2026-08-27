@@ -49,11 +49,11 @@ import { Expectimax2048Cover } from "./blog/2048-expectimax/cover";
 export const posts: PostData[] = [
   {
     slug: "2048-expectimax",
-    title: "2048 Expectimax：查表启发式与迭代加深",
+    title: "给 2048 写一个 Expectimax bot",
     date: "2026-08-25",
     tag: "前端技术",
     summary:
-      "用 Expectimax 拆 2048：机会节点与期望估值、16 位行查表、空格/合并/单调启发式，以及浏览器里迭代加深与动画同步。附可自动推盘的封面与控制台脚本。",
+      "从一步决策讲起：Max / Chance 节点、16 位行查表、空格与单调等叶节点启发、迭代加深与 Arena 动画同步。文末附可复制的 Expectimax 脚本，直接在 /2048 冲榜。",
     cover: <Expectimax2048Cover />,
     coverShape: "square",
   },
