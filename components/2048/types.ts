@@ -13,6 +13,8 @@ export type TileView = {
   isFading?: boolean;
   /** Paint order during slide (merge survivor on top). */
   z?: number;
+  /** True only while this tile's transform is animating this move. */
+  isMoving?: boolean;
 };
 
 export type ProductProfile = {

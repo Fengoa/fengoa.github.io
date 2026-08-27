@@ -9,15 +9,25 @@ export type GeneratedBot = {
   raw: string;
 };
 
-const TOKEN_KEY = "oriensx-2048-arena-llm-token";
-const BASE_KEY = "oriensx-2048-arena-llm-base";
-const MODEL_KEY = "oriensx-2048-arena-llm-model";
+const TOKEN_KEY = "oriensx-2048-arena-llm-token-v2";
+const BASE_KEY = "oriensx-2048-arena-llm-base-v2";
+const MODEL_KEY = "oriensx-2048-arena-llm-model-v2";
 
-export const DEFAULT_LLM_BASE = "https://api.openai.com/v1";
-export const DEFAULT_LLM_MODEL = "gpt-4o-mini";
+/** Legacy keys from builds that auto-filled OpenAI defaults. */
+const LEGACY_KEYS = [
+  "oriensx-2048-arena-llm-token",
+  "oriensx-2048-arena-llm-base",
+  "oriensx-2048-arena-llm-model",
+];
+
+function clearLegacyLlmKeys() {
+  if (typeof window === "undefined") return;
+  for (const key of LEGACY_KEYS) localStorage.removeItem(key);
+}
 
 export function loadLlmToken() {
   if (typeof window === "undefined") return "";
+  clearLegacyLlmKeys();
   return localStorage.getItem(TOKEN_KEY) ?? "";
 }
 
@@ -27,23 +37,27 @@ export function saveLlmToken(token: string) {
 }
 
 export function loadLlmBase() {
-  if (typeof window === "undefined") return DEFAULT_LLM_BASE;
-  return localStorage.getItem(BASE_KEY) || DEFAULT_LLM_BASE;
+  if (typeof window === "undefined") return "";
+  clearLegacyLlmKeys();
+  return localStorage.getItem(BASE_KEY) ?? "";
 }
 
 export function saveLlmBase(base: string) {
-  const next = base.trim().replace(/\/$/, "") || DEFAULT_LLM_BASE;
-  localStorage.setItem(BASE_KEY, next);
+  const next = base.trim().replace(/\/$/, "");
+  if (!next) localStorage.removeItem(BASE_KEY);
+  else localStorage.setItem(BASE_KEY, next);
 }
 
 export function loadLlmModel() {
-  if (typeof window === "undefined") return DEFAULT_LLM_MODEL;
-  return localStorage.getItem(MODEL_KEY) || DEFAULT_LLM_MODEL;
+  if (typeof window === "undefined") return "";
+  clearLegacyLlmKeys();
+  return localStorage.getItem(MODEL_KEY) ?? "";
 }
 
 export function saveLlmModel(model: string) {
-  const next = model.trim() || DEFAULT_LLM_MODEL;
-  localStorage.setItem(MODEL_KEY, next);
+  const next = model.trim();
+  if (!next) localStorage.removeItem(MODEL_KEY);
+  else localStorage.setItem(MODEL_KEY, next);
 }
 
 /** GET {base}/models — OpenAI-compatible model list. */
@@ -55,7 +69,9 @@ export async function fetchLlmModels(input: {
   const token = input.token.trim();
   if (!token) throw new Error("Paste an API token first.");
 
-  const base = (input.baseUrl || DEFAULT_LLM_BASE).replace(/\/$/, "");
+  const base = (input.baseUrl || "").trim().replace(/\/$/, "");
+  if (!base) throw new Error("Enter a Base URL first.");
+
   const res = await fetch(`${base}/models`, {
     method: "GET",
     headers: {
@@ -164,8 +180,10 @@ export async function generateBotFromPrompt(
   if (!prompt) throw new Error("Enter a strategy prompt.");
   if (!token) throw new Error("Paste an API token first.");
 
-  const base = (input.baseUrl || DEFAULT_LLM_BASE).replace(/\/$/, "");
-  const model = input.model || DEFAULT_LLM_MODEL;
+  const base = (input.baseUrl || "").trim().replace(/\/$/, "");
+  const model = (input.model || "").trim();
+  if (!base) throw new Error("Enter a Base URL first.");
+  if (!model) throw new Error("Enter a model id first.");
   const endpoint = `${base}/chat/completions`;
 
   const res = await fetch(endpoint, {

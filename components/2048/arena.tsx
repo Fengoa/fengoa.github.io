@@ -87,8 +87,8 @@ export function ArenaApp() {
   const [scriptMode, setScriptMode] = useState<ScriptMode>("prompt");
   const [promptText, setPromptText] = useState("");
   const [llmToken, setLlmToken] = useState("");
-  const [llmBase, setLlmBase] = useState("https://api.openai.com/v1");
-  const [llmModel, setLlmModel] = useState("gpt-4o-mini");
+  const [llmBase, setLlmBase] = useState("");
+  const [llmModel, setLlmModel] = useState("");
   const [llmModels, setLlmModels] = useState<string[]>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelFetchError, setModelFetchError] = useState<string | null>(null);
@@ -327,21 +327,34 @@ export function ArenaApp() {
       updateScore(game.state.score);
       setGameOver(false);
 
-      const moving = game.getMovingTiles();
-      const movingCount = Math.max(
-        1,
-        moving.filter((t) => {
-          const from = fromVisual.find((f) => f.id === t.id);
-          return from && (from.row !== t.row || from.col !== t.col);
-        }).length
+      const movingRaw = game.getMovingTiles();
+      const travelerIds = new Set(
+        movingRaw
+          .filter((t) => {
+            const from = fromVisual.find((f) => f.id === t.id);
+            return Boolean(from && (from.row !== t.row || from.col !== t.col));
+          })
+          .map((t) => t.id)
       );
+      const moving = movingRaw.map((t) => ({
+        ...t,
+        isMoving: travelerIds.has(t.id),
+      }));
+      const movingCount = Math.max(1, travelerIds.size);
       setSlideTargetCount(movingCount);
       slideGameRef.current = game;
       const hadMerge = game.hadMerge();
 
+      // Paint travelers at the START cell with transition armed, then move
+      // them next frame — otherwise a lone sliding tile jumps with no animation.
       flushSync(() => {
         setSliding(true);
-        setTiles(fromVisual);
+        setTiles(
+          fromVisual.map((t) => ({
+            ...t,
+            isMoving: travelerIds.has(t.id),
+          }))
+        );
       });
 
       requestAnimationFrame(() => {
@@ -742,9 +755,9 @@ export function ArenaApp() {
             {scriptMode === "prompt" ? (
               <>
                 <p className="font-mono text-xs leading-relaxed text-muted-foreground">
-                  Paste an OpenAI-compatible API token, describe a strategy, and
-                  generate JavaScript into the Code desk. The token stays in this
-                  browser only.
+                  Paste an API token for any Chat Completions–compatible
+                  endpoint, describe a strategy, and generate JavaScript into
+                  the Code desk. The token stays in this browser only.
                 </p>
                 <label className="font-mono text-xs font-bold text-muted-foreground">
                   API token
@@ -758,7 +771,7 @@ export function ArenaApp() {
                       setLlmToken(next);
                       saveLlmToken(next);
                     }}
-                    placeholder="sk-…"
+                    placeholder="Your API token"
                     className="mt-2 w-full min-w-0 rounded-xl border-2 border-foreground bg-background px-3 py-2.5 font-mono text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </label>
@@ -772,7 +785,7 @@ export function ArenaApp() {
                         setLlmBase(next);
                         saveLlmBase(next);
                       }}
-                      placeholder="https://api.openai.com/v1"
+                      placeholder="https://…/v1"
                       className="mt-2 w-full min-w-0 rounded-xl border-2 border-foreground bg-background px-3 py-2.5 font-mono text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
                   </label>
@@ -787,7 +800,7 @@ export function ArenaApp() {
                           setLlmModel(next);
                           saveLlmModel(next);
                         }}
-                        placeholder="gpt-4o-mini"
+                        placeholder="Model id"
                         className="w-full min-w-0 rounded-xl border-2 border-foreground bg-background py-2.5 pl-3 pr-16 font-mono text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       />
                       <button
@@ -869,7 +882,13 @@ export function ArenaApp() {
                 </label>
                 <button
                   type="button"
-                  disabled={generating || !promptText.trim() || !llmToken.trim()}
+                  disabled={
+                    generating ||
+                    !promptText.trim() ||
+                    !llmToken.trim() ||
+                    !llmBase.trim() ||
+                    !llmModel.trim()
+                  }
                   onClick={() => {
                     void (async () => {
                       generateAbortRef.current?.abort();

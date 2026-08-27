@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import type { TileView } from "./types";
+import { bindConfettiCanvas } from "./score-confetti";
 
 function tileBg(value: number) {
   if (value <= 8192) return `var(--tile-${value})`;
@@ -30,7 +31,9 @@ function Tile({ tile }: { tile: TileView }) {
 
   return (
     <div
-      className="tile-position absolute left-0 top-0 box-border p-1"
+      className={`tile-position absolute left-0 top-0 box-border p-1${
+        tile.isMoving ? " is-moving" : ""
+      }`}
       style={{
         width: "25%",
         height: "25%",
@@ -72,16 +75,34 @@ export function GameBoard({
   onSlideComplete?: () => void;
 }) {
   const slideEndsRef = useRef(0);
+  const wasSlidingRef = useRef(false);
+  const slideStartedAtRef = useRef(0);
+  const confettiCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (sliding) slideEndsRef.current = 0;
-  }, [sliding, tiles]);
+    bindConfettiCanvas(confettiCanvasRef.current);
+    return () => bindConfettiCanvas(null);
+  }, []);
+
+  useEffect(() => {
+    if (sliding && !wasSlidingRef.current) {
+      slideEndsRef.current = 0;
+      slideStartedAtRef.current = performance.now();
+    }
+    wasSlidingRef.current = !!sliding;
+  }, [sliding]);
 
   const handleTransitionEnd = useCallback(
     (e: React.TransitionEvent<HTMLDivElement>) => {
       if (!sliding || !onSlideComplete) return;
       if (e.propertyName !== "transform") return;
-      if (!(e.target as HTMLElement).classList.contains("tile-position")) return;
+      const el = e.target as HTMLElement;
+      if (!el.classList.contains("tile-position")) return;
+      // Stationary tiles must not count — enabling transition with an
+      // unchanged transform can fire transitionend immediately (WebKit).
+      if (!el.classList.contains("is-moving")) return;
+      // Ignore spurious ends from the first paint / mid-slide tile swaps.
+      if (performance.now() - slideStartedAtRef.current < 80) return;
 
       slideEndsRef.current += 1;
       if (slideEndsRef.current >= slideTargetCount) {
@@ -112,6 +133,12 @@ export function GameBoard({
           <Tile key={tile.id} tile={tile} />
         ))}
       </div>
+
+      <canvas
+        ref={confettiCanvasRef}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-20 h-full w-full rounded-[inherit]"
+      />
 
       {gameOver && (
         <div className="pointer-events-auto absolute inset-0 z-10 flex flex-col items-center justify-center overflow-y-auto rounded-[calc(2rem-4px)] bg-[color:var(--arena-bg)]/95 p-4 text-center">

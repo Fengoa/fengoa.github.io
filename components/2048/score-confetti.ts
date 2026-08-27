@@ -21,29 +21,55 @@ const GOLD_COLORS = ["#ffd27a", "#f5efe5", "#e8c85a", "#e8955a", "#ffffff"];
 
 const sideTimers = new Set<number>();
 
+type ConfettiFn = (opts?: confetti.Options) => Promise<null> | null;
+
+let boardConfetti: ConfettiFn | null = null;
+
+/** Bind confetti to the board canvas so bursts stay inside the game frame. */
+export function bindConfettiCanvas(canvas: HTMLCanvasElement | null) {
+  if (!canvas) {
+    boardConfetti = null;
+    return;
+  }
+  boardConfetti = confetti.create(canvas, {
+    resize: true,
+    useWorker: false,
+  });
+}
+
 function tierIndex(milestone: number) {
   const idx = SCORE_MILESTONES.indexOf(milestone);
   return idx >= 0 ? idx : SCORE_MILESTONES.length;
 }
 
-function celebrateDurationMs(tier: number) {
-  // ~8–12s: longer and louder for bigger milestones
-  return Math.min(8000 + tier * 400, 12_000);
+/** soft | medium | big — drives duration and particle budget. */
+function intensityForTier(tier: number): "soft" | "medium" | "big" {
+  if (tier <= 1) return "soft"; // 512, 1024
+  if (tier <= 3) return "medium"; // 2048, 4096
+  return "big"; // 8192+
 }
 
-function fireBurst(
-  opts: confetti.Options & { particleCount: number }
-) {
-  void confetti({
+function celebrateDurationMs(tier: number) {
+  const level = intensityForTier(tier);
+  if (level === "soft") return 1600 + tier * 200; // ~1.6–1.8s
+  if (level === "medium") return 3200 + (tier - 2) * 400; // ~3.2–3.6s
+  return Math.min(5500 + (tier - 4) * 500, 9000);
+}
+
+function fireBurst(opts: confetti.Options & { particleCount: number }) {
+  const run = boardConfetti ?? confetti;
+  void run({
     disableForReducedMotion: true,
     colors: ARENA_COLORS,
-    zIndex: 1200,
     ...opts,
   });
 }
 
 function clearTimers() {
-  for (const id of sideTimers) window.clearInterval(id);
+  for (const id of sideTimers) {
+    window.clearInterval(id);
+    window.clearTimeout(id);
+  }
   sideTimers.clear();
 }
 
@@ -65,177 +91,188 @@ function trackTimeout(fn: () => void, ms: number) {
 /** Stop ongoing bursts (e.g. Play again). */
 export function resetConfetti() {
   clearTimers();
-  confetti.reset();
+  if (boardConfetti && "reset" in boardConfetti) {
+    (boardConfetti as { reset: () => void }).reset();
+  } else {
+    confetti.reset();
+  }
 }
 
 function openingSalvo(tier: number) {
-  const scalar = Math.min(0.95 + tier * 0.08, 1.6);
-  const velocity = 32 + tier * 5;
+  const level = intensityForTier(tier);
+  const scalar =
+    level === "soft"
+      ? 0.75
+      : Math.min(0.85 + tier * 0.05, 1.35);
+  const velocity =
+    level === "soft" ? 22 : level === "medium" ? 28 + tier : 34 + tier * 3;
+  const baseCount =
+    level === "soft"
+      ? 28 + tier * 8
+      : level === "medium"
+        ? 48 + tier * 12
+        : Math.min(70 + tier * 16, 160);
 
   fireBurst({
-    particleCount: Math.min(90 + tier * 28, 280),
-    spread: 100,
-    ticks: 420,
+    particleCount: baseCount,
+    spread: level === "soft" ? 70 : 95,
+    ticks: level === "soft" ? 220 : 360,
     scalar,
-    origin: { x: 0.5, y: 0.42 },
+    origin: { x: 0.5, y: 0.48 },
     startVelocity: velocity,
-    gravity: 0.85,
+    gravity: 0.95,
   });
 
-  fireBurst({
-    particleCount: Math.min(40 + tier * 12, 120),
-    spread: 360,
-    ticks: 380,
-    scalar: scalar * 0.9,
-    shapes: ["star"],
-    colors: GOLD_COLORS,
-    origin: { x: 0.5, y: 0.38 },
-    startVelocity: velocity * 0.75,
-    gravity: 0.7,
-  });
+  if (level !== "soft") {
+    fireBurst({
+      particleCount: Math.min(20 + tier * 6, 70),
+      spread: 360,
+      ticks: 320,
+      scalar: scalar * 0.85,
+      shapes: ["star"],
+      colors: GOLD_COLORS,
+      origin: { x: 0.5, y: 0.42 },
+      startVelocity: velocity * 0.7,
+      gravity: 0.75,
+    });
+  }
 }
 
 function sideCannons(tier: number) {
-  const count = Math.max(14, Math.min(18 + tier * 4, 55));
-  const scalar = Math.min(0.9 + tier * 0.07, 1.5);
-  const ticks = 380 + Math.min(tier * 20, 120);
+  const level = intensityForTier(tier);
+  const count =
+    level === "soft"
+      ? 6
+      : level === "medium"
+        ? 10 + tier
+        : Math.min(14 + tier * 2, 32);
+  const scalar = level === "soft" ? 0.7 : Math.min(0.85 + tier * 0.04, 1.25);
+  const ticks = level === "soft" ? 200 : 320;
 
   fireBurst({
     particleCount: count,
     angle: 55 + Math.random() * 20,
-    spread: 58 + Math.random() * 18,
+    spread: 50 + Math.random() * 14,
     ticks,
     scalar,
-    origin: { x: 0, y: 0.62 + Math.random() * 0.2 },
-    startVelocity: 28 + tier * 3 + Math.random() * 10,
-    gravity: 0.9,
+    origin: { x: 0.02, y: 0.55 + Math.random() * 0.2 },
+    startVelocity: 18 + tier * 2 + Math.random() * 6,
+    gravity: 1,
   });
   fireBurst({
     particleCount: count,
     angle: 125 - Math.random() * 20,
-    spread: 58 + Math.random() * 18,
+    spread: 50 + Math.random() * 14,
     ticks,
     scalar,
-    origin: { x: 1, y: 0.62 + Math.random() * 0.2 },
-    startVelocity: 28 + tier * 3 + Math.random() * 10,
-    gravity: 0.9,
+    origin: { x: 0.98, y: 0.55 + Math.random() * 0.2 },
+    startVelocity: 18 + tier * 2 + Math.random() * 6,
+    gravity: 1,
   });
 }
 
 function skyFirework(tier: number) {
-  const x = 0.18 + Math.random() * 0.64;
-  const y = 0.18 + Math.random() * 0.28;
-  const scalar = Math.min(1 + tier * 0.06, 1.55);
+  const x = 0.22 + Math.random() * 0.56;
+  const y = 0.22 + Math.random() * 0.28;
+  const scalar = Math.min(0.9 + tier * 0.04, 1.3);
 
   fireBurst({
-    particleCount: Math.min(55 + tier * 14, 160),
+    particleCount: Math.min(28 + tier * 8, 90),
     spread: 360,
-    ticks: 400,
+    ticks: 320,
     scalar,
     origin: { x, y },
-    startVelocity: 18 + tier * 2 + Math.random() * 12,
-    gravity: 0.75,
+    startVelocity: 14 + tier + Math.random() * 8,
+    gravity: 0.85,
     decay: 0.92,
   });
 
-  if (tier >= 2) {
+  if (tier >= 4) {
     fireBurst({
-      particleCount: Math.min(24 + tier * 6, 70),
+      particleCount: Math.min(14 + tier * 3, 40),
       spread: 360,
-      ticks: 360,
-      scalar: scalar * 0.85,
+      ticks: 280,
+      scalar: scalar * 0.8,
       shapes: ["star"],
       colors: GOLD_COLORS,
       origin: { x, y },
-      startVelocity: 14 + Math.random() * 10,
-      gravity: 0.65,
+      startVelocity: 10 + Math.random() * 8,
+      gravity: 0.7,
     });
   }
 }
 
 function rainingFinale(tier: number) {
   fireBurst({
-    particleCount: Math.min(100 + tier * 20, 220),
-    spread: 120,
-    ticks: 500,
-    scalar: Math.min(1.1 + tier * 0.05, 1.5),
-    origin: { x: 0.5, y: -0.05 },
-    startVelocity: 12 + tier * 2,
-    gravity: 1.05,
-    drift: (Math.random() - 0.5) * 0.8,
-  });
-  fireBurst({
-    particleCount: Math.min(40 + tier * 10, 90),
+    particleCount: Math.min(40 + tier * 8, 100),
     spread: 100,
-    ticks: 480,
-    shapes: ["star"],
-    colors: GOLD_COLORS,
-    origin: { x: 0.35 + Math.random() * 0.3, y: -0.02 },
-    startVelocity: 10,
-    gravity: 0.95,
+    ticks: 360,
+    scalar: Math.min(0.95 + tier * 0.03, 1.25),
+    origin: { x: 0.5, y: 0.02 },
+    startVelocity: 8 + tier,
+    gravity: 1.1,
+    drift: (Math.random() - 0.5) * 0.6,
   });
 }
 
 /**
- * Multi-wave celebration (~8–12s): opening blast, continuous side cannons,
- * mid-show sky fireworks, and a late raining finale.
+ * Tiered celebration clipped to the board canvas.
+ * 512/1024 stay short; bigger milestones grow longer and denser.
  */
 export function celebrateMilestone(milestone: number) {
   resetConfetti();
 
   const tier = tierIndex(milestone);
+  const level = intensityForTier(tier);
   const durationMs = celebrateDurationMs(tier);
   const end = Date.now() + durationMs;
 
   openingSalvo(tier);
 
-  // Second center punch a beat later
+  if (level === "soft") {
+    // One light follow-up, then done — no cannon loops / rain.
+    trackTimeout(() => sideCannons(tier), 380);
+    trackTimeout(() => clearTimers(), durationMs + 120);
+    return;
+  }
+
   trackTimeout(() => {
     fireBurst({
-      particleCount: Math.min(60 + tier * 18, 180),
-      spread: 90,
-      ticks: 400,
-      scalar: Math.min(1 + tier * 0.07, 1.45),
-      origin: { x: 0.5, y: 0.5 },
-      startVelocity: 26 + tier * 3,
+      particleCount: Math.min(36 + tier * 10, 100),
+      spread: 85,
+      ticks: 320,
+      scalar: Math.min(0.95 + tier * 0.04, 1.3),
+      origin: { x: 0.5, y: 0.52 },
+      startVelocity: 22 + tier * 2,
     });
-  }, 420);
+  }, 400);
 
-  // Side cannons for most of the show
-  const cannonInterval = Math.max(160, 260 - tier * 12);
+  const cannonInterval = level === "medium" ? 320 : Math.max(200, 280 - tier * 10);
   trackInterval(() => {
     if (Date.now() >= end) return;
     sideCannons(tier);
   }, cannonInterval);
 
-  // Sky fireworks from ~1.2s in, every ~700–900ms
-  const fireworkInterval = Math.max(520, 820 - tier * 30);
-  trackTimeout(() => {
-    trackInterval(() => {
-      if (Date.now() >= end - 800) return;
-      skyFirework(tier);
-      if (tier >= 4 && Math.random() > 0.45) {
-        trackTimeout(() => skyFirework(tier), 180);
-      }
-    }, fireworkInterval);
-  }, 1200);
+  if (level === "big") {
+    const fireworkInterval = Math.max(560, 780 - tier * 25);
+    trackTimeout(() => {
+      trackInterval(() => {
+        if (Date.now() >= end - 600) return;
+        skyFirework(tier);
+      }, fireworkInterval);
+    }, 900);
 
-  // Late raining gold + paper
-  trackTimeout(() => {
-    rainingFinale(tier);
-    trackTimeout(() => rainingFinale(tier), 700);
-    if (tier >= 3) {
-      trackTimeout(() => rainingFinale(tier), 1400);
-    }
-  }, Math.max(durationMs - 2800, 4500));
+    trackTimeout(() => {
+      rainingFinale(tier);
+      if (tier >= 5) trackTimeout(() => rainingFinale(tier), 650);
+    }, Math.max(durationMs - 1800, 2800));
 
-  // Closing double cannon
-  trackTimeout(() => {
-    sideCannons(tier + 2);
-    openingSalvo(Math.min(tier + 1, SCORE_MILESTONES.length));
-  }, durationMs - 900);
+    trackTimeout(() => {
+      sideCannons(tier);
+      openingSalvo(tier);
+    }, durationMs - 700);
+  }
 
-  // Hard stop so Play again / next celebrate can take over cleanly
   trackTimeout(() => {
     clearTimers();
   }, durationMs + 200);
@@ -253,13 +290,12 @@ export function celebrateScoreProgress(prevScore: number, nextScore: number) {
   if (top != null) celebrateMilestone(top);
 }
 
-/** Extra finale on game over for high totals — full ~10s spectacle. */
+/** Extra finale on game over for high totals. */
 export function celebrateGameOver(finalScore: number) {
   if (finalScore < 512) return;
 
   const reached = SCORE_MILESTONES.filter((m) => finalScore >= m);
   const top = reached[reached.length - 1] ?? 512;
-  // Bump one tier so game-over always feels like a finale
   celebrateMilestone(
     SCORE_MILESTONES[Math.min(tierIndex(top) + 1, SCORE_MILESTONES.length - 1)] ??
       top

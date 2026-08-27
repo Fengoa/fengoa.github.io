@@ -288,11 +288,12 @@ export class GameController {
       .filter((t) => includeSpawn || !t.isNew)
       .map((t) => ({
         ...t,
+        isMoving: false,
         z: t.isMerged ? 20 : t.isNew ? 5 : t.z ?? 1,
       }));
     const partners = this.movingTiles
       .filter((t) => t.isMergePartner)
-      .map((t) => ({ ...t, isFading: true, z: 10 }));
+      .map((t) => ({ ...t, isFading: true, isMoving: false, z: 10 }));
     return [...settled, ...partners];
   }
 
@@ -303,6 +304,7 @@ export class GameController {
       isMerged: false,
       isFading: false,
       isMergePartner: false,
+      isMoving: false,
     }));
   }
 
