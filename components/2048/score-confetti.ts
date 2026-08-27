@@ -33,7 +33,7 @@ export function bindConfettiCanvas(canvas: HTMLCanvasElement | null) {
   }
   boardConfetti = confetti.create(canvas, {
     resize: true,
-    useWorker: false,
+    useWorker: true,
   });
 }
 
@@ -61,6 +61,8 @@ function fireBurst(opts: confetti.Options & { particleCount: number }) {
   void run({
     disableForReducedMotion: true,
     colors: ARENA_COLORS,
+    ticks: 200,
+    gravity: 1.1,
     ...opts,
   });
 }
@@ -93,6 +95,7 @@ export function resetConfetti() {
   clearTimers();
   celebratedFirstTiles.clear();
   celebratedTileCounts.clear();
+  lastSoftPopAt = 0;
   if (boardConfetti && "reset" in boardConfetti) {
     (boardConfetti as { reset: () => void }).reset();
   } else {
@@ -127,40 +130,27 @@ function countTiles(board: number[]) {
   return map;
 }
 
+let lastSoftPopAt = 0;
+
 /** Tiny board-local pop — does not cancel a bigger celebration. */
 function softTilePop(strength: number) {
-  const n = Math.round(10 + strength * 8);
+  const now = performance.now();
+  // Coalesce rapid merges so confetti does not fight the slide frame.
+  if (now - lastSoftPopAt < 280) return;
+  lastSoftPopAt = now;
+
+  const n = Math.round(6 + strength * 5);
+  // Single burst only — side cannons were the main jank source mid-move.
   fireBurst({
     particleCount: n,
-    spread: 55 + strength * 8,
-    ticks: 180 + strength * 20,
-    scalar: 0.65 + strength * 0.06,
-    origin: { x: 0.5, y: 0.55 },
-    startVelocity: 16 + strength * 2,
-    gravity: 1.05,
+    spread: 48 + strength * 6,
+    ticks: 140 + strength * 12,
+    scalar: 0.55 + strength * 0.05,
+    origin: { x: 0.5, y: 0.52 },
+    startVelocity: 12 + strength * 1.5,
+    gravity: 1.2,
+    decay: 0.94,
   });
-  if (strength >= 2) {
-    fireBurst({
-      particleCount: Math.round(5 + strength * 3),
-      angle: 60,
-      spread: 40,
-      ticks: 160,
-      scalar: 0.6,
-      origin: { x: 0.08, y: 0.6 },
-      startVelocity: 14 + strength,
-      gravity: 1.05,
-    });
-    fireBurst({
-      particleCount: Math.round(5 + strength * 3),
-      angle: 120,
-      spread: 40,
-      ticks: 160,
-      scalar: 0.6,
-      origin: { x: 0.92, y: 0.6 },
-      startVelocity: 14 + strength,
-      gravity: 1.05,
-    });
-  }
 }
 
 function firstTileStrength(value: number) {
@@ -238,32 +228,32 @@ function openingSalvo(tier: number) {
     level === "soft" ? 22 : level === "medium" ? 28 + tier : 34 + tier * 3;
   const baseCount =
     level === "soft"
-      ? 28 + tier * 8
+      ? 18 + tier * 5
       : level === "medium"
-        ? 48 + tier * 12
-        : Math.min(70 + tier * 16, 160);
+        ? 32 + tier * 8
+        : Math.min(48 + tier * 12, 110);
 
   fireBurst({
     particleCount: baseCount,
-    spread: level === "soft" ? 70 : 95,
-    ticks: level === "soft" ? 220 : 360,
+    spread: level === "soft" ? 65 : 90,
+    ticks: level === "soft" ? 180 : 280,
     scalar,
     origin: { x: 0.5, y: 0.48 },
     startVelocity: velocity,
-    gravity: 0.95,
+    gravity: 1.05,
   });
 
-  if (level !== "soft") {
+  if (level === "big") {
     fireBurst({
-      particleCount: Math.min(20 + tier * 6, 70),
+      particleCount: Math.min(16 + tier * 4, 48),
       spread: 360,
-      ticks: 320,
+      ticks: 260,
       scalar: scalar * 0.85,
       shapes: ["star"],
       colors: GOLD_COLORS,
       origin: { x: 0.5, y: 0.42 },
       startVelocity: velocity * 0.7,
-      gravity: 0.75,
+      gravity: 0.85,
     });
   }
 }
@@ -272,12 +262,12 @@ function sideCannons(tier: number) {
   const level = intensityForTier(tier);
   const count =
     level === "soft"
-      ? 6
+      ? 4
       : level === "medium"
-        ? 10 + tier
-        : Math.min(14 + tier * 2, 32);
-  const scalar = level === "soft" ? 0.7 : Math.min(0.85 + tier * 0.04, 1.25);
-  const ticks = level === "soft" ? 200 : 320;
+        ? 7 + tier
+        : Math.min(10 + tier * 2, 22);
+  const scalar = level === "soft" ? 0.65 : Math.min(0.8 + tier * 0.04, 1.2);
+  const ticks = level === "soft" ? 160 : 240;
 
   fireBurst({
     particleCount: count,
@@ -377,7 +367,7 @@ export function celebrateMilestone(milestone: number) {
     });
   }, 400);
 
-  const cannonInterval = level === "medium" ? 320 : Math.max(200, 280 - tier * 10);
+  const cannonInterval = level === "medium" ? 400 : Math.max(280, 360 - tier * 12);
   trackInterval(() => {
     if (Date.now() >= end) return;
     sideCannons(tier);

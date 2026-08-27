@@ -59,8 +59,8 @@ export type LeaderboardStore = {
   }) => Promise<LeaderboardBoard>;
 };
 
-export const MOVE_ANIM_MS = 180;
+export const MOVE_ANIM_MS = 200;
 /** Start merge pop this far through the slide (0–1) — before tiles fully meet. */
-export const MERGE_POP_LEAD = 0.68;
-export const POP_ANIM_MS = 380;
+export const MERGE_POP_LEAD = 0.72;
+export const POP_ANIM_MS = 320;
 export const GAME_OVER_DELAY_MS = 820;

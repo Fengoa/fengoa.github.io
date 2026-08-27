@@ -117,9 +117,15 @@ export function ArenaApp() {
   const scoreRef = useRef(0);
 
   const updateScore = useCallback((next: number) => {
-    celebrateScoreProgress(scoreRef.current, next);
+    const prev = scoreRef.current;
     scoreRef.current = next;
     setScore(next);
+    // Defer score fireworks so they do not stall the slide paint.
+    if (next > prev) {
+      window.requestAnimationFrame(() => {
+        celebrateScoreProgress(prev, next);
+      });
+    }
   }, []);
 
   const resetScore = useCallback(() => {
@@ -322,7 +328,6 @@ export function ArenaApp() {
         return false;
       }
 
-      celebrateBoardProgress(prevBoard, game.state.board);
       animatingRef.current = true;
       slideDoneRef.current = false;
       slideEndedRef.current = false;
@@ -347,6 +352,7 @@ export function ArenaApp() {
       setSlideTargetCount(movingCount);
       slideGameRef.current = game;
       const hadMerge = game.hadMerge();
+      const nextBoard = game.state.board.slice();
 
       // Paint travelers at the START cell with transition armed, then move
       // them next frame — otherwise a lone sliding tile jumps with no animation.
@@ -364,6 +370,11 @@ export function ArenaApp() {
         requestAnimationFrame(() => {
           if (controllerRef.current !== game || !animatingRef.current) return;
           setTiles(moving);
+
+          // Confetti after the slide has begun — avoids main-thread contention.
+          window.requestAnimationFrame(() => {
+            celebrateBoardProgress(prevBoard, nextBoard);
+          });
 
           if (hadMerge) {
             mergePopTimerRef.current = window.setTimeout(() => {
