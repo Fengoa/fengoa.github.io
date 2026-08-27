@@ -12,6 +12,7 @@ import {
 import { productNameFromUrl, leaderboardStore } from "./storage";
 import { ScriptEditor } from "./script-editor";
 import {
+  celebrateBoardProgress,
   celebrateGameOver,
   celebrateScoreProgress,
   resetConfetti,
@@ -309,6 +310,7 @@ export function ArenaApp() {
         isNew: false,
         isMerged: false,
       }));
+      const prevBoard = game.state.board.slice();
 
       const changed = game.move(dir);
       if (!changed) {
@@ -320,6 +322,7 @@ export function ArenaApp() {
         return false;
       }
 
+      celebrateBoardProgress(prevBoard, game.state.board);
       animatingRef.current = true;
       slideDoneRef.current = false;
       slideEndedRef.current = false;
@@ -528,6 +531,7 @@ export function ArenaApp() {
 
     const game = new GameController();
     controllerRef.current = game;
+    resetConfetti();
     if (animTimerRef.current !== null) {
       window.clearTimeout(animTimerRef.current);
       animTimerRef.current = null;

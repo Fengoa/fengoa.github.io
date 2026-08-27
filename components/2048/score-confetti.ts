@@ -91,12 +91,142 @@ function trackTimeout(fn: () => void, ms: number) {
 /** Stop ongoing bursts (e.g. Play again). */
 export function resetConfetti() {
   clearTimers();
+  celebratedFirstTiles.clear();
+  celebratedTileCounts.clear();
   if (boardConfetti && "reset" in boardConfetti) {
     (boardConfetti as { reset: () => void }).reset();
   } else {
     confetti.reset();
   }
 }
+
+/** First appearance of these tile values this game. */
+const FIRST_TILE_MILESTONES = [
+  128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536,
+];
+
+/** Celebrate when board holds N copies of these values. */
+const MULTI_TILE_TARGETS: Array<{ value: number; counts: number[] }> = [
+  { value: 128, counts: [2, 3] },
+  { value: 256, counts: [2, 3] },
+  { value: 512, counts: [2, 3] },
+  { value: 1024, counts: [2] },
+  { value: 2048, counts: [2] },
+  { value: 4096, counts: [2] },
+];
+
+const celebratedFirstTiles = new Set<number>();
+const celebratedTileCounts = new Set<string>();
+
+function countTiles(board: number[]) {
+  const map = new Map<number, number>();
+  for (const v of board) {
+    if (v < 2) continue;
+    map.set(v, (map.get(v) ?? 0) + 1);
+  }
+  return map;
+}
+
+/** Tiny board-local pop — does not cancel a bigger celebration. */
+function softTilePop(strength: number) {
+  const n = Math.round(10 + strength * 8);
+  fireBurst({
+    particleCount: n,
+    spread: 55 + strength * 8,
+    ticks: 180 + strength * 20,
+    scalar: 0.65 + strength * 0.06,
+    origin: { x: 0.5, y: 0.55 },
+    startVelocity: 16 + strength * 2,
+    gravity: 1.05,
+  });
+  if (strength >= 2) {
+    fireBurst({
+      particleCount: Math.round(5 + strength * 3),
+      angle: 60,
+      spread: 40,
+      ticks: 160,
+      scalar: 0.6,
+      origin: { x: 0.08, y: 0.6 },
+      startVelocity: 14 + strength,
+      gravity: 1.05,
+    });
+    fireBurst({
+      particleCount: Math.round(5 + strength * 3),
+      angle: 120,
+      spread: 40,
+      ticks: 160,
+      scalar: 0.6,
+      origin: { x: 0.92, y: 0.6 },
+      startVelocity: 14 + strength,
+      gravity: 1.05,
+    });
+  }
+}
+
+function firstTileStrength(value: number) {
+  if (value <= 128) return 0.5;
+  if (value <= 256) return 1;
+  if (value <= 512) return 1.5;
+  if (value <= 1024) return 2.5;
+  if (value <= 2048) return 3.5;
+  return 4.5;
+}
+
+/**
+ * Fire on newly created tile values / multi-copy moments this game.
+ * Soft pops stack lightly; large first tiles (2048+) use a short milestone.
+ */
+export function celebrateBoardProgress(prevBoard: number[], nextBoard: number[]) {
+  const prev = countTiles(prevBoard);
+  const next = countTiles(nextBoard);
+
+  let bestFirst: number | null = null;
+  for (const value of FIRST_TILE_MILESTONES) {
+    if ((next.get(value) ?? 0) > 0 && (prev.get(value) ?? 0) === 0) {
+      if (!celebratedFirstTiles.has(value)) {
+        celebratedFirstTiles.add(value);
+        bestFirst = value;
+      }
+    }
+  }
+
+  let bestMulti: { value: number; count: number } | null = null;
+  for (const { value, counts } of MULTI_TILE_TARGETS) {
+    for (const need of counts) {
+      const key = `${value}:${need}`;
+      if (
+        (next.get(value) ?? 0) >= need &&
+        (prev.get(value) ?? 0) < need &&
+        !celebratedTileCounts.has(key)
+      ) {
+        celebratedTileCounts.add(key);
+        if (!bestMulti || value * need > bestMulti.value * bestMulti.count) {
+          bestMulti = { value, count: need };
+        }
+      }
+    }
+  }
+
+  // Prefer the biggest new first-tile; otherwise multi-copy pop.
+  if (bestFirst != null) {
+    if (bestFirst >= 2048) {
+      // Map tile value onto score-milestone tiers for a fuller (still scoped) show.
+      const mapped =
+        bestFirst >= 8192 ? 8192 : bestFirst >= 4096 ? 4096 : 2048;
+      celebrateMilestone(mapped);
+    } else {
+      softTilePop(firstTileStrength(bestFirst));
+    }
+    return;
+  }
+
+  if (bestMulti) {
+    softTilePop(
+      firstTileStrength(bestMulti.value) * 0.75 + bestMulti.count * 0.35
+    );
+  }
+}
+
 
 function openingSalvo(tier: number) {
   const level = intensityForTier(tier);
