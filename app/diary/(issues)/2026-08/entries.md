@@ -374,3 +374,37 @@ not_wowinter14 的站点。填入网址后，代理读取站点、判断品类�
 完整报告 49 美元一次，扩到 12 个问题、每引擎 3 次抽样（144 条），并附竞品摘录、引用源、可发布的 schema 与 llms.txt。另有 29 美元/月的周复扫。面向本地服务商：有人把「附近最好的某行」输入对话引擎时，用来核对名字是否出现。
 
 ![VisiScan：AI 搜索可见度扫描](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788143262869.png)
+
+---
+id: startupwiki
+date: 2026-08-31
+time: 10:45
+tags: 创业公司, 目录, 多智能体, 开源
+url: https://startupwiki.tech/
+---
+
+# StartupWiki：用多智能体现写的创业公司档案库
+
+首页长得像 Google：中间一个搜索框，旁边是 I'm Feeling Lucky 和 Suggest Startup。它做的事情是给创业公司做可读档案，定位接近免费的 Crunchbase / PitchBook：融资轮次、财务数字、竞品、团队、时间线。作者 Pranesh（HN：shpran），Next.js + Supabase，公开检索走 DuckDuckGo，不读 Crunchbase。读档案不强制登录；提交公司要用 Google 账号。
+
+特殊之处在生成方式。点 Suggest 后，后台用 Gemini 多智能体在大约 15–20 秒里现写整份档案，并用 SSE 把过程推到页面上：网页检索、财务沙盒、VC 多空辩论、编辑合成，以及它自称的 SEC pre-clearance。公开痕迹太少时，Fact Finder 会请提交者补几句业务说明；留空则由 Gemini 补全「看起来真实」的公司细节、竞品、融资和时间线。档案因此同时像数据库条目和一份生成研报，Verified 徽章按设计应链到引用来源。
+
+覆盖仍薄。AI 分类页目前大约 9 家（Anthropic、Pinecone、Scale AI 等），Micro Businesses 为 0。2026 年 6 月的 Show HN 里，有人搜自己熟悉的公司对不上，Verified 一度点不开源。站点在送 lifetime Pro（API、PDF/CSV、去广告），用 Substack 发注册链接。适合当「AI 怎么把一家公司写成投资备忘录」的样本来看；数字和融资字段需要对照一手材料。
+
+![StartupWiki：Google 式首页与创业公司目录](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788144329897.png)
+
+---
+id: 1mil-app
+date: 2026-08-31
+time: 10:51
+tags: 创业点子, 调研, 独立开发, 验证
+url: https://1mil.app
+---
+
+# 1mil.app：按你的背景扫描有证据的生意方向
+
+Eli Fayerman 做的创业点子扫描器，面向独立开发者、Solo Founder 和在职转业的人。他做过 Thomson Reuters 工程，后来拿了律师执照，这个工具做了大约五个月。输入你熟悉的领域和擅长什么，它用实时网页检索做市场调研，再按你的背景生成方向，独立跑三轮，最后用确定性代码过闸。返回约 10 个排序后的机会：点名竞品、真实定价锚点，以及本周可执行的下一步。登录后第一次扫描免费。
+
+每条机会带 insight 分（证据质量）和 business 分（独立变现、包装、护城河、定价把握）。高分往往落在已有付费地板的市场，常见月费大约 30 到 100 美元。作者把自己的评分做过盲测：同一批 25 个点子跑两遍，排序相关约 −0.05，于是公开审计、去掉虚假精度、改成重复校验。竞品价格会在入库前对照检索证据。输入越具体越好，例如「给私人音乐老师用的账单软件」比「软件」有用。输出可跟输入语言一致，包括当地竞品和币种。
+
+![1mil.app：按背景扫描创业点子](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788144692464.png)
