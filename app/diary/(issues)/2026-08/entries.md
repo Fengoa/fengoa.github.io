@@ -321,11 +321,11 @@ url: https://gaploid.github.io/cosmic-collisions/
 
 # Cosmic Collisions：浏览器里用 26 万粒子演月球形成撞击
 
-gaploid 的 WebGL 2 页面。默认场景是巨撞击假说：原地球与忒伊亚（Theia）在自引力下落到一起，溅射、潮汐臂、碎屑盘，以及盘里按 Ida–Canup–Stewart 标度估出的月球。粒子数从 1.6 万到 26.2 万；手机打开时约 3.3 万。另有正撞、擦掠逃离（hit & run）、等质量双星、高速解体（shatter）几套预设，撞击体质比、入射角、速度、核占比和密度都能调。
+gaploid 的 WebGL 页面。默认演巨撞击假说：原地球碰上忒伊亚（Theia），溅出碎屑盘，再按文献标度估一轮月球。粒子最多约 26 万，手机上大约 3 万。质量比、入射角都能调，还有正撞、擦掠逃离几套预设。
+
+打开就能玩。重力是网格加近邻修正，接触用弹簧，没有流体，所以看不到汽化。Chrome 可用。
 
 ![Cosmic Collisions：Theia 撞击后的碎屑盘与潮汐臂](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788142523694.png)
-
-重力用 64³ 粒子网格加近邻成对修正（P³M），接触是弹簧-阻尼、不受拉力。没有 SPH 和状态方程，因此看不到汽化与冲击波；岩石按可压缩颗粒堆处理。拖拽旋转、滚轮缩放；空格暂停，R 重开，F 跟随目标。另有希克苏鲁伯撞击页，按 Collins、Housen & Holsapple 等文献给出陨石坑与第一日羽流。无构建步骤，页面可直接打开。Chrome 可用，Safari 当时仍有兼容问题。
 
 ---
 id: token-level-advertising
@@ -337,13 +337,7 @@ url: https://arxiv.org/abs/2608.27382
 
 # Token 级广告：把广告嵌进大模型的生成过程
 
-Hanbing Liu、Bowei Zhang、Changyuan Yu、Yinyu Ye、Qi Qi 的预印本（arXiv:2608.27382）。信息入口变成一句生成回复之后，广告机会由生成轨迹本身塑造。论文提出 **LAMA**（Latent Advertiser Mixture Auction）：广告商上报每个 token 的续写价值，诱导各自的下一 token 策略；平台用隐变量混合解码，并随已生成 token 更新分配后验。生成结束时，后验决定胜出广告商和支付。
-
-理论上 LAMA 满足 Markov DSIC 与 IR：广告商说真话是占优策略，参与满足个体理性。福利接近带 KL 正则的最优，缺口随正则减弱而缩小。实现上不必广告商自行计算整棵 token 树：平台用学到的局部优势和根值，在已实现路径上重建上报信号。
-
-在真实商业搜索 query 切分上做了概念验证，对照生成前分配、生成后插入，以及回复级聚合。LAMA 提高平台总福利和营收，同时维持用户侧回复质量。
-
-对海外投放 Agent 和生成式产品化，这篇把竞价单元从 slot 下沉到 token，机制与实证都在，适合当作投放机制设计的参考基线。
+Hanbing Liu 等人的预印本（arXiv:2608.27382）。广告嵌进逐 token 生成：广告商报每个 token 的续写价值，平台用隐变量混合解码，生成结束再结算谁赢、付多少。机制叫 LAMA。对投放 Agent 来说，竞价单元从广告位下沉到 token。
 
 ---
 id: github-receipts
@@ -369,9 +363,7 @@ url: https://www.visiscan.app
 
 # VisiScan：免费扫描品牌在 AI 回答里有没有被点名
 
-not_wowinter14 的站点。填入网址后，代理读取站点、判断品类与服务范围，再用买家会问的问题去问 ChatGPT、Claude、Perplexity、Gemini，核对回答里出现的是你还是对手。免费扫描无需注册，约 60 秒出结果：5 个问题 × 4 家引擎、各抽 2 次，合计 40 条实答，给出 0–100 的 AI Visibility 与 AI Readiness，以及一条优先修复建议。
-
-完整报告 49 美元一次，扩到 12 个问题、每引擎 3 次抽样（144 条），并附竞品摘录、引用源、可发布的 schema 与 llms.txt。另有 29 美元/月的周复扫。面向本地服务商：有人把「附近最好的某行」输入对话引擎时，用来核对名字是否出现。
+not_wowinter14 的站点。填网址，它读站点、猜品类，再用买家会问的问题去问 ChatGPT、Claude、Perplexity、Gemini，看回答里点的是你还是对手。免费扫不用注册，大约一分钟出分。完整报告 49 美元一次。
 
 ![VisiScan：AI 搜索可见度扫描](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788143262869.png)
 
@@ -385,11 +377,7 @@ url: https://startupwiki.tech/
 
 # StartupWiki：用多智能体现写的创业公司档案库
 
-首页长得像 Google：中间一个搜索框，旁边是 I'm Feeling Lucky 和 Suggest Startup。它做的事情是给创业公司做可读档案，定位接近免费的 Crunchbase / PitchBook：融资轮次、财务数字、竞品、团队、时间线。作者 Pranesh（HN：shpran），Next.js + Supabase，公开检索走 DuckDuckGo，不读 Crunchbase。读档案不强制登录；提交公司要用 Google 账号。
-
-特殊之处在生成方式。点 Suggest 后，后台用 Gemini 多智能体在大约 15–20 秒里现写整份档案，并用 SSE 把过程推到页面上：网页检索、财务沙盒、VC 多空辩论、编辑合成，以及它自称的 SEC pre-clearance。公开痕迹太少时，Fact Finder 会请提交者补几句业务说明；留空则由 Gemini 补全「看起来真实」的公司细节、竞品、融资和时间线。档案因此同时像数据库条目和一份生成研报，Verified 徽章按设计应链到引用来源。
-
-覆盖仍薄。AI 分类页目前大约 9 家（Anthropic、Pinecone、Scale AI 等），Micro Businesses 为 0。2026 年 6 月的 Show HN 里，有人搜自己熟悉的公司对不上，Verified 一度点不开源。站点在送 lifetime Pro（API、PDF/CSV、去广告），用 Substack 发注册链接。适合当「AI 怎么把一家公司写成投资备忘录」的样本来看；数字和融资字段需要对照一手材料。
+首页长得像 Google，实际是创业公司档案库，想做成能公开读的 Crunchbase。作者 Pranesh。点 Suggest 之后，Gemini 多智能体大约 15 秒现写整份档案。公开材料不够时，模型会补上「看起来真实」的融资和时间线。覆盖还很薄，AI 分类大约 9 家。数字要对照一手材料。
 
 ![StartupWiki：Google 式首页与创业公司目录](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788144329897.png)
 
@@ -403,11 +391,9 @@ url: https://1mil.app
 
 # 1mil.app：按你的背景扫描有证据的生意方向
 
-Eli Fayerman 做的创业点子扫描器，面向独立开发者、Solo Founder 和在职转业的人。他做过 Thomson Reuters 工程，后来拿了律师执照，这个工具做了大约五个月。输入你熟悉的领域和擅长什么，它用实时网页检索做市场调研，再按你的背景生成方向，独立跑三轮，最后用确定性代码过闸。返回约 10 个排序后的机会：点名竞品、真实定价锚点，以及本周可执行的下一步。登录后第一次扫描免费。
+Eli Fayerman 的点子扫描器。填你熟悉什么、擅长什么，它上网搜一圈，给出大约 10 个带竞品和定价锚点的方向。登录后第一次免费。
 
-每条机会带 insight 分（证据质量）和 business 分（独立变现、包装、护城河、定价把握）。高分往往落在已有付费地板的市场，常见月费大约 30 到 100 美元。作者把自己的评分做过盲测：同一批 25 个点子跑两遍，排序相关约 −0.05，于是公开审计、去掉虚假精度、改成重复校验。竞品价格会在入库前对照检索证据。输入越具体越好，例如「给私人音乐老师用的账单软件」比「软件」有用。输出可跟输入语言一致，包括当地竞品和币种。
-
-有价值的是带证据的点子本身。站点目前不公开整包目录：首页 Best picks 仍在收集，每次扫描只出约 10 条。作者自 2026 年 3 月起大约做了 339 次扫描、累计约 3400 条，没有整包放出。职业页（开发者、律师、护士等）只有几条方向性示例。可浏览的预研点子库要去 Ideabrowser 一类产品。
+站点不公开整包目录。作者自己扫了三百多次、大约 3400 条，没放出来。想翻现成库可以去 Ideabrowser 一类产品。
 
 ![1mil.app：按背景扫描创业点子](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788144692464.png)
 
@@ -421,7 +407,7 @@ url: https://usenuzzle.com
 
 # Nuzzle：把宠物照片做成锁屏上的动态插画壁纸
 
-13001r 做的 iOS 应用。选一张宠物或人的照片、挑一种插画风格，生成可放在锁屏上的动态壁纸。作者说做它是因为 iOS 上像样的动态壁纸应用很少。播放用 Live Photo，需要 iOS 17 及以上。没有提示词和滑杆，流程是选风格、加照片、出成品。App Store 可下，Google Play 即将上线。站点有免费动态壁纸演示。
+13001r 的 iOS 应用。选一张宠物照片、挑一种插画风格，做成锁屏上的动态壁纸。播放用 Live Photo，需要 iOS 17 及以上。App Store 可下。
 
 ![Nuzzle：宠物动态插画锁屏壁纸](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788145173615.png)
 
@@ -435,9 +421,7 @@ url: https://anvendor.com/
 
 # anVendor：查对手的客户，以及他们大概花多少钱
 
-ia_soul 做的竞品客户情报站。输入对手或任意 SaaS（如 Segment、Snowflake、Notion），返回正在为其付费的公司，并估年度花费；反过来输入域名，列出该公司订阅的分析、CRM、营销、托管等服务，按估算出价排序。作者是独立 ML 工程师，大约做了半年。引擎只判断「这家公司在和该 SaaS 发生订阅式交互」，方法未公开，自称没有入侵、没有密钥库、也没有大模型，用工程和经典机器学习。目前可检测约 700 种服务。覆盖不到的查询会记成需求。
-
-花费按厂商公开价目表匹配席位数，写成下限如「$48k+ / yr」，不是发票也不是谈判价。搜索本身不扣费；揭开一条客户花 0.25 信用，完整公司分析 1 信用。查不到自动退回。免费档每 30 天 3 信用。结果可导出 CSV、Excel、PDF。面向销售找线索、会前摸底、以及看对手客户盘。
+ia_soul 做的竞品客户情报站。输入对手或某个 SaaS，列出谁在付钱、大概一年花多少；反过来输入域名，看这家公司订了哪些服务。大约 700 种 SaaS。花费按公开价目表估下限。搜索免费，揭开一条客户花 0.25 信用。
 
 ![anVendor：查对手客户与估算花费](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788145341549.png)
 
@@ -451,10 +435,8 @@ url: https://umer9538.github.io/underfoot/
 
 # Underfoot：系统更新在设备端模型上改了什么
 
-Umer2521 做的设备端模型漂移观测站。Apple 和 Google 会随系统更新替换手机里的 AI 模型，没有 changelog，也没有可固定的版本号。Underfoot 冻结一套提示词，对每个 OS 构建抓取回答，把差异做成公开记录。旧构建被覆盖后，那一版模型无法再测。
+Umer2521 的观测站。系统更新会替换手机里的设备端模型，没有 changelog。Underfoot 冻结 28 条提示词，对每个 OS 构建抓一遍回答，把差异公开。旧系统一被覆盖，那一版就测不了了。
 
-目前固定 28 条提示词，每条 greedy 采样 5 次。macOS 26.5.1（25F80，FoundationModels 1.5.2）140 次全部成功，输出字节级相同，俳句这类高方差题目也不例外。iOS 26.3.1 模拟器（23D8133，fm 1.1.7）里可用性 API 报 available，生成却全部失败，错误码 ModelManagerError 1026。同一条市政会议摘要，1.5.2 五次都过，1.1.7 以「可能含不安全内容」拒绝，护栏层可以单独漂移。要求「只返回 JSON」时，回答固定包在 markdown 代码围栏里。
-
-采集协议要求套件名称、版本和 SHA-256 一致才可比对。仓库在 GitHub（Umer9538/underfoot）。作者在找有 Apple Intelligence 资格的真机（iPhone 15 Pro 及以上）或 Pixel 8+ 补列，大约十分钟一列。
+现在的基线：macOS 26.5.1 上 140 次回答完全相同。iOS 模拟器报模型可用，生成却全部失败。同一条市政会议摘要，新框架放行，旧框架以不安全为由拒绝。仓库在 GitHub（Umer9538/underfoot）。
 
 ![Underfoot：设备端模型随系统更新的漂移观测](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788145524298.png)
