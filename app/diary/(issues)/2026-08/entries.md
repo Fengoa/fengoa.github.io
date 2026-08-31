@@ -270,3 +270,107 @@ url: https://2048bid.lol/
 voladd 做的浏览器站点，灵感来自 outbid.lol 的付费排行榜。提交产品网址后玩一局 2048，分数进入当日 UTC 排行榜；最高分占据榜首，并记入 Hall of Fame。方向键、WASD 或滑动均可操作。对局结束后，服务器回放每一步并核对时间，只有通过校验的分数才会上榜。免费。
 
 作者博士第一年常玩 2048。同类玩法还有 flappybid.lol。
+
+---
+id: seaweedfs
+date: 2026-08-28
+time: 11:13
+tags: 对象存储, 分布式文件系统, S3, 开源, Iceberg
+url: https://github.com/seaweedfs/seaweedfs
+---
+
+# SeaweedFS：面向海量小文件的分布式对象存储
+
+Chris Lu（chrislusf）维护的开源项目，Apache 2.0 许可，GitHub 约 3.4 万 star。目标很明确：存下数十亿个文件，并让读取尽量快。设计思路来自 Facebook 的 Haystack 论文，并吸收了 f4 纠删码、Tectonic 等工业系统的做法。
+
+## 架构
+
+系统把**数据路径**和**元数据路径**拆开，避免所有读写都挤在一个中心元数据节点上。
+
+**Master** 只管控制面：维护 volume 到 volume server 的映射，给写入分配 `fid`（volume id + file key + cookie）。它不碰文件内容，元数据量小，容易缓存。
+
+**Volume Server** 管数据面：把大量小文件（needle）顺序写进固定大小的 volume（通常 32GB）。每个 blob 的偏移与长度只占用约 16 字节内存索引，读取时多数情况只需一次磁盘寻道，即 O(1) 访问。单文件元数据磁盘开销约 40 字节。
+
+**Filer**（可选）在 blob 层之上提供目录树和 POSIX 语义，元数据后端可接 Postgres、Redis、TiDB、Elasticsearch 等现成存储，线性扩展。
+
+**S3 Gateway**（`weed s3`）把标准 S3 API 翻译到 Filer 与 Volume：上传时 Master 分配 volume，客户端直传 volume server；下载时由 gateway 查元数据再取数据。任意 S3 客户端或 AWS SDK 均可对接，无需专用 SDK。
+
+单机开发可用 `weed mini` 一条命令拉起 Master、Volume、Filer、S3（默认 `localhost:8333`）、WebDAV 与 Admin UI；生产环境再把各角色拆到独立进程或节点横向扩展。
+
+## 能力概览
+
+对象层支持多副本与机架/数据中心感知、纠删码（温数据可选）、分层与冷数据 offload 到云端 S3、生命周期规则、加密与跨集群异步复制。Filer 侧提供 FUSE 挂载、WebDAV、Hadoop 兼容文件系统。较新的方向是内置 **Iceberg REST Catalog** 与 S3 Table Bucket：Spark、Trino、DuckDB 等可直接查表，不必再单独部署 Hive Metastore 或 Glue。另有 Kubernetes CSI Driver 与 Operator。
+
+## 与 MinIO、Ceph 的取舍
+
+README 中的对比表值得一看。相对 Ceph，SeaweedFS 架构更扁平：Master 对应 MDS，Volume 对应 OSD，Filer 对应 CephFS，但运维与扩容路径更简单——加容量主要是再起 volume server 并指向 master，不必按 CRUSH 规则整池迁移。
+
+相对 MinIO（README 注明其已于 2026 年 4 月停止开发），SeaweedFS 针对**海量小文件**做了专门优化：MinIO 类方案每个对象在盘上还有独立元数据文件，小文件场景写放大明显；SeaweedFS 把元数据压在 volume 内存索引里，热数据用副本、温数据再纠删码。若只需要 S3 兼容与控制台，RustFS 等 MinIO 分支仍可作为替代；若画像/附件/日志这类小对象很多，SeaweedFS 更值得评估。
+
+## 资料
+
+仓库 [github.com/seaweedfs/seaweedfs](https://github.com/seaweedfs/seaweedfs)，Wiki 与 [架构白皮书 PDF](https://github.com/seaweedfs/seaweedfs/wiki/SeaweedFS_Architecture.pdf)，2025 年介绍幻灯片在 README 链接里。二进制发布页与 Docker 镜像 `chrislusf/seaweedfs` 可直接试用。
+
+---
+id: cosmic-collisions
+date: 2026-08-31
+time: 10:16
+tags: 模拟, WebGL, 月球, 粒子
+url: https://gaploid.github.io/cosmic-collisions/
+---
+
+# Cosmic Collisions：浏览器里用 26 万粒子演月球形成撞击
+
+gaploid 的 WebGL 2 页面。默认场景是巨撞击假说：原地球与忒伊亚（Theia）在自引力下落到一起，溅射、潮汐臂、碎屑盘，以及盘里按 Ida–Canup–Stewart 标度估出的月球。粒子数从 1.6 万到 26.2 万；手机打开时约 3.3 万。另有正撞、擦掠逃离（hit & run）、等质量双星、高速解体（shatter）几套预设，撞击体质比、入射角、速度、核占比和密度都能调。
+
+![Cosmic Collisions：Theia 撞击后的碎屑盘与潮汐臂](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788142523694.png)
+
+重力用 64³ 粒子网格加近邻成对修正（P³M），接触是弹簧-阻尼、不受拉力。没有 SPH 和状态方程，因此看不到汽化与冲击波；岩石按可压缩颗粒堆处理。拖拽旋转、滚轮缩放；空格暂停，R 重开，F 跟随目标。另有希克苏鲁伯撞击页，按 Collins、Housen & Holsapple 等文献给出陨石坑与第一日羽流。无构建步骤，页面可直接打开。Chrome 可用，Safari 当时仍有兼容问题。
+
+---
+id: token-level-advertising
+date: 2026-08-31
+time: 10:19
+tags: 广告, 论文, 机制设计, 大模型
+url: https://arxiv.org/abs/2608.27382
+---
+
+# Token 级广告：把广告嵌进大模型的生成过程
+
+Hanbing Liu、Bowei Zhang、Changyuan Yu、Yinyu Ye、Qi Qi 的预印本（arXiv:2608.27382）。信息入口变成一句生成回复之后，广告机会由生成轨迹本身塑造。论文提出 **LAMA**（Latent Advertiser Mixture Auction）：广告商上报每个 token 的续写价值，诱导各自的下一 token 策略；平台用隐变量混合解码，并随已生成 token 更新分配后验。生成结束时，后验决定胜出广告商和支付。
+
+理论上 LAMA 满足 Markov DSIC 与 IR：广告商说真话是占优策略，参与满足个体理性。福利接近带 KL 正则的最优，缺口随正则减弱而缩小。实现上不必广告商自行计算整棵 token 树：平台用学到的局部优势和根值，在已实现路径上重建上报信号。
+
+在真实商业搜索 query 切分上做了概念验证，对照生成前分配、生成后插入，以及回复级聚合。LAMA 提高平台总福利和营收，同时维持用户侧回复质量。
+
+对海外投放 Agent 和生成式产品化，这篇把竞价单元从 slot 下沉到 token，机制与实证都在，适合当作投放机制设计的参考基线。
+
+---
+id: github-receipts
+date: 2026-08-31
+time: 10:21
+tags: GitHub, 可视化, 收据, 小工具
+url: https://receipthub.io/github
+---
+
+# ReceiptHub：把 GitHub 活跃度排成一张热敏收据
+
+sleepy_duck 的浏览器小工具。用 GitHub 登录后，把 commits、pull request、issue、star 和贡献连续天数排成热敏纸风格的逐项清单，可打印。站点口号是 Your GitHub activity, itemized。同一套收据样式还覆盖 Chess.com、Lichess.org、Last.fm。免费。
+
+![ReceiptHub：GitHub 活跃度收据](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788142874319.png)
+
+---
+id: visiscan
+date: 2026-08-31
+time: 10:28
+tags: AEO, AI 搜索, 可见度, 工具
+url: https://www.visiscan.app
+---
+
+# VisiScan：免费扫描品牌在 AI 回答里有没有被点名
+
+not_wowinter14 的站点。填入网址后，代理读取站点、判断品类与服务范围，再用买家会问的问题去问 ChatGPT、Claude、Perplexity、Gemini，核对回答里出现的是你还是对手。免费扫描无需注册，约 60 秒出结果：5 个问题 × 4 家引擎、各抽 2 次，合计 40 条实答，给出 0–100 的 AI Visibility 与 AI Readiness，以及一条优先修复建议。
+
+完整报告 49 美元一次，扩到 12 个问题、每引擎 3 次抽样（144 条），并附竞品摘录、引用源、可发布的 schema 与 llms.txt。另有 29 美元/月的周复扫。面向本地服务商：有人把「附近最好的某行」输入对话引擎时，用来核对名字是否出现。
+
+![VisiScan：AI 搜索可见度扫描](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788143262869.png)
