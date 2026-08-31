@@ -410,3 +410,51 @@ Eli Fayerman 做的创业点子扫描器，面向独立开发者、Solo Founder 
 有价值的是带证据的点子本身。站点目前不公开整包目录：首页 Best picks 仍在收集，每次扫描只出约 10 条。作者自 2026 年 3 月起大约做了 339 次扫描、累计约 3400 条，没有整包放出。职业页（开发者、律师、护士等）只有几条方向性示例。可浏览的预研点子库要去 Ideabrowser 一类产品。
 
 ![1mil.app：按背景扫描创业点子](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788144692464.png)
+
+---
+id: nuzzle
+date: 2026-08-31
+time: 10:59
+tags: iOS, 壁纸, 宠物, Live Photo
+url: https://usenuzzle.com
+---
+
+# Nuzzle：把宠物照片做成锁屏上的动态插画壁纸
+
+13001r 做的 iOS 应用。选一张宠物或人的照片、挑一种插画风格，生成可放在锁屏上的动态壁纸。作者说做它是因为 iOS 上像样的动态壁纸应用很少。播放用 Live Photo，需要 iOS 17 及以上。没有提示词和滑杆，流程是选风格、加照片、出成品。App Store 可下，Google Play 即将上线。站点有免费动态壁纸演示。
+
+![Nuzzle：宠物动态插画锁屏壁纸](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788145173615.png)
+
+---
+id: anvendor
+date: 2026-08-31
+time: 11:02
+tags: 竞品, 销售线索, SaaS, 情报
+url: https://anvendor.com/
+---
+
+# anVendor：查对手的客户，以及他们大概花多少钱
+
+ia_soul 做的竞品客户情报站。输入对手或任意 SaaS（如 Segment、Snowflake、Notion），返回正在为其付费的公司，并估年度花费；反过来输入域名，列出该公司订阅的分析、CRM、营销、托管等服务，按估算出价排序。作者是独立 ML 工程师，大约做了半年。引擎只判断「这家公司在和该 SaaS 发生订阅式交互」，方法未公开，自称没有入侵、没有密钥库、也没有大模型，用工程和经典机器学习。目前可检测约 700 种服务。覆盖不到的查询会记成需求。
+
+花费按厂商公开价目表匹配席位数，写成下限如「$48k+ / yr」，不是发票也不是谈判价。搜索本身不扣费；揭开一条客户花 0.25 信用，完整公司分析 1 信用。查不到自动退回。免费档每 30 天 3 信用。结果可导出 CSV、Excel、PDF。面向销售找线索、会前摸底、以及看对手客户盘。
+
+![anVendor：查对手客户与估算花费](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788145341549.png)
+
+---
+id: underfoot
+date: 2026-08-31
+time: 11:05
+tags: Apple Intelligence, 设备端模型, 评测, 漂移
+url: https://umer9538.github.io/underfoot/
+---
+
+# Underfoot：系统更新在设备端模型上改了什么
+
+Umer2521 做的设备端模型漂移观测站。Apple 和 Google 会随系统更新替换手机里的 AI 模型，没有 changelog，也没有可固定的版本号。Underfoot 冻结一套提示词，对每个 OS 构建抓取回答，把差异做成公开记录。旧构建被覆盖后，那一版模型无法再测。
+
+目前固定 28 条提示词，每条 greedy 采样 5 次。macOS 26.5.1（25F80，FoundationModels 1.5.2）140 次全部成功，输出字节级相同，俳句这类高方差题目也不例外。iOS 26.3.1 模拟器（23D8133，fm 1.1.7）里可用性 API 报 available，生成却全部失败，错误码 ModelManagerError 1026。同一条市政会议摘要，1.5.2 五次都过，1.1.7 以「可能含不安全内容」拒绝，护栏层可以单独漂移。要求「只返回 JSON」时，回答固定包在 markdown 代码围栏里。
+
+采集协议要求套件名称、版本和 SHA-256 一致才可比对。仓库在 GitHub（Umer9538/underfoot）。作者在找有 Apple Intelligence 资格的真机（iPhone 15 Pro 及以上）或 Pixel 8+ 补列，大约十分钟一列。
+
+![Underfoot：设备端模型随系统更新的漂移观测](https://chaomei-1259670296.cos.ap-guangzhou.myqcloud.com/jobhunt/pasted-1788145524298.png)
