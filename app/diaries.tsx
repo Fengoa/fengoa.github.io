@@ -4,6 +4,16 @@ import { DiaryCover } from "@/app/diary/cover";
 /** 日记期次元数据；列表页已改为信息流，此处仅作归档兼容 */
 export const diaries: PostData[] = [
   {
+    slug: "2026-09",
+    href: "/diary",
+    title: "2026 年 9 月日记",
+    date: "2026-09",
+    tag: "2026",
+    summary: "记录本月读到、看到与使用过的内容，按条目持续补充。",
+    cover: <DiaryCover year={2026} month={9} />,
+    coverShape: "square",
+  },
+  {
     slug: "2026-08",
     href: "/diary",
     title: "2026 年 8 月日记",
